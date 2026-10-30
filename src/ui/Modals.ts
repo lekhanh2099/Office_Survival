@@ -3,6 +3,13 @@ import { CARDS } from '../data/cards';
 import { ALL_ACHS } from '../data/achievements';
 import { getDiscoveredCards, getHighScores, getUnlockedAchievements } from '../core/GameState';
 import { sounds } from '../audio/SoundManager';
+import {
+  downloadCertificate,
+  MEME_AVATARS,
+  renderCertificateToCanvas,
+  shareCertificate
+} from './CertificateGenerator';
+import { ALL_ROLES } from '../data/roles';
 
 function esc(t?: string | number | null): string {
   return String(t ?? '').replace(/[&<>"']/g, x => ({
@@ -203,4 +210,152 @@ export function openDonateModal(host: HTMLElement): void {
     </button>
     <button class="secondary" data-act="close">ĐÓNG LẠI ĐỂ CÀY GAME TIẾP</button>
   </section></div>`;
+}
+
+export function openCertificateModal(host: HTMLElement, state: GameState): void {
+  sounds.click();
+  let currentAvatarId = MEME_AVATARS[0].id;
+  let currentName = state.playerName || 'Nhân Viên Gương Mẫu';
+
+  host.innerHTML = `<div class="dialogShade"><section class="dialog" role="dialog" aria-modal="true" style="text-align:center;max-width:520px">
+    <div style="font-size:36px;margin:2px 0">📜🖨️✨</div>
+    <h2 style="margin:2px 0 4px">BIÊN BẢN SA THẢI / BẰNG KHEN</h2>
+    <p class="note" style="margin-bottom:10px">Tùy chỉnh thông tin để tải ảnh hoặc chia sẻ lên Story / Bạn bè!</p>
+
+    <!-- Custom Name Input -->
+    <div style="text-align:left;margin-bottom:10px">
+      <label style="font-size:12px;font-weight:800;display:block;margin-bottom:4px">✏️ Tên nhân viên:</label>
+      <input id="certNameInput" type="text" maxlength="24" value="${esc(currentName)}" style="width:100%;box-sizing:border-box;padding:8px 12px;border:2px solid var(--ink);border-radius:10px;font-weight:800;font-size:14px;background:#fff" placeholder="Nhập tên của bạn...">
+    </div>
+
+    <!-- Meme Avatar Selection -->
+    <div style="text-align:left;margin-bottom:12px">
+      <label style="font-size:12px;font-weight:800;display:block;margin-bottom:6px">🎭 Chọn Meme Ảnh Thẻ:</label>
+      <div id="memeSelectorHost" style="display:grid;grid-template-columns:repeat(3, 1fr);gap:6px">
+        ${MEME_AVATARS.map((m, i) => `
+          <button type="button" class="miniButton memeAvatarBtn ${i === 0 ? 'active' : ''}" data-avatar="${m.id}" style="padding:6px;font-size:11px;text-align:center">
+            <span style="font-size:22px;display:block">${m.emoji}</span>
+            <b>${esc(m.name)}</b>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- Canvas Preview -->
+    <div style="border:3px solid var(--ink);border-radius:14px;overflow:hidden;box-shadow:3px 3px 0 var(--ink);background:#000;margin-bottom:14px">
+      <canvas id="certCanvas" style="width:100%;height:auto;display:block"></canvas>
+    </div>
+
+    <!-- Actions -->
+    <button class="primary" id="btnDownloadCert" style="margin-bottom:8px">💾 TẢI ẢNH VỀ MÁY (PNG)</button>
+    <button class="secondary" id="btnShareCert" style="margin-bottom:8px">📤 CHIA SẺ LÊN STORY / BẠN BÈ</button>
+    <button class="secondary" data-act="close">ĐÓNG</button>
+  </section></div>`;
+
+  const canvas = document.getElementById('certCanvas') as HTMLCanvasElement;
+  const nameInput = document.getElementById('certNameInput') as HTMLInputElement;
+
+  function redraw() {
+    if (!canvas) return;
+    renderCertificateToCanvas(canvas, state, currentName, currentAvatarId);
+  }
+
+  redraw();
+
+  nameInput?.addEventListener('input', () => {
+    currentName = nameInput.value.trim() || 'Nhân Viên Gương Mẫu';
+    state.playerName = currentName;
+    redraw();
+  });
+
+  const selectorHost = document.getElementById('memeSelectorHost');
+  selectorHost?.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('.memeAvatarBtn') as HTMLElement | null;
+    if (!btn) return;
+    sounds.click();
+    document.querySelectorAll('.memeAvatarBtn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentAvatarId = btn.dataset.avatar || MEME_AVATARS[0].id;
+    redraw();
+  });
+
+  document.getElementById('btnDownloadCert')?.addEventListener('click', () => {
+    downloadCertificate(canvas, `office-survival-${state.day}ngay.png`);
+  });
+
+  document.getElementById('btnShareCert')?.addEventListener('click', () => {
+    shareCertificate(canvas);
+  });
+}
+
+export function openRoleSelectionModal(
+  host: HTMLElement,
+  onSelect: (roleId: string, playerName: string) => void
+): void {
+  sounds.click();
+  let selectedRole = 'genz';
+
+  host.innerHTML = `<div class="dialogShade"><section class="dialog" role="dialog" aria-modal="true" style="text-align:center;max-width:480px">
+    <div style="font-size:38px;margin:2px 0">🏢👔✨</div>
+    <h2 style="margin:2px 0 4px">CHỌN HỆ TƯ TƯỞNG CÔNG SỞ</h2>
+    <p class="note" style="margin-bottom:12px">Mỗi hệ tư tưởng có chỉ số khởi đầu và nội tại sống sót riêng biệt!</p>
+
+    <div style="text-align:left;margin-bottom:12px">
+      <label style="font-size:12px;font-weight:800;display:block;margin-bottom:4px">✏️ Tên / Biệt danh của bạn:</label>
+      <input id="roleInputName" type="text" maxlength="24" value="Nhân Viên Gương Mẫu" style="width:100%;box-sizing:border-box;padding:8px 12px;border:2px solid var(--ink);border-radius:10px;font-weight:800;font-size:14px;background:#fff" placeholder="Nhập tên hoặc nickname...">
+    </div>
+
+    <div class="eyebrow" style="text-align:left;margin-bottom:8px">🎭 CHỌN 1 TRONG 4 CLASS:</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+      ${ALL_ROLES.map((r, i) => `
+        <button type="button" class="roleSelectBtn ${i === 0 ? 'active' : ''}" data-role="${r.id}" style="background:#fff;border:2px solid var(--ink);border-radius:13px;padding:11px;text-align:left;box-shadow:2px 2px 0 var(--ink);cursor:pointer;transition:transform 0.1s">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <span style="font-weight:900;font-size:14px">${r.emoji} ${esc(r.name)}</span>
+            <span style="font-size:10px;font-weight:800;background:#f0edff;color:#4f46e5;padding:2px 6px;border-radius:5px;border:1px solid #4f46e5">${esc(r.passiveName)}</span>
+          </div>
+          <div style="font-size:11px;color:#6b6782;font-style:italic;margin-bottom:4px">${esc(r.motto)}</div>
+          <div style="font-size:11px;color:#2e2b44;line-height:1.4"><b>Nội tại:</b> ${esc(r.passiveDesc)}</div>
+          <div style="margin-top:5px;display:flex;gap:6px;font-size:10px;font-weight:800">
+            <span style="background:#e6fcf0;color:#15693e;padding:1px 5px;border-radius:4px">⚡ Khởi đầu ${r.initE}</span>
+            <span style="background:#fff2eb;color:#9c3612;padding:1px 5px;border-radius:4px">📋 Việc ${r.initB}</span>
+            <span style="background:#f0edff;color:#4331a8;padding:1px 5px;border-radius:4px">⭐ Uy tín ${r.initR}</span>
+          </div>
+        </button>
+      `).join('')}
+    </div>
+
+    <button class="primary" id="btnConfirmRole" style="margin-bottom:8px">🚀 XÁC NHẬN NHẬN VIỆC</button>
+    <button class="secondary" data-act="close">HUỶ BỎ</button>
+  </section></div>`;
+
+  const btns = host.querySelectorAll('.roleSelectBtn');
+  btns.forEach(b => {
+    b.addEventListener('click', () => {
+      sounds.click();
+      btns.forEach(x => {
+        x.classList.remove('active');
+        (x as HTMLElement).style.borderColor = 'var(--ink)';
+        (x as HTMLElement).style.background = '#fff';
+      });
+      b.classList.add('active');
+      (b as HTMLElement).style.borderColor = 'var(--purple)';
+      (b as HTMLElement).style.background = '#f5f2ff';
+      selectedRole = (b as HTMLElement).dataset.role || 'genz';
+    });
+  });
+
+  // Highlight first button
+  const first = host.querySelector('.roleSelectBtn') as HTMLElement | null;
+  if (first) {
+    first.style.borderColor = 'var(--purple)';
+    first.style.background = '#f5f2ff';
+  }
+
+  document.getElementById('btnConfirmRole')?.addEventListener('click', () => {
+    sounds.success();
+    const nameInput = document.getElementById('roleInputName') as HTMLInputElement;
+    const name = nameInput?.value.trim() || 'Nhân Viên Gương Mẫu';
+    host.innerHTML = '';
+    onSelect(selectedRole, name);
+  });
 }

@@ -4,11 +4,13 @@ import { loadGameState } from './core/GameState';
 import { renderDay, renderGameOver, renderPlay, renderResult, renderWelcome } from './ui/Renderer';
 import {
   burstHearts,
+  openCertificateModal,
   openCompendiumModal,
   openDonateModal,
   openHelpModal,
   openHistoryModal,
-  openRankingsModal
+  openRankingsModal,
+  openRoleSelectionModal
 } from './ui/Modals';
 import { sounds } from './audio/SoundManager';
 import { showToast } from './ui/Toast';
@@ -155,7 +157,9 @@ document.addEventListener('click', (ev) => {
     case 'start':
       if (loadGameState() && !confirm('Bắt đầu run mới? Tiến trình cũ sẽ bị thay thế.')) return;
       sounds.click();
-      engine.newRun();
+      openRoleSelectionModal(HOST, (roleId, name) => {
+        engine.newRun(roleId, name);
+      });
       break;
     case 'continue': {
       const saved = loadGameState();
@@ -163,7 +167,9 @@ document.addEventListener('click', (ev) => {
       if (saved) {
         engine.setState(saved);
       } else {
-        engine.newRun();
+        openRoleSelectionModal(HOST, (roleId, name) => {
+          engine.newRun(roleId, name);
+        });
       }
       break;
     }
@@ -175,9 +181,12 @@ document.addEventListener('click', (ev) => {
       break;
     case 'restart':
       sounds.click();
-      if (confirm('Chơi lại từ Ngày 1? Tiến trình hiện tại sẽ bị xoá.')) {
-        engine.newRun();
-      }
+      openRoleSelectionModal(HOST, (roleId, name) => {
+        engine.newRun(roleId, name);
+      });
+      break;
+    case 'certificate':
+      openCertificateModal(HOST, engine.getState());
       break;
     case 'history':
       openHistoryModal(HOST, engine.getState());

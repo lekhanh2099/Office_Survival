@@ -491,6 +491,79 @@ addCard('dev_begging', 'rare', 'Dev Game Đói Lả', '🧑‍💻', 'Bẻ gãy 
   ch('Dí deadline ngược: "Thêm 10 thẻ nữa!"', 'Bắt dev tăng ca cày thêm tính năng', { b: -1 }, 'Dev sợ hãi quay về gõ phím: "Dạ dạ em làm liền, em dọn bớt 1 việc tồn cho sốp tha cho em!"')
 ]);
 
+// ==================== MEME CARDS ====================
+addCard('meme_this_is_fine', 'base', 'Cún Lửa', '🐶🔥', 'Mọi thứ vẫn ổn (This is Fine)', 'Văn phòng bốc cháy theo nghĩa đen: Server sập, deadline trễ 3 ngày, khách hàng doạ kiện. Bạn đang ngồi nhâm nhi tách trà: "This is fine."', [
+  ch('Uống tiếp tách trà: "Kệ đời trôi"', 'Tĩnh tâm bảo tồn năng lượng nhưng việc dồn ứ', { e: 2, b: 2 }, 'Bạn nhấp một ngụm trà nóng. Lửa cháy tới chân bàn nhưng tâm bạn tĩnh như mặt hồ.'),
+  ch('Cầm bình chữa cháy lao vào cứu server', 'Hành động anh hùng bảo vệ hạ tầng công ty', { e: -2, b: -2, r: 1 }, 'Bạn xịt tuyết trắng xoá cả phòng server. IT cúi đầu cảm tạ bạn.'),
+  ch('Đổ thêm dầu vào lửa: "Cháy to hơn đi!"', 'Canh bạc tuyệt vọng hy vọng được huỷ dự án', {}, 'Bạn hắt thêm can xăng vào đống báo cáo.', {
+    roll: {
+      chance: 0.5,
+      win: { d: { b: -3 }, message: 'Server cháy sạch thật, sếp thông báo hoãn dự án sang quý sau!' },
+      lose: { d: { r: -2, b: 2 }, message: 'Camera an ninh ghi lại rõ mồn một. Bạn bị lập biên bản kỷ luật.' }
+    }
+  })
+]);
+
+addCard('meme_crying_cat', 'base', 'Mèo Khóc Like', '😿👍', 'Gượng cười trong nước mắt', 'Trưởng phòng bảo: "Em phụ trách thêm dự án này nhé, không có thưởng nhưng có thêm kinh nghiệm và sự tín nhiệm." Bạn vừa rớt nước mắt vừa giơ ngón cái đồng ý.', [
+  ch('Giơ ngón cái: "Em rất vinh dự ạ!"', 'Cắn răng nhận việc để lấy lòng sếp', { e: -2, b: 2, r: 2 }, 'Sếp vỗ vai: "Công ty cần những người như em." Bạn khóc ướt đẫm bàn phím.'),
+  ch('Chối khéo: "Em xin nhường cơ hội cho các bạn khác"', 'Bảo vệ ranh giới cá nhân nhưng mất điểm nhiệt tình', { e: 1, r: -1 }, 'Sếp thở dài: "Dạo này em thiếu lửa quá." Bạn thở phào vì tối nay được ngủ.'),
+  ch('Hỏi: "Kinh nghiệm có đổi ra trà sữa được không sếp?"', 'Canh bạc bộc trực mỉa mai đãi ngộ', {}, 'Cả phòng nín thở chờ phản ứng của sếp.', {
+    roll: {
+      chance: 0.5,
+      win: { d: { r: 1, e: 1 }, message: 'Sếp bật cười: "Hài hước đấy! Thôi anh duyệt cho ly Highlands."' },
+      lose: { d: { r: -2 }, message: 'Sếp nghiêm mặt: "Công ty không phải chỗ đùa cợt." Không khí đóng băng.' }
+    }
+  })
+]);
+
+addCard('meme_pepe_interview', 'base', 'Pepe Doanh Nhân', '🐸👔', 'Phỏng vấn bằng sự tự tin ảo', 'HR gọi bạn lên phỏng vấn đánh giá: "Điểm yếu lớn nhất của em trong công việc là gì?" Bạn mặc vest, chỉnh cà vạt, ánh mắt đầy tham vọng.', [
+  ch('Trả lời: "Điểm yếu của em là quá cầu toàn và yêu việc"', 'Văn mẫu kinh điển ru ngủ người phỏng vấn', { r: 1, b: 1 }, 'HR gật gù ghi vào sổ: "Ứng viên có động lực cao, giao thêm task."'),
+  ch('Thành thật: "Em yếu nhất lúc chuông báo thức 7h sáng kêu"', 'Chân thật đến mức HR bối rối', { e: 1, r: -1 }, 'HR đánh dấu hỏi chấm to tướng vào hồ sơ nhân sự của bạn.'),
+  ch('Hỏi ngược lại: "Thế điểm yếu của công ty mình là gì?"', 'Canh bạc đảo ngược vị thế phỏng vấn', {}, 'Bạn khoanh tay nhìn thẳng vào mắt HR.', {
+    roll: {
+      chance: 0.45,
+      win: { d: { r: 2, b: -1 }, message: 'HR toát mồ hôi: "Em có tư duy phản biện xuất sắc! Đề xuất tăng lương."' },
+      lose: { d: { r: -2, b: 2 }, message: 'HR mời bạn ra khỏi phòng và gửi email cảnh cáo về thái độ.' }
+    }
+  })
+]);
+
+addCard('meme_bongo_cat', 'base', 'Mèo Cào Phím', '🐱⌨️', 'Bàn phím cơ Blue Switch', 'Bạn mang bàn phím cơ Blue Switch vào phòng làm việc im lặng, gõ cành cạch như súng liên thanh. Cả phòng đang nhìn bạn với ánh mắt hình viên đạn.', [
+  ch('Tiếp tục gõ điên cuồng 150 từ/phút', 'Hoàn thành task chớp nhoáng mặc kệ người xung quanh', { b: -2, r: -1 }, 'Task bay vèo vèo nhưng đồng nghiệp bên cạnh đang mài dao dưới gầm bàn.'),
+  ch('Rút phích cắm, chuyển sang gõ rón rén', 'Hạ bớt cái tôi để bảo toàn mối quan hệ đồng nghiệp', { e: -1, r: 1 }, 'Phòng làm việc trở lại yên bình. Bạn gõ phím nhẹ như mèo đi ăn trộm.'),
+  ch('Bật nhạc Lo-fi át tiếng phím cơ', 'Canh bạc biến văn phòng thành quán cà phê chill', {}, 'Bạn bật loa ngoài phát nhạc không lời.', {
+    roll: {
+      chance: 0.55,
+      win: { d: { e: 2, r: 1 }, message: 'Cả phòng chill theo điệu nhạc, năng suất làm việc tăng vọt!' },
+      lose: { d: { r: -2 }, message: 'Trưởng phòng quát: "Tắt ngay! Tưởng đây là quán trà sữa hả?"' }
+    }
+  })
+]);
+
+addCard('meme_cheems', 'base', 'Cheems Suy Sụp', '🐕💤', 'Hướng ngoại nhưng hết pin', 'Team building lúc 14:00, mọi người đang nhảy bốc lửa và hô vang khẩu hiệu. Pin xã hội của bạn đã chạm đáy 0%, chỉ muốn hoá thành hạt bụi bay đi.', [
+  ch('Chui vào nhà vệ sinh trốn 45 phút', 'Nạp lại chút pin xã hội trong không gian yên tĩnh', { e: 2, r: -1 }, 'Nhà vệ sinh tầng 5 là thiên đường cứu rỗi tâm hồn hướng nội của bạn.'),
+  ch('Uống bò húc, nhảy quẩy bất chấp', 'Ép bản thân hoà nhập vào tập thể', { e: -2, r: 2 }, 'Bạn giật giải "Nhân viên nhiệt huyết nhất" nhưng tối về nằm liệt giường.'),
+  ch('Giả vờ nhận cuộc gọi khẩn của gia đình', 'Canh bạc chuồn êm đẹp khỏi đám đông', {}, 'Bạn áp điện thoại vào tai vừa đi vừa gật đầu nghiêm trọng.', {
+    roll: {
+      chance: 0.6,
+      win: { d: { e: 1, b: -1 }, message: 'Mọi người thông cảm vẫy tay chào. Bạn phóng xe về nhà ngủ ngon lành!' },
+      lose: { d: { r: -1, b: 1 }, message: 'Điện thoại bạn bỗng reo chuông thật. Màn kịch bị bại lộ trước toàn thể công ty.' }
+    }
+  })
+]);
+
+addCard('meme_drake', 'base', 'Sếp Drake', '🙅‍♂️👉', 'Sếp Gật Sếp Lắc', 'Bạn trình 2 đề xuất: Đề xuất 1 chi 200k mua dụng cụ làm việc; Đề xuất 2 chi 20 triệu làm tiệc sinh nhật công ty. Sếp lắc đầu với cái 1 và gật đầu với cái 2.', [
+  ch('Gộp 200k dụng cụ vào ngân sách tiệc', 'Kỹ xảo kế toán hợp pháp hoá chi phí làm việc', { b: -1, r: 1 }, 'Bạn vừa có bàn phím mới vừa được ăn bánh kem miễn phí.'),
+  ch('Tranh luận về tính thiết thực của công cụ', 'Đòi hỏi sự hợp lý từ ban lãnh đạo', { e: -2, r: -1 }, 'Sếp bảo bạn không có tầm nhìn vĩ mô và thiếu tinh thần gắn kết.'),
+  ch('Xung phong làm trưởng ban tổ chức tiệc', 'Canh bạc tận dụng sự kiện để kiếm chác và ngoại giao', {}, 'Bạn cầm micro điều hành bữa tiệc.', {
+    roll: {
+      chance: 0.5,
+      win: { d: { e: 2, r: 1 }, message: 'Bữa tiệc thành công rực rỡ! Sếp khen bạn có tài tổ chức sự kiện.' },
+      lose: { d: { e: -2, b: 2 }, message: 'Loa bị cháy, bánh kem bị rơi. Cả công ty đổ lỗi cho bạn.' }
+    }
+  })
+]);
+
 // ==================== FINALE CARDS ====================
 addCard('end_normal', 'finale', 'Sếp tổng', '🌇', '17:59 — Em ơi, một chút thôi!', 'Sếp xuất hiện ngay khi bạn đặt tay lên nút tắt máy. Câu "một chút" dài như vũ trụ.', [
   ch('Hẹn xử lý vào sáng mai, có ghi chú', 'Giữ vững ranh giới tan tầm, hẹn sếp sáng mai tính tiếp', { e: -1, b: -1, r: -1 }, 'Sếp tiếc nuối nhưng bạn đã giữ được ranh giới.'),

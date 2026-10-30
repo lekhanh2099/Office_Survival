@@ -2,6 +2,7 @@ import { GameState } from '../types/game';
 import { CARDS } from '../data/cards';
 import { ALL_PERKS } from '../data/perks';
 import { MODIFIERS } from '../data/modifiers';
+import { ROLES } from '../data/roles';
 import { TIMES } from '../core/GameEngine';
 import { getDiscoveredCards, getHighScores, loadGameState } from '../core/GameState';
 
@@ -21,8 +22,10 @@ function meter(val: number, max: number, color: string): string {
 
 export function renderHUD(state: GameState): string {
   const m = MODIFIERS.find(mod => mod.id === state.modifier) || MODIFIERS[0];
+  const role = ROLES[state.role || 'genz'] || ROLES.genz;
+  const maxB = state.role === 'senior' ? 9 : 8;
   const eDanger = state.e <= 2 ? ' dangerPulse' : '';
-  const bDanger = state.b >= 6 ? ' dangerPulse' : '';
+  const bDanger = state.b >= (maxB - 2) ? ' dangerPulse' : '';
   const rDanger = state.r <= 1 ? ' dangerPulse' : '';
 
   const perkBadges = (state.perks || []).map(pid => {
@@ -32,7 +35,10 @@ export function renderHUD(state: GameState): string {
 
   return `<div class="screenHeader">
     <div>
-      <div class="eyebrow">Sinh tồn chốn công sở</div>
+      <div class="eyebrow" style="display:flex;align-items:center;gap:6px">
+        <span>Sinh tồn chốn công sở</span>
+        <span style="background:#e0dcfe;color:#433299;font-weight:900;padding:1px 6px;border-radius:4px;font-size:10px">${role.emoji} ${esc(role.name)}</span>
+      </div>
       <div class="dayName">NGÀY ${String(state.day).padStart(2, '0')}</div>
       <div class="daySub">Lượt ${Math.min(state.turn + 1, 8)}/8 · Trụ càng lâu điểm càng cao</div>
     </div>
@@ -54,8 +60,8 @@ export function renderHUD(state: GameState): string {
     </div>
     <div class="hudItem${bDanger}" data-stat="b">
       <div class="hudLabel">📋 Việc tồn</div>
-      <div class="hudValue">${state.b}/8</div>
-      ${meter(state.b, 8, '#ff8c69')}
+      <div class="hudValue">${state.b}/${maxB}</div>
+      ${meter(state.b, maxB, '#ff8c69')}
     </div>
   </div>
   <div class="wideStatus">
@@ -78,15 +84,15 @@ export function renderWelcome(): string {
     <p class="introBlurb">Mục tiêu: Còn thở khi sếp nhắn "em ơi". Sống sót qua các cuộc họp vô nghĩa, máy in nổi loạn và drama trà sữa.</p>
     <div class="introFeatures">
       <div class="feature"><span>❤️</span>3 mạng</div>
-      <div class="feature"><span>🃏</span>58 thẻ sự kiện</div>
-      <div class="feature"><span>♾️</span>Vô tận</div>
+      <div class="feature"><span>🎭</span>4 Class nghề</div>
+      <div class="feature"><span>🃏</span>65 thẻ sự kiện</div>
     </div>
     ${topScore ? `<p class="note" style="margin-bottom:12px">🏆 Kỷ lục cá nhân: <b>${topScore.score.toLocaleString('vi-VN')} điểm</b> (Ngày ${topScore.day} · ${esc(topScore.title)})</p>` : ''}
     <div class="buttons">
-      <button class="primary" data-act="start">🚀 NHẬN VIỆC NGAY <span>→</span></button>
+      <button class="primary" data-act="start">🚀 CHỌN HỆ TƯ TƯỞNG &amp; NHẬN VIỆC <span>→</span></button>
       ${loadGameState() ? '<button class="secondary" data-act="continue">↩ Tiếp tục run đã lưu</button>' : ''}
     </div>
-    <p class="note" style="margin:16px 0 0">Chơi hoàn toàn không cần mạng. Đã khám phá: <b>${totalDisc}/58</b> sự kiện.</p>
+    <p class="note" style="margin:16px 0 0">Chơi hoàn toàn không cần mạng. Đã khám phá: <b>${totalDisc}/65</b> sự kiện.</p>
   </section>
   <p class="footerHelp">Mẹo: Một lựa chọn có lợi trước mắt có thể kéo theo nghiệp quật sau vài lượt.</p>`;
 }
@@ -248,6 +254,7 @@ export function renderGameOver(state: GameState): string {
       <div class="summaryBox">Nghiệp đã trả<strong>${state.triggerCount || 0}</strong></div>
     </div>
     <div class="buttons">
+      <button class="primary" data-act="certificate" style="background:linear-gradient(135deg, #e11d48, #be123c);border-color:#881337;box-shadow:3px 3px 0 #881337;font-weight:900">📜 XUẤT BIÊN BẢN SA THẢI (KHOE STORY)</button>
       <button class="primary" data-act="restart">🔄 ỨNG TUYỂN LẠI TỪ ĐẦU</button>
       <button class="secondary" data-act="share">📤 Chia sẻ thành tích</button>
       <button class="secondary" data-act="donate" style="background:#fff8d6;border-color:#f59e0b;color:#854d0e;font-weight:900">🧋 Tiếp tế trà sữa cứu đói Dev</button>

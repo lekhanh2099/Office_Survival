@@ -2,6 +2,7 @@ import { Card, GameState, QueuedCard, StatDelta } from '../types/game';
 import { CARDS, FINALE_CARD_IDS, RARE_CARD_IDS, REGULAR_CARD_IDS } from '../data/cards';
 import { ALL_PERKS } from '../data/perks';
 import { MODIFIERS } from '../data/modifiers';
+import { ROLES } from '../data/roles';
 import { RNG } from './RNG';
 import { createInitialState, markCardDiscovered, saveGameState, saveHighScoreRecord, unlockAchievement } from './GameState';
 import { sounds } from '../audio/SoundManager';
@@ -40,8 +41,16 @@ export class GameEngine {
     this.onStateChange(this.state);
   }
 
-  newRun(): void {
+  newRun(roleId = 'genz', playerName = 'Nhân Viên Gương Mẫu', avatar = '🐱📱'): void {
+    const role = ROLES[roleId] || ROLES.genz;
     this.state = createInitialState();
+    this.state.role = role.id;
+    this.state.playerName = playerName;
+    this.state.avatar = avatar;
+    this.state.e = role.initE;
+    this.state.b = role.initB;
+    this.state.r = role.initR;
+    this.state.dailyStart = { lives: 3, e: role.initE, b: role.initB, r: role.initR, score: 0 };
     this.rng.setSeed(this.state.seed);
     this.prepare();
   }
@@ -194,7 +203,8 @@ export class GameEngine {
     if (choice.queue?.length) queued.push('Quyết định này có thể quay lại vào một lượt sau.');
 
     if (choice.roll) {
-      const bonus = this.hasPerk('power_strip') ? 0.15 : 0;
+      let bonus = this.hasPerk('power_strip') ? 0.15 : 0;
+      if (this.state.role === 'sales') bonus += 0.15;
       const chance = Math.min(0.95, choice.roll.chance + bonus);
       const win = this.rng.next() < chance;
       const part = win ? choice.roll.win : choice.roll.lose;
@@ -247,14 +257,15 @@ export class GameEngine {
         unlockAchievement('crisis_champ');
       }
     }
-    if (this.state.b >= 8) {
+    const maxBacklog = this.state.role === 'senior' ? 9 : 8;
+    if (this.state.b >= maxBacklog) {
       if (this.hasPerk('leave_form')) {
         this.state.perks = this.state.perks.filter(p => p !== 'leave_form');
         this.state.b = Math.max(0, this.state.b - 3);
         failureNotes.push('📑 Mẫu đơn nghỉ phép tự động kích hoạt! Tránh được khủng hoảng quá tải.');
       } else {
         failures.push('Backlog vượt ngưỡng');
-        this.state.b = 5;
+        this.state.b = maxBacklog - 3;
         unlockAchievement('crisis_champ');
       }
     }
@@ -394,7 +405,8 @@ export class GameEngine {
     this.state.turn = 0;
     this.state.lastTurnLostLife = false;
     this.state.cleanBonus = 0;
-    const energyRecover = this.hasPerk('thermos') ? 5 : 4;
+    let energyRecover = this.hasPerk('thermos') ? 5 : 4;
+    if (this.state.role === 'genz') energyRecover = Math.max(energyRecover, 5);
     this.state.e = Math.min(10, this.state.e + energyRecover);
     this.state.modifier = this.state.day <= 2 ? 'normal' : this.rng.pick(MODIFIERS).id;
     this.state.dailyStart = { lives: this.state.lives, e: this.state.e, b: this.state.b, r: this.state.r, score: this.state.score };
