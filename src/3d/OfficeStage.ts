@@ -31,6 +31,14 @@ export interface ColleagueSpeech {
   worldPos: THREE.Vector3;
 }
 
+export interface ObstacleAABB {
+  name: string;
+  minX: number;
+  maxX: number;
+  minZ: number;
+  maxZ: number;
+}
+
 export class OfficeStage {
   public container: HTMLElement;
   public scene!: THREE.Scene;
@@ -50,6 +58,9 @@ export class OfficeStage {
   public activeStation: Workstation | null = null;
   public pickups: MapPickup[] = [];
 
+  // Solid Collision Obstacles
+  public obstacles: ObstacleAABB[] = [];
+
   // NPC Patrol Waypoints
   private bossWaypoints: THREE.Vector3[] = [];
   private currentBossWpIdx = 0;
@@ -58,8 +69,8 @@ export class OfficeStage {
   // Animated Server LEDs
   private ledMeshes: { mesh: THREE.Mesh; baseColor: number; speed: number; offset: number }[] = [];
 
-  // Expansive World Bounds (64 x 50 units)
-  public readonly bounds = { minX: -30, maxX: 30, minZ: -23, maxZ: 23 };
+  // Expansive World Bounds (60 x 46 units)
+  public readonly bounds = { minX: -29.0, maxX: 29.0, minZ: -22.5, maxZ: 22.5 };
 
   // Current Zone tracking
   public currentZoneName = 'Văn Phòng Điều Hành';
@@ -69,7 +80,7 @@ export class OfficeStage {
 
   // Dynamic Colleague Speech Bubble System
   public activeSpeech: ColleagueSpeech | null = null;
-  private speechTimer = 2.5;
+  private speechTimer = 3.0;
   private speechLibrary: Omit<ColleagueSpeech, 'worldPos'>[] = [
     {
       speaker: 'Sếp Hùng',
@@ -155,18 +166,18 @@ export class OfficeStage {
     // 3. Lighting (Hemisphere + Sunlight + Department Pools of Light)
     this.setupLighting();
 
-    // 4. Large Multi-Zone World & Exterior Street Environment
+    // 4. Large Multi-Zone World & Solid Colliders
     this.setupGrandCampus();
 
     // 5. Workstations across departments & Altar
     this.setupDepartmentWorkstations();
 
-    // 6. Scattered Collectibles (Trà sữa, Tiền thưởng, Cà phê)
+    // 6. Scattered Collectibles
     this.setupPickups();
 
-    // 7. Player Chibi (Spawns at Central Desk)
+    // 7. Player Chibi (Spawns in clear walkway aisle in front of desk)
     this.player = new ChibiCharacter('#fed7aa', '#4f46e5', false, 'BẠN (MERCHANDISER)');
-    this.player.group.position.set(-10, 0, -8);
+    this.player.group.position.set(-10.5, 0, -11.5);
     this.scene.add(this.player.group);
 
     // 8. NPC Colleagues
@@ -176,12 +187,40 @@ export class OfficeStage {
     window.addEventListener('resize', this.onResize);
   }
 
+  public addObstacle(name: string, cx: number, cz: number, width: number, depth: number): void {
+    this.obstacles.push({
+      name,
+      minX: cx - width / 2,
+      maxX: cx + width / 2,
+      minZ: cz - depth / 2,
+      maxZ: cz + depth / 2
+    });
+  }
+
+  public isColliding(x: number, z: number, radius = 0.40): boolean {
+    // Check campus perimeter bounds
+    if (x - radius < this.bounds.minX || x + radius > this.bounds.maxX) return true;
+    if (z - radius < this.bounds.minZ || z + radius > this.bounds.maxZ) return true;
+
+    // Check obstacle AABBs (circle vs AABB)
+    for (let i = 0; i < this.obstacles.length; i++) {
+      const obs = this.obstacles[i];
+      const closestX = Math.max(obs.minX, Math.min(x, obs.maxX));
+      const closestZ = Math.max(obs.minZ, Math.min(z, obs.maxZ));
+
+      const distX = x - closestX;
+      const distZ = z - closestZ;
+      if (distX * distX + distZ * distZ < radius * radius) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private setupLighting(): void {
-    // Warm Hemisphere Ambient Light (Warm sky glow, cool dark ground shadow)
     const hemi = new THREE.HemisphereLight(0xfff1e6, 0x0f172a, 1.15);
     this.scene.add(hemi);
 
-    // Directional Sunlight (Warm moonlight & street key light)
     const sun = new THREE.DirectionalLight(0xffedd5, 1.5);
     sun.position.set(22, 34, 18);
     sun.castShadow = true;
@@ -197,23 +236,19 @@ export class OfficeStage {
     sun.shadow.bias = -0.0008;
     this.scene.add(sun);
 
-    // Warm Pools of Light (Cozy interior diorama feel)
-    // 1. Office Center Warm Chandelier
+    // Warm Pools of Light
     const lOffice = new THREE.PointLight(0xfbbf24, 2.0, 24);
     lOffice.position.set(-14, 5.5, -12);
     this.scene.add(lOffice);
 
-    // 2. Lab D65 Color Grading Light
     const lLab = new THREE.PointLight(0x38bdf8, 2.0, 22);
     lLab.position.set(14, 5.5, -10);
     this.scene.add(lLab);
 
-    // 3. Warehouse Amber Industrial Lamp
     const lWarehouse = new THREE.PointLight(0xf59e0b, 1.9, 24);
     lWarehouse.position.set(-14, 5.5, 12);
     this.scene.add(lWarehouse);
 
-    // 4. Port Logistics Floodlight
     const lPort = new THREE.PointLight(0x60a5fa, 2.2, 26);
     lPort.position.set(14, 5.5, 14);
     this.scene.add(lPort);
@@ -232,20 +267,31 @@ export class OfficeStage {
     this.createZoneFloor(-14, -12, 24, 20, '#f8fafc', '#e2e8f0');
     this.createZoneSign(-14, 3.8, -21.5, '🏢 VĂN PHÒNG ĐIỀU HÀNH & MERCHANDISER', '#4f46e5');
 
-    // Desks with warm wood top, metal arched desk lamps, laptops & plants
+    // Desks: Row 1 at z = -14, Row 2 at z = -9
     for (let i = 0; i < 3; i++) {
-      this.createColleagueDesk(-18 + i * 5, -14);
-      this.createColleagueDesk(-18 + i * 5, -9);
+      const dx = -18 + i * 5;
+      this.createColleagueDesk(dx, -14);
+      this.addObstacle(`desk_r1_${i}`, dx, -14, 2.5, 1.3);
+
+      this.createColleagueDesk(dx, -9);
+      this.addObstacle(`desk_r2_${i}`, dx, -9, 2.5, 1.3);
     }
+
     this.createWaterCooler(-3, -18);
+    this.addObstacle('water_cooler', -3, -18, 0.8, 0.8);
+
     this.createPlant(-24, -20);
+    this.addObstacle('plant_1', -24, -20, 0.8, 0.8);
+
     this.createPlant(-4, -20);
+    this.addObstacle('plant_2', -4, -20, 0.8, 0.8);
 
     // Boardroom (Phòng Họp VIP with Whiteboard & Glass Partitions)
     this.createBoardroom(-20, -18, 7, 5);
 
     // IT Server Racks with Blinking LEDs
     this.createServerRacks(-24, -9);
+    this.addObstacle('server_racks', -23.25, -9, 3.2, 1.1);
 
     // ==================== ZONE 2: COLOR LAB & CUTTING (PHÒNG LAB & XƯỞNG CẮT) ====================
     this.createZoneFloor(14, -12, 24, 20, '#ecfdf5', '#a7f3d0');
@@ -253,36 +299,55 @@ export class OfficeStage {
 
     // Cutting Tables
     this.createCuttingTable(8, -12);
+    this.addObstacle('cut_table_1', 8, -12, 4.3, 1.9);
+
     this.createCuttingTable(16, -12);
+    this.addObstacle('cut_table_2', 16, -12, 4.3, 1.9);
+
     this.createCuttingTable(8, -7);
+    this.addObstacle('cut_table_3', 8, -7, 4.3, 1.9);
+
     this.createCuttingTable(16, -7);
+    this.addObstacle('cut_table_4', 16, -7, 4.3, 1.9);
 
     // ==================== ZONE 3: MEGA FABRIC WAREHOUSE (KHO VẢI ĐẠI NGÀN) ====================
     this.createZoneFloor(-14, 12, 24, 20, '#fffbeb', '#fde68a');
     this.createZoneSign(-14, 3.2, 2.5, '🧵 KHO VẢI CUỘN & NGUYÊN PHỤ LIỆU', '#d97706');
 
-    // Storage Racks
+    // 6 Massive Fabric Racks (With collision so player NEVER walks through them)
     for (let r = 0; r < 3; r++) {
-      this.createWarehouseRack(-22 + r * 7, 8);
-      this.createWarehouseRack(-22 + r * 7, 16);
+      const rx = -22 + r * 7;
+      this.createWarehouseRack(rx, 8);
+      this.addObstacle(`rack_row1_${r}`, rx, 8, 2.2, 1.4);
+
+      this.createWarehouseRack(rx, 16);
+      this.addObstacle(`rack_row2_${r}`, rx, 16, 2.2, 1.4);
     }
+
     this.createForklift(-5, 14);
+    this.addObstacle('forklift', -5, 14, 1.8, 1.3);
 
     // ==================== ZONE 4: LOGISTICS PORT & DOCK (CẢNG BIỂN & XUẤT CONT) ====================
     this.createZoneFloor(14, 12, 24, 20, '#1e293b', '#334155');
     this.createZoneSign(14, 3.2, 2.5, '🚢 CẢNG XUẤT HÀNG & BÃI CONT 40HQ', '#0284c7');
 
-    // Giant Shipping Containers
+    // Giant Shipping Containers (With solid collision)
     this.createShippingContainer(8, 12, '#0284c7', 'CÁT LÁI EXPRESS');
+    this.addObstacle('container_1', 8, 12, 5.4, 2.6);
+
     this.createShippingContainer(18, 12, '#e11d48', 'MAERSK LINE 40HQ');
+    this.addObstacle('container_2', 18, 12, 5.4, 2.6);
+
     this.createShippingContainer(14, 18, '#16a34a', 'ONE OCEAN NETWORK');
+    this.addObstacle('container_3', 14, 18, 5.4, 2.6);
 
     // ==================== ZONE 5: CENTRAL PANTRY & CANTEEN LOUNGE ====================
     this.createZoneFloor(0, 0, 10, 8, '#fdf4ff', '#f5d0fe');
     this.createZoneSign(0, 2.8, -3.6, '🧋 CĂN TIN TRÀ SỮA & PANTRY THƯ GIÃN', '#9333ea');
     this.createLoungeCoffeeBar(0, 0);
+    this.addObstacle('coffee_bar', 0, 0, 3.8, 3.8);
 
-    // Fairy String Lights hanging along the corridor
+    // Fairy String Lights hanging along corridor
     this.createFairyLights();
 
     // Perimeter Fences / Boundary Walls
@@ -406,7 +471,6 @@ export class OfficeStage {
     const g = new THREE.Group();
     g.position.set(x, 0, z);
 
-    // Modern black mullion glass walls
     const glassMat = new THREE.MeshStandardMaterial({
       color: 0x93c5fd,
       transparent: true,
@@ -420,7 +484,6 @@ export class OfficeStage {
     wallN.position.set(0, 1.3, -h / 2);
     g.add(wallN);
 
-    // Frame top border
     const frameTop = new THREE.Mesh(new THREE.BoxGeometry(w, 0.08, 0.12), frameMat);
     frameTop.position.set(0, 2.56, -h / 2);
     g.add(frameTop);
@@ -436,7 +499,7 @@ export class OfficeStage {
     table.castShadow = true;
     g.add(table);
 
-    // Swivel chairs around table
+    // Swivel chairs
     const chairMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 });
     const chairOffsets = [
       [-w * 0.24, -h * 0.32],
@@ -461,6 +524,11 @@ export class OfficeStage {
     g.add(pLight);
 
     this.scene.add(g);
+
+    // Register colliders for boardroom walls and table
+    this.addObstacle('boardroom_wall_n', x, z - h / 2, w, 0.35);
+    this.addObstacle('boardroom_wall_w', x - w / 2, z, 0.35, h);
+    this.addObstacle('boardroom_table', x, z, w * 0.74, h * 0.50);
   }
 
   private createWhiteboard(parent: THREE.Group, x: number, y: number, z: number): void {
@@ -469,11 +537,9 @@ export class OfficeStage {
     canvas.height = 256;
     const ctx = canvas.getContext('2d')!;
 
-    // Whiteboard background
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, 512, 256);
 
-    // Header Title
     ctx.fillStyle = '#1e1b4b';
     ctx.font = 'bold 22px Nunito, sans-serif';
     ctx.fillText('📊 KẾ HOẠCH XUẤT KHẨU Q4 · THỊ TRƯỜNG US & EU', 20, 36);
@@ -484,7 +550,6 @@ export class OfficeStage {
     ctx.moveTo(20, 48); ctx.lineTo(492, 48);
     ctx.stroke();
 
-    // Draw Bar Chart
     const categories = [
       { label: 'Polo US', value: 85, color: '#22c55e' },
       { label: 'Khaki EU', value: 65, color: '#3b82f6' },
@@ -513,7 +578,6 @@ export class OfficeStage {
       ctx.fillText(cat.label, bx + 22, chartY + 18);
     });
 
-    // AQL Pass Stamp
     ctx.fillStyle = '#15803d';
     ctx.font = 'bold 15px Nunito, sans-serif';
     ctx.fillText('✅ CHUẨN AQL 2.5: ĐẠT 100%', 320, 80);
@@ -544,7 +608,6 @@ export class OfficeStage {
       glassDoor.position.set(rx, 1.3, 0.46);
       g.add(glassDoor);
 
-      // Blinking LED slots
       const ledColors = [0x22c55e, 0x10b981, 0xef4444, 0xf59e0b, 0x38bdf8];
       for (let row = 0; row < 5; row++) {
         for (let col = 0; col < 4; col++) {
@@ -565,7 +628,6 @@ export class OfficeStage {
       }
     }
 
-    // Cyan server room ambient light
     const srvLight = new THREE.PointLight(0x06b6d4, 1.6, 9);
     srvLight.position.set(0.75, 1.8, 0.6);
     g.add(srvLight);
@@ -581,13 +643,11 @@ export class OfficeStage {
     const goldMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.7, roughness: 0.3 });
     const darkRedMat = new THREE.MeshStandardMaterial({ color: 0x7f1d1d, roughness: 0.5 });
 
-    // Plinth / Base
     const base = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.22, 1.1), darkRedMat);
     base.position.y = 0.11;
     base.castShadow = true;
     g.add(base);
 
-    // Altar cabinet back and sides
     const back = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.4, 0.08), redMat);
     back.position.set(0, 0.8, -0.45);
     g.add(back);
@@ -600,7 +660,6 @@ export class OfficeStage {
     rightWall.position.set(0.62, 0.8, 0);
     g.add(rightWall);
 
-    // Traditional Roof with curved golden eaves
     const roof = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.18, 1.2), redMat);
     roof.position.set(0, 1.5, 0);
     g.add(roof);
@@ -609,7 +668,6 @@ export class OfficeStage {
     goldTrim.position.set(0, 1.58, 0);
     g.add(goldTrim);
 
-    // Mini Golden Statues (Thần Tài & Thổ Địa)
     const thanTai = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 0.42, 12), goldMat);
     thanTai.position.set(-0.3, 0.42, -0.2);
     g.add(thanTai);
@@ -618,7 +676,6 @@ export class OfficeStage {
     thoDia.position.set(0.3, 0.40, -0.2);
     g.add(thoDia);
 
-    // Bát Hương (Incense bowl) & 3 glowing incense sticks
     const incenseBowl = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.10, 0.12, 12), goldMat);
     incenseBowl.position.set(0, 0.28, 0.05);
     g.add(incenseBowl);
@@ -631,13 +688,11 @@ export class OfficeStage {
       g.add(stick);
     }
 
-    // Golden Thiềm Thừ (Money Toad) on side
     const toad = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 10), goldMat);
     toad.scale.set(1.2, 0.7, 1);
     toad.position.set(-0.52, 0.28, 0.35);
     g.add(toad);
 
-    // Plate of Offering (Mâm Ngũ Quả / Oranges)
     const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.12, 0.04, 12), new THREE.MeshStandardMaterial({ color: 0xffffff }));
     plate.position.set(0.42, 0.24, 0.3);
     g.add(plate);
@@ -647,12 +702,12 @@ export class OfficeStage {
     fruit1.position.set(0.42, 0.30, 0.3);
     g.add(fruit1);
 
-    // Red Spiritual Point Light
     const altarLight = new THREE.PointLight(0xef4444, 2.2, 8);
     altarLight.position.set(0, 0.8, 0.2);
     g.add(altarLight);
 
     this.scene.add(g);
+    this.addObstacle('altar', x, z, 1.6, 1.3);
     return g;
   }
 
@@ -661,7 +716,6 @@ export class OfficeStage {
     const bulbGeo = new THREE.SphereGeometry(0.08, 8, 8);
     const bulbColors = [0xfef08a, 0xfde047, 0xfbbf24, 0xf472b6, 0x38bdf8];
 
-    // String hanging along corridor from x: -24 to 24 at z = -2.0, y = 2.4
     for (let x = -24; x <= 24; x += 1.6) {
       const sag = Math.sin((x + 24) * 0.8) * 0.18;
       const color = bulbColors[Math.abs(Math.round(x)) % bulbColors.length];
@@ -700,17 +754,17 @@ export class OfficeStage {
     curb.position.set(0, 0.08, -24.4);
     this.scene.add(curb);
 
-    // 4. Streetlamps (Tall poles with warm glowing lantern)
+    // 4. Streetlamps
     this.createStreetlamp(-20, -26);
     this.createStreetlamp(0, -26);
     this.createStreetlamp(20, -26);
 
-    // 5. Parked Scooters / Motorbikes (Xe máy)
-    this.createScooterMesh(-16, -24.8, 0.2, 0x0284c7); // Cyan Honda Wave
-    this.createScooterMesh(-13.5, -24.8, -0.15, 0xe11d48); // Red Vespa
-    this.createScooterMesh(14, -24.8, 0.3, 0x10b981); // Mint scooter
+    // 5. Parked Scooters
+    this.createScooterMesh(-16, -24.8, 0.2, 0x0284c7);
+    this.createScooterMesh(-13.5, -24.8, -0.15, 0xe11d48);
+    this.createScooterMesh(14, -24.8, 0.3, 0x10b981);
 
-    // 6. Distant City Skyline Silhouettes
+    // 6. Distant City Skyline
     this.createCitySkyline();
   }
 
@@ -723,23 +777,19 @@ export class OfficeStage {
     pole.position.y = 2.5;
     g.add(pole);
 
-    // Horizontal arm
     const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.4, 8), poleMat);
     arm.rotateZ(Math.PI / 2);
     arm.position.set(0.6, 4.9, 0);
     g.add(arm);
 
-    // Lantern head
     const head = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.4, 8), poleMat);
     head.position.set(1.2, 4.7, 0);
     g.add(head);
 
-    // Glowing bulb
     const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
     bulb.position.set(1.2, 4.5, 0);
     g.add(bulb);
 
-    // Warm amber street PointLight
     const lampLight = new THREE.PointLight(0xfef08a, 2.2, 18);
     lampLight.position.set(1.2, 4.4, 0);
     g.add(lampLight);
@@ -756,7 +806,6 @@ export class OfficeStage {
     const bodyMat = new THREE.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.2 });
     const chromeMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.8, roughness: 0.2 });
 
-    // Wheels
     const wheelGeo = new THREE.CylinderGeometry(0.28, 0.28, 0.14, 16);
     wheelGeo.rotateZ(Math.PI / 2);
     const wFront = new THREE.Mesh(wheelGeo, darkMat);
@@ -767,35 +816,29 @@ export class OfficeStage {
     wRear.position.set(0, 0.28, -0.7);
     g.add(wRear);
 
-    // Main body / floorboard
     const deck = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.12, 0.9), bodyMat);
     deck.position.set(0, 0.25, 0);
     g.add(deck);
 
-    // Front shield / apron
     const apron = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.55, 0.16), bodyMat);
     apron.position.set(0, 0.52, 0.6);
     apron.rotation.x = -0.15;
     g.add(apron);
 
-    // Headlight
     const light = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.06, 12), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
     light.rotateX(Math.PI / 2);
     light.position.set(0, 0.72, 0.68);
     g.add(light);
 
-    // Handlebars
     const bars = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.65, 8), chromeMat);
     bars.rotateZ(Math.PI / 2);
     bars.position.set(0, 0.78, 0.55);
     g.add(bars);
 
-    // Seat
     const seat = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.14, 0.65), new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.9 }));
     seat.position.set(0, 0.52, -0.25);
     g.add(seat);
 
-    // Helmet sitting on seat
     const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 12), new THREE.MeshStandardMaterial({ color: 0xef4444 }));
     helmet.scale.set(1, 0.85, 1);
     helmet.position.set(0, 0.68, -0.15);
@@ -824,7 +867,6 @@ export class OfficeStage {
       mesh.position.set(b.x, b.h / 2, b.z);
       g.add(mesh);
 
-      // Lit windows on skyscraper
       for (let wy = 3; wy < b.h - 2; wy += 3.2) {
         for (let wx = -b.w / 2 + 1.2; wx < b.w / 2 - 1.0; wx += 2.0) {
           if (Math.sin(b.x + wy + wx) > -0.2) {
@@ -848,7 +890,6 @@ export class OfficeStage {
     table.castShadow = true;
     g.add(table);
 
-    // Cloth layers on table
     const cloth = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.08, 1.4), new THREE.MeshStandardMaterial({ color: 0xf43f5e }));
     cloth.position.set(0, 0.96, 0);
     g.add(cloth);
@@ -866,7 +907,6 @@ export class OfficeStage {
     rack.castShadow = true;
     g.add(rack);
 
-    // Shelves with rolls of fabric
     const colors = [0x3b82f6, 0xef4444, 0xf59e0b, 0x10b981, 0x8b5cf6, 0xec4899];
     for (let level = 0; level < 3; level++) {
       for (let i = 0; i < 3; i++) {
@@ -891,7 +931,6 @@ export class OfficeStage {
     cont.castShadow = true;
     g.add(cont);
 
-    // Label Sprite
     const canvas = document.createElement('canvas');
     canvas.width = 300;
     canvas.height = 70;
@@ -933,7 +972,6 @@ export class OfficeStage {
     bar.position.y = 0.45;
     g.add(bar);
 
-    // Giant Boba Mascot in center of Lounge
     const bobaCup = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.32, 1.0, 16), new THREE.MeshStandardMaterial({ color: 0xfef08a }));
     bobaCup.position.set(0, 1.4, 0);
     g.add(bobaCup);
@@ -952,22 +990,22 @@ export class OfficeStage {
 
     // North Wall
     const nw = new THREE.Mesh(new THREE.BoxGeometry(64, h, 0.6), wallMat);
-    nw.position.set(0, h / 2, -25);
+    nw.position.set(0, h / 2, -23.5);
     this.scene.add(nw);
 
     // South Wall
     const sw = new THREE.Mesh(new THREE.BoxGeometry(64, h, 0.6), wallMat);
-    sw.position.set(0, h / 2, 25);
+    sw.position.set(0, h / 2, 23.5);
     this.scene.add(sw);
 
     // West Wall
-    const ww = new THREE.Mesh(new THREE.BoxGeometry(0.6, h, 50), wallMat);
-    ww.position.set(-32, h / 2, 0);
+    const ww = new THREE.Mesh(new THREE.BoxGeometry(0.6, h, 48), wallMat);
+    ww.position.set(-30.0, h / 2, 0);
     this.scene.add(ww);
 
     // East Wall
-    const ew = new THREE.Mesh(new THREE.BoxGeometry(0.6, h, 50), wallMat);
-    ew.position.set(32, h / 2, 0);
+    const ew = new THREE.Mesh(new THREE.BoxGeometry(0.6, h, 48), wallMat);
+    ew.position.set(30.0, h / 2, 0);
     this.scene.add(ew);
   }
 
@@ -999,37 +1037,37 @@ export class OfficeStage {
   private setupDepartmentWorkstations(): void {
     // 1. My Desk (Văn phòng)
     const deskG = new THREE.Group();
-    deskG.position.set(-10, 0, -8);
-    this.addStation('desk', 'Bàn Làm Việc Merchandiser', 'Văn Phòng Điều Hành', '💻', deskG.position, 2.2, deskG);
+    deskG.position.set(-10.5, 0, -13.0);
+    this.addStation('desk', 'Bàn Làm Việc Merchandiser', 'Văn Phòng Điều Hành', '💻', deskG.position, 2.5, deskG);
 
     // 2. Central Printer (Văn phòng)
     const printerG = new THREE.Group();
     printerG.position.set(-4, 0, -12);
-    this.addStation('printer', 'Máy In Techpack & Hợp Đồng', 'Văn Phòng Điều Hành', '🖨️', printerG.position, 2.2, printerG);
+    this.addStation('printer', 'Máy In Techpack & Hợp Đồng', 'Văn Phòng Điều Hành', '🖨️', printerG.position, 2.3, printerG);
 
     // 3. Cutting & Lab Station (Xưởng cắt & Lab)
     const labG = new THREE.Group();
-    labG.position.set(12, 0, -10);
-    this.addStation('lab', 'Phòng Lab Soi Màu D65', 'Xưởng Cắt & Lab', '🔬', labG.position, 2.4, labG);
+    labG.position.set(12, 0, -9.5);
+    this.addStation('lab', 'Phòng Lab Soi Màu D65', 'Xưởng Cắt & Lab', '🔬', labG.position, 2.5, labG);
 
-    // 4. Warehouse Fabric Racks (Kho vải)
+    // 4. Warehouse Fabric Racks (Kho vải - located in wide walkway between racks)
     const fabricG = new THREE.Group();
-    fabricG.position.set(-14, 0, 10);
-    this.addStation('fabric', 'Kệ Vải Thun & Phụ Liệu Spandex', 'Kho Vải Đại Ngàn', '🧵', fabricG.position, 2.5, fabricG);
+    fabricG.position.set(-14, 0, 12);
+    this.addStation('fabric', 'Kệ Vải Thun & Phụ Liệu Spandex', 'Kho Vải Đại Ngàn', '🧵', fabricG.position, 2.6, fabricG);
 
-    // 5. Canteen Boba Lounge (Khu Pantry trung tâm)
+    // 5. Canteen Boba Lounge (Khu Pantry trung tâm - right in front of counter)
     const coffeeG = new THREE.Group();
-    coffeeG.position.set(0, 0, 0);
+    coffeeG.position.set(0, 0, 2.6);
     this.addStation('coffee', 'Quầy Trà Sữa & Cà Phê Năng Lượng', 'Căn Tin Trung Tâm', '🧋', coffeeG.position, 2.4, coffeeG);
 
-    // 6. Logistics Shipping Port (Cảng Cont Cát Lái)
+    // 6. Logistics Shipping Port (Cảng Cont Cát Lái - apron between containers)
     const shipG = new THREE.Group();
-    shipG.position.set(14, 0, 14);
+    shipG.position.set(13, 0, 15);
     this.addStation('shipping', 'Cổng Xuất Cont Cát Lái', 'Cảng Biển & Xuất Khẩu', '🚢', shipG.position, 2.8, shipG);
 
     // 7. Bàn Thờ Thần Tài & Thổ Địa (Altar of Fortune)
     const altarG = this.createThanTaiAltar(-14, -20);
-    this.addStation('altar', 'Bàn Thờ Thần Tài - Thổ Địa', 'Văn Phòng Điều Hành', '🙏', altarG.position, 2.4, altarG);
+    this.addStation('altar', 'Bàn Thờ Thần Tài - Thổ Địa', 'Văn Phòng Điều Hành', '🙏', new THREE.Vector3(-14, 0, -18.4), 2.4, altarG);
   }
 
   private addStation(
@@ -1053,7 +1091,6 @@ export class OfficeStage {
     indicatorMesh.position.set(pos.x, 0.03, pos.z);
     this.scene.add(indicatorMesh);
 
-    // 3D Billboard Floating Tag
     const canvas = document.createElement('canvas');
     canvas.width = 340;
     canvas.height = 80;
@@ -1094,12 +1131,12 @@ export class OfficeStage {
 
   private setupPickups(): void {
     const spawnPoints = [
-      { x: -20, z: -10, type: 'boba' as const },
-      { x: -8, z: 14, type: 'boba' as const },
-      { x: 18, z: -8, type: 'coffee' as const },
+      { x: -20, z: -11.5, type: 'boba' as const },
+      { x: -8, z: 12, type: 'boba' as const },
+      { x: 12, z: -7, type: 'coffee' as const },
       { x: 8, z: 8, type: 'bonus_cash' as const },
-      { x: -22, z: 18, type: 'bonus_cash' as const },
-      { x: 22, z: 16, type: 'boba' as const }
+      { x: -15, z: 12, type: 'bonus_cash' as const },
+      { x: 22, z: 14, type: 'boba' as const }
     ];
 
     for (let i = 0; i < spawnPoints.length; i++) {
@@ -1127,17 +1164,17 @@ export class OfficeStage {
   }
 
   private setupColleagues(): void {
-    // 1. Sếp Hùng (Patrols Executive Boardroom Corridor)
+    // 1. Sếp Hùng (Patrols open corridor)
     this.bossNpc = new ChibiCharacter('#ffedd5', '#475569', true, 'SẾP HÙNG (ĐI TUẦN)');
     this.bossNpc.group.position.set(-20, 0, -16);
     this.bossNpc.moveSpeed = 1.9;
     this.scene.add(this.bossNpc.group);
 
     this.bossWaypoints = [
-      new THREE.Vector3(-22, 0, -18),
-      new THREE.Vector3(-16, 0, -18),
-      new THREE.Vector3(-16, 0, -14),
-      new THREE.Vector3(-22, 0, -14)
+      new THREE.Vector3(-22, 0, -16),
+      new THREE.Vector3(-16, 0, -16),
+      new THREE.Vector3(-16, 0, -11.5),
+      new THREE.Vector3(-22, 0, -11.5)
     ];
 
     const visionGeo = new THREE.RingGeometry(0.4, 2.6, 24);
@@ -1147,14 +1184,14 @@ export class OfficeStage {
     this.bossVisionMesh.position.y = 0.03;
     this.bossNpc.group.add(this.bossVisionMesh);
 
-    // 2. Chị Nga Kế Toán (Stationed in Fabric Warehouse)
+    // 2. Chị Nga Kế Toán (Stationed in Fabric Warehouse walkway)
     this.accountantNpc = new ChibiCharacter('#fed7aa', '#dc2626', true, 'CHỊ NGA (KẾ TOÁN KHO)');
-    this.accountantNpc.group.position.set(-12, 0, 10);
+    this.accountantNpc.group.position.set(-11, 0, 12);
     this.scene.add(this.accountantNpc.group);
 
     // 3. Anh Tuấn Logistics (Stationed at Port Dock)
     this.truckerNpc = new ChibiCharacter('#fde047', '#0284c7', true, 'ANH TUẤN (TÀI XẾ CONT)');
-    this.truckerNpc.group.position.set(12, 0, 12);
+    this.truckerNpc.group.position.set(12, 0, 15);
     this.scene.add(this.truckerNpc.group);
   }
 
@@ -1203,8 +1240,40 @@ export class OfficeStage {
   };
 
   update(delta: number, playerDirX: number, playerDirZ: number): void {
-    // 1. Update Player
-    this.player.update(delta, playerDirX, playerDirZ, this.bounds);
+    // 1. Solid Sliding Collision Movement for Player
+    const isMoving = Math.abs(playerDirX) > 0.01 || Math.abs(playerDirZ) > 0.01;
+    if (isMoving) {
+      const currentSpeed = this.player.carriedItem === 'none' ? this.player.moveSpeed : this.player.moveSpeed * 0.9;
+      const moveDist = currentSpeed * delta;
+      const stepX = playerDirX * moveDist;
+      const stepZ = playerDirZ * moveDist;
+
+      const curPos = this.player.getPosition();
+      const radius = 0.38;
+
+      // Try X axis independently
+      let targetX = curPos.x;
+      if (Math.abs(stepX) > 0.0001) {
+        if (!this.isColliding(curPos.x + stepX, curPos.z, radius)) {
+          targetX = curPos.x + stepX;
+        }
+      }
+
+      // Try Z axis independently (enables smooth sliding along tables and racks)
+      let targetZ = curPos.z;
+      if (Math.abs(stepZ) > 0.0001) {
+        if (!this.isColliding(targetX, curPos.z + stepZ, radius)) {
+          targetZ = curPos.z + stepZ;
+        }
+      }
+
+      curPos.x = targetX;
+      curPos.z = targetZ;
+
+      this.player.updateAnimation(delta, playerDirX, playerDirZ, true);
+    } else {
+      this.player.updateAnimation(delta, 0, 0, false);
+    }
 
     // 2. Camera Smooth Follow or Overview Diorama Lerp
     if (this.cameraMode === 'overview') {
@@ -1277,7 +1346,7 @@ export class OfficeStage {
     if (this.speechTimer <= 0) {
       if (this.activeSpeech) {
         this.activeSpeech = null;
-        this.speechTimer = 3.0; // 3 seconds silent interval
+        this.speechTimer = 3.0;
       } else {
         const item = this.speechLibrary[Math.floor(Math.random() * this.speechLibrary.length)];
         let worldPos: THREE.Vector3;
@@ -1291,7 +1360,7 @@ export class OfficeStage {
           worldPos = new THREE.Vector3(-14, 2.2, -20);
         }
         this.activeSpeech = { ...item, worldPos };
-        this.speechTimer = 5.5; // Display for 5.5s
+        this.speechTimer = 5.5;
       }
     }
   }
@@ -1310,7 +1379,9 @@ export class OfficeStage {
     } else {
       const dirX = dx / dist;
       const dirZ = dz / dist;
-      this.bossNpc.update(delta, dirX, dirZ);
+      bPos.x += dirX * this.bossNpc.moveSpeed * delta;
+      bPos.z += dirZ * this.bossNpc.moveSpeed * delta;
+      this.bossNpc.updateAnimation(delta, dirX, dirZ, true);
     }
   }
 

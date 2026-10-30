@@ -18,7 +18,7 @@ export class ChibiCharacter {
   private walkCycle = 0;
   private idleTime = 0;
   public isMoving = false;
-  public moveSpeed = 5.2; // units per second
+  public moveSpeed = 5.4; // units per second
   public carriedItem: CarriedItemType = 'none';
 
   // Customization
@@ -91,7 +91,7 @@ export class ChibiCharacter {
     hairMesh.position.set(0, 0.16, -0.05);
     this.headMesh.add(hairMesh);
 
-    // Front Bangs (Cute anime hair strands)
+    // Front Bangs
     const bangGeo = new THREE.BoxGeometry(0.18, 0.14, 0.08);
     const bang1 = new THREE.Mesh(bangGeo, hairMat);
     bang1.position.set(-0.16, 0.28, 0.32);
@@ -173,7 +173,7 @@ export class ChibiCharacter {
     this.itemHolder.position.set(0, 0.48, 0.38);
     this.group.add(this.itemHolder);
 
-    // 6. Ground Ring / Selection Indicator (Makes player stand out!)
+    // 6. Ground Ring / Selection Indicator (Player only)
     if (this.isPlayer) {
       const ringCanvas = document.createElement('canvas');
       ringCanvas.width = 128;
@@ -206,7 +206,7 @@ export class ChibiCharacter {
       this.groundRingMesh.position.y = 0.02;
       this.group.add(this.groundRingMesh);
     } else {
-      // Soft shadow
+      // Soft shadow for NPCs
       const shadowGeo = new THREE.CircleGeometry(0.42, 16);
       const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.28 });
       const shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
@@ -215,7 +215,7 @@ export class ChibiCharacter {
       this.group.add(shadowMesh);
     }
 
-    // 7. Floating 3D Nametag (Only for NPCs, player has glowing ground indicator)
+    // 7. Floating 3D Nametag (For NPCs)
     if (isNpc) {
       this.createNametag(name, isNpc);
     }
@@ -227,7 +227,6 @@ export class ChibiCharacter {
     canvas.height = 80;
     const ctx = canvas.getContext('2d')!;
 
-    // Rounded tag background
     ctx.fillStyle = isNpc ? '#ef4444' : '#4f46e5';
     ctx.beginPath();
     ctx.roundRect(10, 10, 300, 60, 24);
@@ -292,27 +291,16 @@ export class ChibiCharacter {
     }
   }
 
-  update(delta: number, dirX: number, dirZ: number, bounds?: { minX: number; maxX: number; minZ: number; maxZ: number }): void {
-    const isMoving = Math.abs(dirX) > 0.01 || Math.abs(dirZ) > 0.01;
+  updateAnimation(delta: number, dirX: number, dirZ: number, isMoving: boolean): void {
     this.isMoving = isMoving;
 
     if (isMoving) {
-      const currentSpeed = this.carriedItem === 'none' ? this.moveSpeed : this.moveSpeed * 0.9;
-
-      this.group.position.x += dirX * currentSpeed * delta;
-      this.group.position.z += dirZ * currentSpeed * delta;
-
-      if (bounds) {
-        this.group.position.x = Math.max(bounds.minX, Math.min(bounds.maxX, this.group.position.x));
-        this.group.position.z = Math.max(bounds.minZ, Math.min(bounds.maxZ, this.group.position.z));
-      }
-
       // Smooth facing rotation
       const targetAngle = Math.atan2(dirX, dirZ);
       let diff = targetAngle - this.group.rotation.y;
       while (diff < -Math.PI) diff += Math.PI * 2;
       while (diff > Math.PI) diff -= Math.PI * 2;
-      this.group.rotation.y += diff * 15 * delta;
+      this.group.rotation.y += diff * 14 * delta;
 
       // Running animation waddle
       this.walkCycle += delta * 16;
@@ -332,6 +320,12 @@ export class ChibiCharacter {
       this.headMesh.position.y = 0.98 + Math.sin(this.idleTime) * 0.018;
       this.bodyMesh.scale.set(1 + Math.sin(this.idleTime) * 0.02, 1, 1 + Math.sin(this.idleTime) * 0.02);
     }
+  }
+
+  // Backwards-compatible update
+  update(delta: number, dirX: number, dirZ: number): void {
+    const isMoving = Math.abs(dirX) > 0.01 || Math.abs(dirZ) > 0.01;
+    this.updateAnimation(delta, dirX, dirZ, isMoving);
   }
 
   getPosition(): THREE.Vector3 {

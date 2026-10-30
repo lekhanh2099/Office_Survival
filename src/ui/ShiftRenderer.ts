@@ -1,13 +1,104 @@
 import { ShiftState } from '../3d/ShiftGameEngine';
 import { OfficeStage } from '../3d/OfficeStage';
 
-function esc(t?: string | number | null): string {
-  return String(t ?? '').replace(/[&<>"']/g, x => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-  }[x] || x));
+const stationCoords: Record<string, [number, number]> = {
+  desk: [-10.5, -13.0],
+  printer: [-4, -12],
+  lab: [12, -9.5],
+  fabric: [-14, 12],
+  shipping: [13, 15],
+  coffee: [0, 2.6],
+  altar: [-14, -18.4]
+};
+
+export function mountShiftHUD(host: HTMLElement): void {
+  host.innerHTML = `
+    <!-- Top Status Ribbon (Single sleek integrated row across top) -->
+    <header class="shiftTopRibbon">
+      <div class="ribbonClock">
+        <span class="clockIcon">⏰</span>
+        <span class="clockTime" id="hudClock">09:00</span>
+        <span class="ribbonDay" id="hudDay">N1</span>
+      </div>
+
+      <div class="ribbonMeters">
+        <div class="meterGroup" title="Năng lượng">
+          <span class="meterIcon">⚡</span>
+          <span class="meterVal" id="hudEnergyVal">100%</span>
+          <div class="meterTrack">
+            <div class="meterFill" id="hudEnergyFill" style="width:100%;background:#22c55e"></div>
+          </div>
+        </div>
+
+        <div class="meterGroup" title="Áp lực stress">
+          <span class="meterIcon">🔥</span>
+          <span class="meterVal" id="hudStressVal">10%</span>
+          <div class="meterTrack">
+            <div class="meterFill" id="hudStressFill" style="width:10%;background:#fb923c"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ribbonOrders" title="Đơn hàng đã xuất">
+        <span class="orderIcon">📦</span>
+        <span class="orderCount" id="hudOrders">0/3</span>
+      </div>
+    </header>
+
+    <!-- Quest Banner (Floats left beneath ribbon, ends before radar) -->
+    <div class="shiftQuestBanner">
+      <div class="questPulseIcon">🎯</div>
+      <div class="questContent">
+        <div class="questTagRow">
+          <span class="questZoneBadge" id="hudZoneBadge">🏢 VĂN PHÒNG</span>
+          <span class="questOrderName" id="hudOrderName">ĐƠN HÀNG</span>
+        </div>
+        <div class="questInstruction" id="hudQuestText">Nhiệm vụ đang tải...</div>
+      </div>
+    </div>
+
+    <!-- Circular Mini Radar (Floats right beneath ribbon, NO OVERLAP) -->
+    <div class="shiftMiniRadar" title="Radar khuôn viên dệt may">
+      <div class="radarQuadrant q1" title="Văn Phòng">VP</div>
+      <div class="radarQuadrant q2" title="Lab Màu">LAB</div>
+      <div class="radarQuadrant q3" title="Kho Vải">KHO</div>
+      <div class="radarQuadrant q4" title="Cảng Cont">CẢNG</div>
+      <div class="radarPantryIcon">🧋</div>
+
+      <!-- Target Objective Blinking Gold Star -->
+      <div class="radarTargetDot" id="hudTargetDot" title="Mục tiêu tiếp theo">⭐</div>
+
+      <!-- Player Dot (Cyan) -->
+      <div class="radarPlayerDot" id="hudPlayerDot"></div>
+
+      <!-- Boss Dot (Red) -->
+      <div class="radarBossDot" id="hudBossDot"></div>
+    </div>
+
+    <!-- Camera Diorama Switcher Button -->
+    <button class="shiftCamToggleBtn" id="hudCamBtn" data-act="toggle_camera" type="button" title="Chuyển đổi góc máy Toàn Cảnh / Theo Dõi Chibi">
+      🎥 Toàn Cảnh
+    </button>
+
+    <!-- Active Colleague Speech Bubble (Comic dialogue in world projection) -->
+    <div class="colleagueSpeechBubble" id="hudSpeechBubble" style="display:none">
+      <div class="bubbleTail"></div>
+      <div class="bubbleHeader">
+        <span class="bubbleAvatar" id="speechAvatar">👔</span>
+        <span class="bubbleSpeaker" id="speechSpeaker">Sếp Hùng</span>
+        <span class="bubbleRole" id="speechRole">· GĐ</span>
+      </div>
+      <div class="bubbleText" id="speechText"></div>
+    </div>
+  `;
 }
 
-export function renderShiftHUD(state: ShiftState, stage?: OfficeStage): string {
+export function updateShiftHUD(host: HTMLElement, state: ShiftState, stage?: OfficeStage): void {
+  // If not mounted yet, mount initial DOM
+  if (!host.querySelector('#hudClock')) {
+    mountShiftHUD(host);
+  }
+
   const timeStr = `${String(state.timeHour).padStart(2, '0')}:${String(state.timeMinute).padStart(2, '0')}`;
   const energyPct = Math.max(0, Math.min(100, state.energy));
   const stressPct = Math.max(0, Math.min(100, state.stress));
@@ -16,8 +107,45 @@ export function renderShiftHUD(state: ShiftState, stage?: OfficeStage): string {
   if (state.energy < 30) energyColor = '#ef4444';
   else if (state.energy < 60) energyColor = '#f59e0b';
 
-  // Calculate Minimap Coordinates (Normalized 0-100%)
-  // Bounds: X [-30, 30], Z [-23, 23]
+  // Ribbon
+  const clockEl = host.querySelector('#hudClock');
+  if (clockEl) clockEl.textContent = timeStr;
+
+  const dayEl = host.querySelector('#hudDay');
+  if (dayEl) dayEl.textContent = `N${state.day}`;
+
+  const energyVal = host.querySelector('#hudEnergyVal');
+  if (energyVal) energyVal.textContent = `${Math.round(state.energy)}%`;
+
+  const energyFill = host.querySelector('#hudEnergyFill') as HTMLElement;
+  if (energyFill) {
+    energyFill.style.width = `${energyPct}%`;
+    energyFill.style.background = energyColor;
+  }
+
+  const stressVal = host.querySelector('#hudStressVal');
+  if (stressVal) stressVal.textContent = `${Math.round(state.stress)}%`;
+
+  const stressFill = host.querySelector('#hudStressFill') as HTMLElement;
+  if (stressFill) {
+    stressFill.style.width = `${stressPct}%`;
+    stressFill.style.background = state.stress > 60 ? '#ef4444' : '#fb923c';
+  }
+
+  const ordersEl = host.querySelector('#hudOrders');
+  if (ordersEl) ordersEl.textContent = `${state.ordersCompleted}/${state.targetOrders}`;
+
+  // Quest Banner
+  const zoneBadge = host.querySelector('#hudZoneBadge');
+  if (zoneBadge) zoneBadge.textContent = state.currentZone;
+
+  const orderName = host.querySelector('#hudOrderName');
+  if (orderName) orderName.textContent = state.currentTask.orderName;
+
+  const questText = host.querySelector('#hudQuestText');
+  if (questText) questText.textContent = state.currentTask.stepDescription;
+
+  // Radar Normalized Coordinates (Bounds: X [-30, 30], Z [-23, 23])
   let pX = 50;
   let pZ = 50;
   let bossX = 25;
@@ -35,114 +163,61 @@ export function renderShiftHUD(state: ShiftState, stage?: OfficeStage): string {
     }
   }
 
-  // Calculate Target Station Beacon position for radar
-  const stationCoords: Record<string, [number, number]> = {
-    desk: [-10, -8],
-    printer: [-4, -12],
-    lab: [12, -10],
-    fabric: [-14, 10],
-    shipping: [14, 14],
-    coffee: [0, 0],
-    altar: [-14, -20]
-  };
-  const targetC = stationCoords[state.currentTask.targetStation] || [-10, -8];
+  const targetC = stationCoords[state.currentTask.targetStation] || [-10.5, -13.0];
   const tgtX = Math.max(10, Math.min(90, ((targetC[0] + 30) / 60) * 100));
   const tgtZ = Math.max(10, Math.min(90, ((targetC[1] + 23) / 46) * 100));
 
-  let speechBubbleHTML = '';
-  if (stage) {
-    const speech = stage.getActiveSpeechScreenData();
-    if (speech) {
-      speechBubbleHTML = `
-      <div class="colleagueSpeechBubble" style="left:${speech.x}px;top:${speech.y}px">
-        <div class="bubbleTail"></div>
-        <div class="bubbleHeader">
-          <span class="bubbleAvatar" style="background:${speech.avatarBg}">${speech.emoji}</span>
-          <span class="bubbleSpeaker">${esc(speech.speaker)}</span>
-          <span class="bubbleRole">· ${esc(speech.role)}</span>
-        </div>
-        <div class="bubbleText">${esc(speech.text)}</div>
-      </div>
-      `;
-    }
+  const pDot = host.querySelector('#hudPlayerDot') as HTMLElement;
+  if (pDot) {
+    pDot.style.left = `${pX}%`;
+    pDot.style.top = `${pZ}%`;
   }
 
-  const camLabel = stage?.cameraMode === 'overview' ? '🏃 Bám Sát' : '🎥 Toàn Cảnh';
-  const camBtnHTML = `
-  <button class="shiftCamToggleBtn" data-act="toggle_camera" title="Chuyển đổi góc máy Toàn Cảnh / Theo Dõi Chibi">
-    ${camLabel}
-  </button>
-  `;
+  const bDot = host.querySelector('#hudBossDot') as HTMLElement;
+  if (bDot) {
+    bDot.style.left = `${bossX}%`;
+    bDot.style.top = `${bossZ}%`;
+  }
 
-  return `
-  <!-- Top Status Ribbon (Single sleek integrated row across top) -->
-  <header class="shiftTopRibbon">
-    <div class="ribbonClock">
-      <span class="clockIcon">⏰</span>
-      <span class="clockTime">${timeStr}</span>
-      <span class="ribbonDay">N${state.day}</span>
-    </div>
+  const tgtDot = host.querySelector('#hudTargetDot') as HTMLElement;
+  if (tgtDot) {
+    tgtDot.style.left = `${tgtX}%`;
+    tgtDot.style.top = `${tgtZ}%`;
+  }
 
-    <div class="ribbonMeters">
-      <div class="meterGroup" title="Năng lượng">
-        <span class="meterIcon">⚡</span>
-        <span class="meterVal">${Math.round(state.energy)}%</span>
-        <div class="meterTrack">
-          <div class="meterFill" style="width:${energyPct}%;background:${energyColor}"></div>
-        </div>
-      </div>
+  // Camera Toggle Button
+  const camBtn = host.querySelector('#hudCamBtn');
+  if (camBtn) {
+    camBtn.textContent = stage?.cameraMode === 'overview' ? '🏃 Bám Sát' : '🎥 Toàn Cảnh';
+  }
 
-      <div class="meterGroup" title="Áp lực stress">
-        <span class="meterIcon">🔥</span>
-        <span class="meterVal">${Math.round(state.stress)}%</span>
-        <div class="meterTrack">
-          <div class="meterFill" style="width:${stressPct}%;background:${state.stress > 60 ? '#ef4444' : '#fb923c'}"></div>
-        </div>
-      </div>
-    </div>
+  // Speech Bubble
+  const bubble = host.querySelector('#hudSpeechBubble') as HTMLElement;
+  if (bubble && stage) {
+    const speech = stage.getActiveSpeechScreenData();
+    if (speech) {
+      bubble.style.display = 'block';
+      bubble.style.left = `${speech.x}px`;
+      bubble.style.top = `${speech.y}px`;
 
-    <div class="ribbonOrders" title="Đơn hàng đã xuất">
-      <span class="orderIcon">📦</span>
-      <span class="orderCount">${state.ordersCompleted}/${state.targetOrders}</span>
-    </div>
-  </header>
+      const avatar = host.querySelector('#speechAvatar') as HTMLElement;
+      if (avatar) {
+        avatar.textContent = speech.emoji;
+        avatar.style.background = speech.avatarBg;
+      }
 
-  <!-- Quest Banner (Floats left beneath ribbon, ends before radar) -->
-  <div class="shiftQuestBanner">
-    <div class="questPulseIcon">🎯</div>
-    <div class="questContent">
-      <div class="questTagRow">
-        <span class="questZoneBadge">${esc(state.currentZone)}</span>
-        <span class="questOrderName">${esc(state.currentTask.orderName)}</span>
-      </div>
-      <div class="questInstruction">${esc(state.currentTask.stepDescription)}</div>
-    </div>
-  </div>
+      const spk = host.querySelector('#speechSpeaker');
+      if (spk) spk.textContent = speech.speaker;
 
-  <!-- Circular Mini Radar (Floats right beneath ribbon, NO OVERLAP) -->
-  <div class="shiftMiniRadar" title="Radar khuôn viên dệt may">
-    <div class="radarQuadrant q1" title="Văn Phòng">VP</div>
-    <div class="radarQuadrant q2" title="Lab Màu">LAB</div>
-    <div class="radarQuadrant q3" title="Kho Vải">KHO</div>
-    <div class="radarQuadrant q4" title="Cảng Cont">CẢNG</div>
-    <div class="radarPantryIcon">🧋</div>
+      const role = host.querySelector('#speechRole');
+      if (role) role.textContent = `· ${speech.role}`;
 
-    <!-- Target Objective Blinking Gold Star -->
-    <div class="radarTargetDot" style="left:${tgtX}%;top:${tgtZ}%" title="Mục tiêu tiếp theo">⭐</div>
-
-    <!-- Player Dot (Cyan) -->
-    <div class="radarPlayerDot" style="left:${pX}%;top:${pZ}%"></div>
-
-    <!-- Boss Dot (Red) -->
-    <div class="radarBossDot" style="left:${bossX}%;top:${bossZ}%"></div>
-  </div>
-
-  <!-- Camera Diorama Switcher Button -->
-  ${camBtnHTML}
-
-  <!-- Active Colleague Speech Bubble (Comic dialogue in world projection) -->
-  ${speechBubbleHTML}
-  `;
+      const txt = host.querySelector('#speechText');
+      if (txt) txt.textContent = speech.text;
+    } else {
+      bubble.style.display = 'none';
+    }
+  }
 }
 
 export function renderShiftFinishModal(state: ShiftState): string {

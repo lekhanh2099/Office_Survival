@@ -7,7 +7,7 @@ import { Card3DCanvas } from './ui/Card3DCanvas';
 import { OfficeStage } from './3d/OfficeStage';
 import { VirtualJoystick } from './3d/VirtualJoystick';
 import { ShiftGameEngine } from './3d/ShiftGameEngine';
-import { renderShiftHUD, renderShiftFinishModal } from './ui/ShiftRenderer';
+import { mountShiftHUD, updateShiftHUD, renderShiftFinishModal } from './ui/ShiftRenderer';
 import {
   renderBattlerHUD,
   renderCrisisArena,
@@ -90,6 +90,9 @@ function renderShiftMode(): void {
   });
   shiftJoystick.setVisible(true);
 
+  // Mount HUD DOM once
+  mountShiftHUD(uiHost);
+
   lastFrameTime = performance.now();
 
   const loop = (now: number) => {
@@ -112,10 +115,11 @@ function renderShiftMode(): void {
     } else if (uiHost && shiftStage) {
       if (uiHost.classList.contains('shiftFinishedOverlay')) {
         uiHost.classList.remove('shiftFinishedOverlay');
+        mountShiftHUD(uiHost);
       }
       shiftJoystick?.setVisible(true);
       shiftJoystick?.updateActionState(s.activePrompt);
-      uiHost.innerHTML = renderShiftHUD(s, shiftStage);
+      updateShiftHUD(uiHost, s, shiftStage);
     }
 
     shiftAnimFrameId = requestAnimationFrame(loop);
