@@ -1,19 +1,22 @@
 export interface JoystickVector {
-  x: number; // -1 to 1 (left to right)
-  y: number; // -1 to 1 (up to down)
+  x: number; // -1 to 1
+  y: number; // -1 to 1
   active: boolean;
 }
 
 export class VirtualJoystick {
   private container: HTMLElement;
-  private baseEl!: HTMLElement;
-  private thumbEl!: HTMLElement;
+  private joyContainer!: HTMLElement;
+  private joyBase!: HTMLElement;
+  private joyThumb!: HTMLElement;
   private actionBtn!: HTMLElement;
 
-  private isTouching = false;
-  private touchId: number | null = null;
-  private startX = 0;
-  private startY = 0;
+  private isDragging = false;
+  private activePointerId: number | null = null;
+  private baseCenterX = 0;
+  private baseCenterY = 0;
+  private maxRadius = 42; // pixels
+
   private currentVector: JoystickVector = { x: 0, y: 0, active: false };
 
   // Keyboard state
@@ -28,104 +31,100 @@ export class VirtualJoystick {
   }
 
   private initDOM(): void {
-    // Wrapper for touch joystick
-    const joyWrapper = document.createElement('div');
-    joyWrapper.className = 'virtualJoystickWrapper';
-    joyWrapper.innerHTML = `
-      <div class="virtualJoyBase" id="joyBase">
-        <div class="virtualJoyThumb" id="joyThumb"></div>
+    this.joyContainer = document.createElement('div');
+    this.joyContainer.className = 'virtualControlsOverlay';
+    this.joyContainer.innerHTML = `
+      <!-- Visible Virtual Joystick in bottom-left -->
+      <div class="virtualJoyPad" id="joyPadArea">
+        <div class="virtualJoyBase" id="joyBase">
+          <div class="virtualJoyArrow up">▲</div>
+          <div class="virtualJoyArrow down">▼</div>
+          <div class="virtualJoyArrow left">◀</div>
+          <div class="virtualJoyArrow right">▶</div>
+          <div class="virtualJoyThumb" id="joyThumb"></div>
+        </div>
+        <div class="joyHelperText">KÉO ĐỂ DI CHUYỂN</div>
       </div>
-      <button class="virtualActionBtn" id="joyActionBtn" type="button" aria-label="Tương tác hành động">
+
+      <!-- Action Button in bottom-right -->
+      <button class="virtualActionBtn" id="joyActionBtn" type="button" aria-label="Tương tác làm việc">
         <span class="actionBtnIcon">⚡</span>
         <span class="actionBtnText">LÀM VIỆC</span>
       </button>
-    `;
-    this.container.appendChild(joyWrapper);
 
-    this.baseEl = joyWrapper.querySelector('#joyBase') as HTMLElement;
-    this.thumbEl = joyWrapper.querySelector('#joyThumb') as HTMLElement;
-    this.actionBtn = joyWrapper.querySelector('#joyActionBtn') as HTMLElement;
+      <!-- Desktop keyboard hint -->
+      <div class="desktopKeyHint">Phím WASD / Mũi tên để chạy · Phím Space để làm việc</div>
+    `;
+
+    this.container.appendChild(this.joyContainer);
+
+    this.joyBase = this.joyContainer.querySelector('#joyBase') as HTMLElement;
+    this.joyThumb = this.joyContainer.querySelector('#joyThumb') as HTMLElement;
+    this.actionBtn = this.joyContainer.querySelector('#joyActionBtn') as HTMLElement;
   }
 
   private initEvents(): void {
-    // 1. Touch Joystick Events
-    const maxRadius = 45;
+    const padArea = this.joyContainer.querySelector('#joyPadArea') as HTMLElement;
 
-    const onTouchStart = (e: TouchEvent) => {
-      if (this.isTouching) return;
-      const touch = e.changedTouches[0];
-      // Only trigger if touch on left 60% of screen and not on action button
-      if (touch.clientX > window.innerWidth * 0.65) return;
+    // Use PointerEvents (works seamlessly for BOTH mouse clicks/drags and finger touches!)
+    const onPointerDown = (e: PointerEvent) => {
+      e.preventDefault();
+      this.isDragging = true;
+      this.activePointerId = e.pointerId;
+      padArea.setPointerCapture(e.pointerId);
 
-      this.isTouching = true;
-      this.touchId = touch.identifier;
-      this.startX = touch.clientX;
-      this.startY = touch.clientY;
+      const rect = this.joyBase.getBoundingClientRect();
+      this.baseCenterX = rect.left + rect.width / 2;
+      this.baseCenterY = rect.top + rect.height / 2;
 
-      this.baseEl.style.display = 'block';
-      this.baseEl.style.left = `${this.startX}px`;
-      this.baseEl.style.top = `${this.startY}px`;
-      this.thumbEl.style.transform = 'translate(-50%, -50%)';
-
-      this.currentVector = { x: 0, y: 0, active: true };
+      this.updateFromPointer(e.clientX, e.clientY);
     };
 
-    const onTouchMove = (e: TouchEvent) => {
-      if (!this.isTouching) return;
-      for (let i = 0; i < e.changedTouches.length; i++) {
-        const t = e.changedTouches[i];
-        if (t.identifier === this.touchId) {
-          const dx = t.clientX - this.startX;
-          const dy = t.clientY - this.startY;
-          const dist = Math.sqrt(dx * dx + dy * dy);
+    const onPointerMove = (e: PointerEvent) => {
+      if (!this.isDragging || e.pointerId !== this.activePointerId) return;
+      e.preventDefault();
+      this.updateFromPointer(e.clientX, e.clientY);
+    };
 
-          const angle = Math.atan2(dy, dx);
-          const clampedDist = Math.min(dist, maxRadius);
+    const onPointerUp = (e: PointerEvent) => {
+      if (e.pointerId !== this.activePointerId) return;
+      this.isDragging = false;
+      this.activePointerId = null;
+      try {
+        padArea.releasePointerCapture(e.pointerId);
+      } catch {}
 
-          const thumbX = Math.cos(angle) * clampedDist;
-          const thumbY = Math.sin(angle) * clampedDist;
+      // Reset thumb to center
+      this.joyThumb.style.transform = 'translate(-50%, -50%)';
+      this.currentVector = { x: 0, y: 0, active: false };
+    };
 
-          this.thumbEl.style.transform = `translate(calc(-50% + ${thumbX}px), calc(-50% + ${thumbY}px))`;
+    padArea.addEventListener('pointerdown', onPointerDown);
+    padArea.addEventListener('pointermove', onPointerMove);
+    padArea.addEventListener('pointerup', onPointerUp);
+    padArea.addEventListener('pointercancel', onPointerUp);
 
-          this.currentVector = {
-            x: clampedDist > 5 ? (thumbX / maxRadius) : 0,
-            y: clampedDist > 5 ? (thumbY / maxRadius) : 0,
-            active: clampedDist > 5
-          };
-          break;
-        }
+    // Also support touching anywhere on the left half of container
+    this.joyContainer.addEventListener('pointerdown', (e) => {
+      // If clicking action button or joypad area, let them handle it
+      if ((e.target as HTMLElement).closest('#joyPadArea, #joyActionBtn')) return;
+      // If on left 55% of container
+      const containerRect = this.container.getBoundingClientRect();
+      if (e.clientX - containerRect.left < containerRect.width * 0.55) {
+        onPointerDown(e);
       }
-    };
-
-    const onTouchEnd = (e: TouchEvent) => {
-      if (!this.isTouching) return;
-      for (let i = 0; i < e.changedTouches.length; i++) {
-        if (e.changedTouches[i].identifier === this.touchId) {
-          this.isTouching = false;
-          this.touchId = null;
-          this.baseEl.style.display = 'none';
-          this.currentVector = { x: 0, y: 0, active: false };
-          break;
-        }
-      }
-    };
-
-    window.addEventListener('touchstart', onTouchStart, { passive: true });
-    window.addEventListener('touchmove', onTouchMove, { passive: true });
-    window.addEventListener('touchend', onTouchEnd, { passive: true });
-    window.addEventListener('touchcancel', onTouchEnd, { passive: true });
-
-    // 2. Action Button Click
-    this.actionBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.onActionCallback?.();
     });
-    this.actionBtn.addEventListener('touchstart', (e) => {
+
+    // Action button
+    const triggerAction = (e: Event) => {
+      e.preventDefault();
       e.stopPropagation();
       this.onActionCallback?.();
-    }, { passive: true });
+    };
 
-    // 3. Desktop Keyboard Listeners
+    this.actionBtn.addEventListener('pointerdown', triggerAction);
+
+    // Keyboard support (WASD and Arrows)
     window.addEventListener('keydown', (e) => {
       this.keys[e.code] = true;
       if (e.code === 'Space' || e.code === 'KeyE') {
@@ -139,13 +138,36 @@ export class VirtualJoystick {
     });
   }
 
+  private updateFromPointer(clientX: number, clientY: number): void {
+    const dx = clientX - this.baseCenterX;
+    const dy = clientY - this.baseCenterY;
+    const dist = Math.hypot(dx, dy);
+
+    const angle = Math.atan2(dy, dx);
+    const clampedDist = Math.min(dist, this.maxRadius);
+
+    const thumbX = Math.cos(angle) * clampedDist;
+    const thumbY = Math.sin(angle) * clampedDist;
+
+    this.joyThumb.style.transform = `translate(calc(-50% + ${thumbX}px), calc(-50% + ${thumbY}px))`;
+
+    if (clampedDist > 4) {
+      this.currentVector = {
+        x: thumbX / this.maxRadius,
+        y: thumbY / this.maxRadius,
+        active: true
+      };
+    } else {
+      this.currentVector = { x: 0, y: 0, active: false };
+    }
+  }
+
   getVector(): JoystickVector {
-    // If touch joystick is active, prefer touch
     if (this.currentVector.active) {
       return this.currentVector;
     }
 
-    // Otherwise check keyboard
+    // Keyboard fallback
     let kx = 0;
     let ky = 0;
 
@@ -167,7 +189,6 @@ export class VirtualJoystick {
   }
 
   destroy(): void {
-    const parent = this.baseEl?.parentElement;
-    parent?.remove();
+    this.joyContainer?.remove();
   }
 }
