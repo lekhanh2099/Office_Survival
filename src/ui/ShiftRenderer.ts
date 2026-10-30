@@ -164,54 +164,55 @@ export function mountShiftHUD(host: HTMLElement): void {
       <div class="questInstruction" id="hudQuestText">Nhiệm vụ đang tải...</div>
     </div>
 
-    <!-- Circular Mini Radar (Floats right beneath ribbon, NO OVERLAP) -->
-    <div class="shiftMiniRadar" title="Radar khuôn viên dệt may">
-      <div class="radarQuadrant q1" title="Văn Phòng">VP</div>
-      <div class="radarQuadrant q2" title="Lab Màu">LAB</div>
-      <div class="radarQuadrant q3" title="Kho Vải">KHO</div>
-      <div class="radarQuadrant q4" title="Cảng Cont">CẢNG</div>
-      <div class="radarPantryIcon">🧋</div>
+    <!-- Right Control Rail: Radar + Sleek Vertical Icon Action Tools (Zero Overlap!) -->
+    <aside class="shiftRightRail">
+      <!-- Circular Mini Radar -->
+      <div class="shiftMiniRadar" title="Radar khuôn viên dệt may">
+        <div class="radarQuadrant q1" title="Văn Phòng">VP</div>
+        <div class="radarQuadrant q2" title="Lab Màu">LAB</div>
+        <div class="radarQuadrant q3" title="Kho Vải">KHO</div>
+        <div class="radarQuadrant q4" title="Cảng Cont">CẢNG</div>
+        <div class="radarPantryIcon">🧋</div>
 
-      <!-- Target Objective Blinking Gold Star -->
-      <div class="radarTargetDot" id="hudTargetDot" title="Mục tiêu tiếp theo">⭐</div>
+        <!-- Target Objective Blinking Gold Star -->
+        <div class="radarTargetDot" id="hudTargetDot" title="Mục tiêu tiếp theo">⭐</div>
+        <!-- Player Dot (Cyan) -->
+        <div class="radarPlayerDot" id="hudPlayerDot"></div>
+        <!-- Boss Dot (Red) -->
+        <div class="radarBossDot" id="hudBossDot"></div>
+      </div>
 
-      <!-- Player Dot (Cyan) -->
-      <div class="radarPlayerDot" id="hudPlayerDot"></div>
+      <!-- Vertical Icon Tool Stack (32px circular buttons) -->
+      <div class="shiftToolStack">
+        <!-- Camera Toggle: Bám Sát / Toàn Cảnh -->
+        <button class="shiftRailBtn" id="hudCamBtn" data-act="toggle_camera" type="button" title="Chuyển đổi góc máy: Bám Sát Chibi / Toàn Cảnh">
+          🎥
+        </button>
 
-      <!-- Boss Dot (Red) -->
-      <div class="radarBossDot" id="hudBossDot"></div>
-    </div>
+        <!-- Recenter Camera on Chibi -->
+        <button class="shiftRailBtn" id="hudRecenterBtn" data-act="recenter_camera" type="button" title="Căn lại camera vào Chibi">
+          🎯
+        </button>
 
-    <!-- Camera Diorama & Touch Navigation Toolbar -->
-    <div class="shiftCamToolbar">
-      <!-- Camera Mode Toggle: Bám Sát / Toàn Cảnh -->
-      <button class="shiftHudBtn" id="hudCamBtn" data-act="toggle_camera" type="button" title="Chuyển đổi góc máy Toàn Cảnh / Theo Dõi Chibi">
-        🎥 Toàn Cảnh
-      </button>
+        <!-- 1-Finger Gesture Action Toggle: Xoay 360° / Kéo Trượt -->
+        <button class="shiftRailBtn" id="hudDragModeBtn" data-act="toggle_drag_mode" type="button" title="Chuyển thao tác vuốt 1 ngón tay: Xoay 3D hoặc Kéo Trượt">
+          🔄
+        </button>
 
-      <!-- 1-Finger Drag Action Toggle: Xoay 360° / Kéo Trượt -->
-      <button class="shiftHudBtn" id="hudDragModeBtn" data-act="toggle_drag_mode" type="button" title="Chuyển thao tác 1 ngón tay: Xoay 3D hoặc Kéo Trượt bản đồ">
-        🔄 Xoay 3D
-      </button>
+        <!-- Interaction Mode Toggle: Chạy Làm Ngay / Hiện Thẻ Xác Nhận -->
+        <button class="shiftRailBtn" id="hudModeToggleBtn" data-act="toggle_interaction_mode" type="button" title="Chế độ chạm: Tự Làm (⚡) hoặc Hiện Thẻ Xác Nhận (📋)">
+          ⚡
+        </button>
 
-      <!-- Recenter Camera on Chibi -->
-      <button class="shiftHudBtn iconBtn" id="hudRecenterBtn" data-act="recenter_camera" type="button" title="Căn lại camera về góc chuẩn trên Chibi">
-        🎯
-      </button>
-
-      <!-- Zoom In / Zoom Out -->
-      <button class="shiftHudBtn iconBtn" id="hudZoomInBtn" data-act="zoom_in" type="button" title="Phóng to">
-        ➕
-      </button>
-      <button class="shiftHudBtn iconBtn" id="hudZoomOutBtn" data-act="zoom_out" type="button" title="Thu nhỏ">
-        ➖
-      </button>
-    </div>
-
-    <!-- Interaction Mode Switcher Button (Auto-Run vs Confirmation Card) -->
-    <button class="shiftModeToggleBtn" id="hudModeToggleBtn" data-act="toggle_interaction_mode" type="button" title="Chuyển chế độ thao tác: Tự Chạy Làm Ngay hoặc Hiện Thẻ Xác Nhận">
-      ⚡ Chạy Làm Ngay
-    </button>
+        <!-- Zoom In & Zoom Out -->
+        <button class="shiftRailBtn" id="hudZoomInBtn" data-act="zoom_in" type="button" title="Phóng to">
+          ➕
+        </button>
+        <button class="shiftRailBtn" id="hudZoomOutBtn" data-act="zoom_out" type="button" title="Thu nhỏ">
+          ➖
+        </button>
+      </div>
+    </aside>
 
     <!-- Mobile Touch Gestures Helper Tip (Fades out automatically) -->
     <div class="shiftGestureTip" id="hudGestureTip">
@@ -358,30 +359,36 @@ export function updateShiftHUD(host: HTMLElement, state: ShiftState, stage?: Off
     }
   }
 
-  // Camera toggle text
+  // Camera toggle button state
   const camMode = stage?.cameraMode || 'follow';
   if (camMode !== lastCamMode) {
     lastCamMode = camMode;
-    if (hudCache.camBtn) hudCache.camBtn.textContent = camMode === 'overview' ? '🏃 Bám Sát' : '🎥 Toàn Cảnh';
+    if (hudCache.camBtn) {
+      hudCache.camBtn.textContent = camMode === 'overview' ? '🏃' : '🎥';
+      hudCache.camBtn.className = camMode === 'overview' ? 'shiftRailBtn active' : 'shiftRailBtn';
+      hudCache.camBtn.setAttribute('title', camMode === 'overview' ? 'Đang ở Toàn Cảnh (Bấm để Bám Sát Chibi)' : 'Đang Bám Sát Chibi (Bấm để xem Toàn Cảnh)');
+    }
   }
 
-  // Drag Mode toggle text
+  // Drag Mode toggle button state
   const dragMode = stage?.dragMode || 'orbit';
   if (dragMode !== lastDragMode) {
     lastDragMode = dragMode;
     if (hudCache.dragModeBtn) {
-      hudCache.dragModeBtn.textContent = dragMode === 'orbit' ? '🔄 Xoay 3D' : '✋ Kéo Trượt';
-      hudCache.dragModeBtn.setAttribute('title', dragMode === 'orbit' ? 'Chế độ 1 ngón: Xoay 360° (Bấm để đổi thành Kéo Trượt bản đồ)' : 'Chế độ 1 ngón: Kéo Trượt bản đồ (Bấm để đổi thành Xoay 3D)');
+      hudCache.dragModeBtn.textContent = dragMode === 'orbit' ? '🔄' : '✋';
+      hudCache.dragModeBtn.className = dragMode === 'pan' ? 'shiftRailBtn active' : 'shiftRailBtn';
+      hudCache.dragModeBtn.setAttribute('title', dragMode === 'orbit' ? '1 ngón: Xoay 360° (Bấm để đổi thành Kéo Trượt)' : '1 ngón: Kéo Trượt (Bấm để đổi thành Xoay 360°)');
     }
   }
 
-  // Mode toggle text
+  // Mode toggle button state
   const intMode = getCachedInteractionMode();
   if (intMode !== lastInteractionMode) {
     lastInteractionMode = intMode;
     if (hudCache.modeBtn) {
-      hudCache.modeBtn.textContent = intMode === 'auto_work' ? '⚡ Chạy Làm Ngay' : '📋 Hiện Thẻ Xác Nhận';
-      hudCache.modeBtn.setAttribute('title', intMode === 'auto_work' ? 'Chế độ hiện tại: Chạm là Chibi tự chạy đến làm việc ngay (Bấm để đổi)' : 'Chế độ hiện tại: Chạm sẽ hiện Thẻ xác nhận công việc (Bấm để đổi)');
+      hudCache.modeBtn.textContent = intMode === 'auto_work' ? '⚡' : '📋';
+      hudCache.modeBtn.className = intMode === 'auto_work' ? 'shiftRailBtn active' : 'shiftRailBtn';
+      hudCache.modeBtn.setAttribute('title', intMode === 'auto_work' ? 'Chế độ: Chạy Làm Ngay ⚡ (Bấm để đổi Hiện Thẻ 📋)' : 'Chế độ: Hiện Thẻ Xác Nhận 📋 (Bấm để đổi Tự Làm ⚡)');
     }
   }
 

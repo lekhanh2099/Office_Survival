@@ -1529,18 +1529,18 @@ p {
 /* ==================== QUEST BANNER & SUPPLY CHAIN STEPPER ==================== */
 .shiftQuestBanner {
   position: absolute;
-  top: 50px;
-  left: 8px;
-  right: 68px; /* stops before radar at right: 8px + 54px */
-  background: rgba(15, 23, 42, 0.94);
+  top: 46px;
+  left: 6px;
+  right: 56px; /* stops before right rail (at right: 6px + 44px width = 50px) */
+  background: rgba(15, 23, 42, 0.95);
   backdrop-filter: blur(10px);
   border: 1.5px solid rgba(255, 255, 255, 0.22);
   border-left: 4px solid #f59e0b;
   border-radius: 10px;
-  padding: 6px 10px 7px;
+  padding: 5px 8px 6px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   z-index: 10;
   pointer-events: auto;
   cursor: pointer;
@@ -1570,7 +1570,7 @@ p {
 .questTagRow {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   overflow: hidden;
   white-space: nowrap;
 }
@@ -1578,7 +1578,7 @@ p {
 .questZoneBadge {
   background: #3b82f6;
   color: #ffffff;
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 900;
   padding: 1px 5px;
   border-radius: 4px;
@@ -1601,9 +1601,9 @@ p {
   background: #38bdf8;
   color: #0f172a;
   border-radius: 5px;
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 900;
-  padding: 1px 6px;
+  padding: 1px 5px;
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
@@ -1614,8 +1614,8 @@ p {
 .questFlowStepper {
   display: flex;
   align-items: center;
-  gap: 3px;
-  margin: 2px 0 3px;
+  gap: 2.5px;
+  margin: 1.5px 0 2px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -1628,9 +1628,9 @@ p {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  padding: 1.5px 5px;
+  padding: 1px 4.5px;
   border-radius: 5px;
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 800;
   white-space: nowrap;
   background: rgba(255, 255, 255, 0.08);
@@ -1641,7 +1641,7 @@ p {
 }
 
 .flowStepItem .stepIcon {
-  font-size: 10px;
+  font-size: 9.5px;
 }
 
 .flowStepItem.stepCompleted {
@@ -1669,31 +1669,46 @@ p {
 }
 
 .flowArrow {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 900;
   color: rgba(255, 255, 255, 0.35);
   flex-shrink: 0;
 }
 
 .questInstruction {
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 800;
   color: #ffffff;
-  line-height: 1.35;
+  line-height: 1.3;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
   overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* ==================== CIRCULAR MINI RADAR ==================== */
-.shiftMiniRadar {
+/* ==================== RIGHT CONTROL RAIL (RADAR & VERTICAL TOOL STACK) ==================== */
+.shiftRightRail {
   position: absolute;
-  top: 48px;
-  right: 8px;
-  width: 54px;
-  height: 54px;
+  top: 46px;
+  right: 6px;
+  width: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  z-index: 15;
+  pointer-events: none;
+}
+
+.shiftRightRail > * {
+  pointer-events: auto;
+}
+
+/* Mini Radar */
+.shiftMiniRadar {
+  position: relative;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: #0f172a;
   border: 2px solid #6366f1;
@@ -1702,12 +1717,12 @@ p {
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
   overflow: hidden;
-  z-index: 10;
   pointer-events: none;
+  flex-shrink: 0;
 }
 
 .radarQuadrant {
-  font-size: 6.5px;
+  font-size: 6px;
   font-weight: 900;
   display: grid;
   place-items: center;
@@ -1725,15 +1740,15 @@ p {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 7.5px;
+  font-size: 7px;
   opacity: 0.8;
   pointer-events: none;
 }
 
 .radarPlayerDot {
   position: absolute;
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   background: #38bdf8;
   border: 1.5px solid #ffffff;
   border-radius: 50%;
@@ -1750,8 +1765,8 @@ p {
 
 .radarBossDot {
   position: absolute;
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   background: #ef4444;
   border: 1px solid #ffffff;
   border-radius: 50%;
@@ -1762,7 +1777,7 @@ p {
 
 .radarTargetDot {
   position: absolute;
-  font-size: 9px;
+  font-size: 8px;
   line-height: 1;
   transform: translate(-50%, -50%);
   z-index: 3;
@@ -1774,84 +1789,52 @@ p {
   100% { transform: translate(-50%, -50%) scale(1.35); opacity: 1; }
 }
 
-/* Camera & View Controls Toolbar */
-.shiftCamToolbar {
-  position: absolute;
-  top: 106px;
-  right: 8px;
+/* Vertical Action Tools Stack */
+.shiftToolStack {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 3px;
-  background: rgba(15, 23, 42, 0.94);
-  backdrop-filter: blur(8px);
-  border: 1.5px solid rgba(255, 255, 255, 0.28);
-  border-radius: 9px;
-  padding: 3px 5px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-  z-index: 15;
-  pointer-events: auto;
-}
-
-.shiftHudBtn {
-  background: transparent;
-  color: #f8fafc;
-  border: none;
-  border-radius: 6px;
-  padding: 4px 6px;
-  font-size: 11px;
-  font-weight: 900;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.shiftHudBtn:hover {
-  background: rgba(255, 255, 255, 0.18);
-  color: #ffffff;
-}
-
-.shiftHudBtn:active {
-  transform: scale(0.93);
-}
-
-.shiftHudBtn.iconBtn {
-  padding: 3px 5px;
-  font-size: 11.5px;
-  min-width: 22px;
-}
-
-/* Mode Switcher Button (Tap Auto-Work vs Action Card) */
-.shiftModeToggleBtn {
-  position: absolute;
-  top: 144px;
-  right: 8px;
+  gap: 4px;
   background: rgba(15, 23, 42, 0.92);
   backdrop-filter: blur(8px);
-  color: #facc15;
-  border: 1.5px solid rgba(250, 204, 21, 0.5);
-  border-radius: 8px;
-  padding: 5px 9px;
-  font-size: 11px;
-  font-weight: 900;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  border-radius: 24px;
+  padding: 4px 3px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.shiftRailBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 13.5px;
   cursor: pointer;
-  pointer-events: auto;
-  z-index: 15;
   transition: all 0.15s ease;
-  white-space: nowrap;
+  user-select: none;
+  touch-action: manipulation;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-.shiftModeToggleBtn:hover {
-  background: #312e81;
-  border-color: #facc15;
-  transform: translateY(-1px);
+.shiftRailBtn:hover {
+  background: #4f46e5;
+  border-color: #818cf8;
+  transform: scale(1.1);
 }
 
-.shiftModeToggleBtn:active {
-  transform: translateY(1px);
+.shiftRailBtn:active {
+  transform: scale(0.92);
+}
+
+.shiftRailBtn.active {
+  background: #facc15;
+  color: #0f172a;
+  border-color: #ffffff;
+  box-shadow: 0 0 8px rgba(250, 204, 21, 0.65);
 }
 
 /* Floating Gestures Tip (Mobile Friendly) */
