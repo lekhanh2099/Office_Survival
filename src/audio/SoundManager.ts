@@ -5,7 +5,11 @@ export class SoundManager {
   private muted: boolean;
 
   constructor() {
-    this.muted = localStorage.getItem(KEY_MUTED) === '1';
+    try {
+      this.muted = localStorage.getItem(KEY_MUTED) === '1';
+    } catch {
+      this.muted = false;
+    }
   }
 
   private initCtx() {
@@ -43,7 +47,9 @@ export class SoundManager {
 
   toggle(): boolean {
     this.muted = !this.muted;
-    localStorage.setItem(KEY_MUTED, this.muted ? '1' : '0');
+    try {
+      localStorage.setItem(KEY_MUTED, this.muted ? '1' : '0');
+    } catch {}
     return this.muted;
   }
 

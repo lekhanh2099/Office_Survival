@@ -36,40 +36,58 @@ let engine: GameEngine;
 let battlerEngine: BattlerEngine;
 
 function render(): void {
-  if (audioToggleBtn) {
-    audioToggleBtn.textContent = sounds.isMuted() ? '🔇' : '🔊';
-  }
-  if (modeSwitchBtn) {
-    modeSwitchBtn.textContent = currentMode === 'battler' ? '🃏 Đấu Thẻ Bài' : '📖 Cốt Truyện';
-  }
+  try {
+    if (audioToggleBtn) {
+      audioToggleBtn.textContent = sounds.isMuted() ? '🔇' : '🔊';
+    }
+    if (modeSwitchBtn) {
+      modeSwitchBtn.innerHTML = currentMode === 'battler'
+        ? '<span class="btnIcon">🃏</span><span class="btnText">Đấu Bài</span>'
+        : '<span class="btnIcon">📖</span><span class="btnText">Truyện</span>';
+    }
 
-  if (currentMode === 'battler') {
-    renderBattlerMode();
-    return;
-  }
+    if (currentMode === 'battler') {
+      renderBattlerMode();
+      return;
+    }
 
-  // Classic Story Mode
-  const state = engine.getState();
-  if (!state || state.stage === 'welcome') {
-    ROOT.innerHTML = renderWelcome();
-    return;
-  }
-
-  switch (state.stage) {
-    case 'play':
-      ROOT.innerHTML = renderPlay(state);
-      break;
-    case 'result':
-      ROOT.innerHTML = renderResult(state);
-      break;
-    case 'day':
-      ROOT.innerHTML = renderDay(state);
-      break;
-    case 'over':
-      ROOT.innerHTML = renderGameOver(state);
-      break;
-    default:
+    // Classic Story Mode
+    const state = engine.getState();
+    if (!state || state.stage === 'welcome') {
       ROOT.innerHTML = renderWelcome();
+      return;
+    }
+
+    switch (state.stage) {
+      case 'play':
+        ROOT.innerHTML = renderPlay(state);
+        break;
+      case 'result':
+        ROOT.innerHTML = renderResult(state);
+        break;
+      case 'day':
+        ROOT.innerHTML = renderDay(state);
+        break;
+      case 'over':
+        ROOT.innerHTML = renderGameOver(state);
+        break;
+      default:
+        ROOT.innerHTML = renderWelcome();
+    }
+  } catch (err) {
+    console.error('Render error:', err);
+    if (ROOT) {
+      ROOT.innerHTML = `<section class="panel" style="text-align:center;padding:24px">
+        <div style="font-size:48px;margin-bottom:8px">⚠️</div>
+        <h2 style="margin:4px 0 8px">Đã cập nhật phiên bản mới!</h2>
+        <p class="note" style="margin-bottom:14px">Dữ liệu lưu tạm cần làm mới để đồng bộ với tính năng mới nhất.</p>
+        <button class="primary" id="btnResetCache" style="width:100%">🔄 Làm mới và chơi ngay</button>
+      </section>`;
+      document.getElementById('btnResetCache')?.addEventListener('click', () => {
+        try { localStorage.clear(); } catch {}
+        window.location.reload();
+      });
+    }
   }
 }
 
