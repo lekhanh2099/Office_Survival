@@ -178,10 +178,11 @@ export class OfficeStage {
     this.camera.position.set(0, 14, 13);
     this.camera.lookAt(0, 0.8, 0);
 
-    // 2. WebGL Renderer with High-Fidelity Tone Mapping & Soft Shadows
+    // 2. WebGL Renderer with High-Fidelity Tone Mapping & Mobile Performance Balancing
+    const isMobile = width < 600;
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     this.renderer.setSize(width, height);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -259,8 +260,10 @@ export class OfficeStage {
     const sun = new THREE.DirectionalLight(0xffeedb, 1.6);
     sun.position.set(22, 34, 18);
     sun.castShadow = true;
-    sun.shadow.mapSize.width = 2048;
-    sun.shadow.mapSize.height = 2048;
+    const isMobile = window.innerWidth < 640;
+    const shadowRes = isMobile ? 1024 : 2048;
+    sun.shadow.mapSize.width = shadowRes;
+    sun.shadow.mapSize.height = shadowRes;
     sun.shadow.camera.near = 1;
     sun.shadow.camera.far = 80;
     const sD = 35;
@@ -557,27 +560,31 @@ export class OfficeStage {
 
   private createZoneSign(cx: number, cy: number, cz: number, text: string, color: string): void {
     const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 100;
+    canvas.width = 1024;
+    canvas.height = 200;
     const ctx = canvas.getContext('2d')!;
     ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.roundRect(10, 10, 492, 80, 24);
+    ctx.roundRect(16, 16, 992, 168, 48);
     ctx.fill();
 
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 8;
     ctx.strokeStyle = '#ffffff';
     ctx.stroke();
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = '900 24px Nunito, sans-serif';
+    ctx.font = '900 50px Nunito, -apple-system, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(text, 256, 58);
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 512, 102);
 
     const tex = new THREE.CanvasTexture(canvas);
+    tex.generateMipmaps = true;
+    tex.minFilter = THREE.LinearMipmapLinearFilter;
+    tex.magFilter = THREE.LinearFilter;
     const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false });
     const sprite = new THREE.Sprite(mat);
-    sprite.scale.set(4.2, 0.85, 1);
+    sprite.scale.set(4.6, 0.9, 1);
     sprite.position.set(cx, cy, cz);
     this.scene.add(sprite);
   }
@@ -1621,26 +1628,30 @@ export class OfficeStage {
     this.scene.add(indicatorMesh);
 
     const canvas = document.createElement('canvas');
-    canvas.width = 340;
-    canvas.height = 80;
+    canvas.width = 720;
+    canvas.height = 160;
     const ctx = canvas.getContext('2d')!;
-    ctx.fillStyle = type === 'altar' ? '#7f1d1d' : '#1e1b4b';
+    ctx.fillStyle = type === 'altar' ? 'rgba(127, 29, 29, 0.95)' : 'rgba(15, 23, 42, 0.95)';
     ctx.beginPath();
-    ctx.roundRect(8, 8, 324, 64, 20);
+    ctx.roundRect(10, 10, 700, 140, 32);
     ctx.fill();
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 6;
     ctx.strokeStyle = type === 'altar' ? '#ef4444' : '#facc15';
     ctx.stroke();
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = '900 24px Nunito, sans-serif';
+    ctx.font = '900 46px Nunito, -apple-system, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(`${emoji} ${name}`, 170, 48);
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${emoji} ${name}`, 360, 80);
 
     const tex = new THREE.CanvasTexture(canvas);
+    tex.generateMipmaps = true;
+    tex.minFilter = THREE.LinearMipmapLinearFilter;
+    tex.magFilter = THREE.LinearFilter;
     const spriteMat = new THREE.SpriteMaterial({ map: tex, depthTest: true });
     const billboardSprite = new THREE.Sprite(spriteMat);
-    billboardSprite.scale.set(1.9, 0.45, 1);
+    billboardSprite.scale.set(2.3, 0.52, 1);
     billboardSprite.position.set(pos.x, 2.5, pos.z);
     this.scene.add(billboardSprite);
 

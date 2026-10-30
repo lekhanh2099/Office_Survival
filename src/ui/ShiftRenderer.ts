@@ -18,7 +18,82 @@ const stationCoords: Record<string, [number, number]> = {
   boss_desk: [-18.0, -19.5]
 };
 
+interface HUDElementCache {
+  host: HTMLElement;
+  clock: HTMLElement | null;
+  day: HTMLElement | null;
+  energyVal: HTMLElement | null;
+  energyFill: HTMLElement | null;
+  stressVal: HTMLElement | null;
+  stressFill: HTMLElement | null;
+  orders: HTMLElement | null;
+  zoneBadge: HTMLElement | null;
+  orderName: HTMLElement | null;
+  questText: HTMLElement | null;
+  playerDot: HTMLElement | null;
+  bossDot: HTMLElement | null;
+  targetDot: HTMLElement | null;
+  camBtn: HTMLElement | null;
+  modeBtn: HTMLElement | null;
+  speechBubble: HTMLElement | null;
+  speechAvatar: HTMLElement | null;
+  speechSpeaker: HTMLElement | null;
+  speechRole: HTMLElement | null;
+  speechText: HTMLElement | null;
+}
+
+let hudCache: HUDElementCache | null = null;
+let lastTimeStr = '';
+let lastDay = -1;
+let lastEnergy = -1;
+let lastStress = -1;
+let lastOrdersStr = '';
+let lastZone = '';
+let lastOrderName = '';
+let lastQuestText = '';
+let lastCamMode = '';
+let lastInteractionMode = '';
+let lastPX = -999;
+let lastPZ = -999;
+let lastBossX = -999;
+let lastBossZ = -999;
+let lastEnergyColor = '';
+let lastTargetStation = '';
+let cachedInteractionMode = '';
+
+export function getCachedInteractionMode(): 'auto_work' | 'card' {
+  if (!cachedInteractionMode) {
+    cachedInteractionMode = localStorage.getItem('os_interaction_mode') || 'auto_work';
+  }
+  return cachedInteractionMode as 'auto_work' | 'card';
+}
+
+export function setCachedInteractionMode(mode: 'auto_work' | 'card'): void {
+  cachedInteractionMode = mode;
+  try {
+    localStorage.setItem('os_interaction_mode', mode);
+  } catch {}
+}
+
 export function mountShiftHUD(host: HTMLElement): void {
+  // Reset dirty tracking cache
+  lastTimeStr = '';
+  lastDay = -1;
+  lastEnergy = -1;
+  lastStress = -1;
+  lastOrdersStr = '';
+  lastZone = '';
+  lastOrderName = '';
+  lastQuestText = '';
+  lastCamMode = '';
+  lastInteractionMode = '';
+  lastPX = -999;
+  lastPZ = -999;
+  lastBossX = -999;
+  lastBossZ = -999;
+  lastEnergyColor = '';
+  lastTargetStation = '';
+
   host.innerHTML = `
     <!-- Top Status Ribbon (Single sleek integrated row across top) -->
     <header class="shiftTopRibbon">
@@ -123,139 +198,171 @@ export function mountShiftHUD(host: HTMLElement): void {
       <div class="bubbleText" id="speechText"></div>
     </div>
   `;
+
+  hudCache = {
+    host,
+    clock: host.querySelector('#hudClock'),
+    day: host.querySelector('#hudDay'),
+    energyVal: host.querySelector('#hudEnergyVal'),
+    energyFill: host.querySelector('#hudEnergyFill'),
+    stressVal: host.querySelector('#hudStressVal'),
+    stressFill: host.querySelector('#hudStressFill'),
+    orders: host.querySelector('#hudOrders'),
+    zoneBadge: host.querySelector('#hudZoneBadge'),
+    orderName: host.querySelector('#hudOrderName'),
+    questText: host.querySelector('#hudQuestText'),
+    playerDot: host.querySelector('#hudPlayerDot'),
+    bossDot: host.querySelector('#hudBossDot'),
+    targetDot: host.querySelector('#hudTargetDot'),
+    camBtn: host.querySelector('#hudCamBtn'),
+    modeBtn: host.querySelector('#hudModeToggleBtn'),
+    speechBubble: host.querySelector('#hudSpeechBubble'),
+    speechAvatar: host.querySelector('#speechAvatar'),
+    speechSpeaker: host.querySelector('#speechSpeaker'),
+    speechRole: host.querySelector('#speechRole'),
+    speechText: host.querySelector('#speechText')
+  };
 }
 
 export function updateShiftHUD(host: HTMLElement, state: ShiftState, stage?: OfficeStage): void {
   // If not mounted yet, mount initial DOM
-  if (!host.querySelector('#hudClock')) {
+  if (!hudCache || hudCache.host !== host || !hudCache.clock) {
     mountShiftHUD(host);
   }
+  if (!hudCache) return;
 
   const timeStr = `${String(state.timeHour).padStart(2, '0')}:${String(state.timeMinute).padStart(2, '0')}`;
-  const energyPct = Math.max(0, Math.min(100, state.energy));
-  const stressPct = Math.max(0, Math.min(100, state.stress));
-
-  let energyColor = '#22c55e';
-  if (state.energy < 30) energyColor = '#ef4444';
-  else if (state.energy < 60) energyColor = '#f59e0b';
-
-  // Ribbon
-  const clockEl = host.querySelector('#hudClock');
-  if (clockEl) clockEl.textContent = timeStr;
-
-  const dayEl = host.querySelector('#hudDay');
-  if (dayEl) dayEl.textContent = `N${state.day}`;
-
-  const energyVal = host.querySelector('#hudEnergyVal');
-  if (energyVal) energyVal.textContent = `${Math.round(state.energy)}%`;
-
-  const energyFill = host.querySelector('#hudEnergyFill') as HTMLElement;
-  if (energyFill) {
-    energyFill.style.width = `${energyPct}%`;
-    energyFill.style.background = energyColor;
+  if (timeStr !== lastTimeStr) {
+    lastTimeStr = timeStr;
+    if (hudCache.clock) hudCache.clock.textContent = timeStr;
   }
 
-  const stressVal = host.querySelector('#hudStressVal');
-  if (stressVal) stressVal.textContent = `${Math.round(state.stress)}%`;
-
-  const stressFill = host.querySelector('#hudStressFill') as HTMLElement;
-  if (stressFill) {
-    stressFill.style.width = `${stressPct}%`;
-    stressFill.style.background = state.stress > 60 ? '#ef4444' : '#fb923c';
+  if (state.day !== lastDay) {
+    lastDay = state.day;
+    if (hudCache.day) hudCache.day.textContent = `N${state.day}`;
   }
 
-  const ordersEl = host.querySelector('#hudOrders');
-  if (ordersEl) ordersEl.textContent = `${state.ordersCompleted}/${state.targetOrders}`;
-
-  // Quest Banner
-  const zoneBadge = host.querySelector('#hudZoneBadge');
-  if (zoneBadge) zoneBadge.textContent = state.currentZone;
-
-  const orderName = host.querySelector('#hudOrderName');
-  if (orderName) orderName.textContent = state.currentTask.orderName;
-
-  const questText = host.querySelector('#hudQuestText');
-  if (questText) questText.textContent = state.currentTask.stepDescription;
-
-  // Radar Normalized Coordinates (Bounds: X [-30, 30], Z [-23, 23])
-  let pX = 50;
-  let pZ = 50;
-  let bossX = 25;
-  let bossZ = 25;
-
-  if (stage) {
-    const pPos = stage.player.getPosition();
-    pX = Math.max(8, Math.min(92, ((pPos.x + 30) / 60) * 100));
-    pZ = Math.max(8, Math.min(92, ((pPos.z + 23) / 46) * 100));
-
-    if (stage.bossNpc) {
-      const bPos = stage.bossNpc.group.position;
-      bossX = Math.max(8, Math.min(92, ((bPos.x + 30) / 60) * 100));
-      bossZ = Math.max(8, Math.min(92, ((bPos.z + 23) / 46) * 100));
+  const roundedEnergy = Math.round(state.energy);
+  if (roundedEnergy !== lastEnergy) {
+    lastEnergy = roundedEnergy;
+    if (hudCache.energyVal) hudCache.energyVal.textContent = `${roundedEnergy}%`;
+    if (hudCache.energyFill) {
+      hudCache.energyFill.style.width = `${Math.max(0, Math.min(100, state.energy))}%`;
+      const color = roundedEnergy < 30 ? '#ef4444' : (roundedEnergy < 60 ? '#f59e0b' : '#22c55e');
+      if (color !== lastEnergyColor) {
+        lastEnergyColor = color;
+        hudCache.energyFill.style.background = color;
+      }
     }
   }
 
-  const targetC = stationCoords[state.currentTask.targetStation] || [-10.5, -13.0];
-  const tgtX = Math.max(10, Math.min(90, ((targetC[0] + 30) / 60) * 100));
-  const tgtZ = Math.max(10, Math.min(90, ((targetC[1] + 23) / 46) * 100));
-
-  const pDot = host.querySelector('#hudPlayerDot') as HTMLElement;
-  if (pDot) {
-    pDot.style.left = `${pX}%`;
-    pDot.style.top = `${pZ}%`;
+  const roundedStress = Math.round(state.stress);
+  if (roundedStress !== lastStress) {
+    lastStress = roundedStress;
+    if (hudCache.stressVal) hudCache.stressVal.textContent = `${roundedStress}%`;
+    if (hudCache.stressFill) {
+      hudCache.stressFill.style.width = `${Math.max(0, Math.min(100, state.stress))}%`;
+      hudCache.stressFill.style.background = roundedStress > 60 ? '#ef4444' : '#fb923c';
+    }
   }
 
-  const bDot = host.querySelector('#hudBossDot') as HTMLElement;
-  if (bDot) {
-    bDot.style.left = `${bossX}%`;
-    bDot.style.top = `${bossZ}%`;
+  const ordersStr = `${state.ordersCompleted}/${state.targetOrders}`;
+  if (ordersStr !== lastOrdersStr) {
+    lastOrdersStr = ordersStr;
+    if (hudCache.orders) hudCache.orders.textContent = ordersStr;
   }
 
-  const tgtDot = host.querySelector('#hudTargetDot') as HTMLElement;
-  if (tgtDot) {
-    tgtDot.style.left = `${tgtX}%`;
-    tgtDot.style.top = `${tgtZ}%`;
+  if (state.currentZone !== lastZone) {
+    lastZone = state.currentZone;
+    if (hudCache.zoneBadge) hudCache.zoneBadge.textContent = state.currentZone;
   }
 
-  // Camera Toggle Button
-  const camBtn = host.querySelector('#hudCamBtn');
-  if (camBtn) {
-    camBtn.textContent = stage?.cameraMode === 'overview' ? '🏃 Bám Sát' : '🎥 Toàn Cảnh';
+  if (state.currentTask.orderName !== lastOrderName) {
+    lastOrderName = state.currentTask.orderName;
+    if (hudCache.orderName) hudCache.orderName.textContent = state.currentTask.orderName;
   }
 
-  // Mode Toggle Button
-  const modeBtn = host.querySelector('#hudModeToggleBtn');
-  if (modeBtn) {
-    const isAuto = localStorage.getItem('os_interaction_mode') !== 'card';
-    modeBtn.textContent = isAuto ? '⚡ Chạy Làm Ngay' : '📋 Hiện Thẻ Xác Nhận';
-    modeBtn.setAttribute('title', isAuto ? 'Chế độ hiện tại: Chạm là Chibi tự chạy đến làm việc ngay (Bấm để đổi)' : 'Chế độ hiện tại: Chạm sẽ hiện Thẻ xác nhận công việc (Bấm để đổi)');
+  if (state.currentTask.stepDescription !== lastQuestText) {
+    lastQuestText = state.currentTask.stepDescription;
+    if (hudCache.questText) hudCache.questText.textContent = state.currentTask.stepDescription;
+  }
+
+  // Camera toggle text
+  const camMode = stage?.cameraMode || 'follow';
+  if (camMode !== lastCamMode) {
+    lastCamMode = camMode;
+    if (hudCache.camBtn) hudCache.camBtn.textContent = camMode === 'overview' ? '🏃 Bám Sát' : '🎥 Toàn Cảnh';
+  }
+
+  // Mode toggle text
+  const intMode = getCachedInteractionMode();
+  if (intMode !== lastInteractionMode) {
+    lastInteractionMode = intMode;
+    if (hudCache.modeBtn) {
+      hudCache.modeBtn.textContent = intMode === 'auto_work' ? '⚡ Chạy Làm Ngay' : '📋 Hiện Thẻ Xác Nhận';
+      hudCache.modeBtn.setAttribute('title', intMode === 'auto_work' ? 'Chế độ hiện tại: Chạm là Chibi tự chạy đến làm việc ngay (Bấm để đổi)' : 'Chế độ hiện tại: Chạm sẽ hiện Thẻ xác nhận công việc (Bấm để đổi)');
+    }
+  }
+
+  // Radar Normalized Coordinates (Bounds: X [-30, 30], Z [-23, 23])
+  if (stage) {
+    const pPos = stage.player.getPosition();
+    const pX = Math.round(Math.max(8, Math.min(92, ((pPos.x + 30) / 60) * 100)));
+    const pZ = Math.round(Math.max(8, Math.min(92, ((pPos.z + 23) / 46) * 100)));
+
+    if (Math.abs(pX - lastPX) >= 1 || Math.abs(pZ - lastPZ) >= 1) {
+      lastPX = pX;
+      lastPZ = pZ;
+      if (hudCache.playerDot) {
+        hudCache.playerDot.style.left = `${pX}%`;
+        hudCache.playerDot.style.top = `${pZ}%`;
+      }
+    }
+
+    if (stage.bossNpc) {
+      const bPos = stage.bossNpc.group.position;
+      const bossX = Math.round(Math.max(8, Math.min(92, ((bPos.x + 30) / 60) * 100)));
+      const bossZ = Math.round(Math.max(8, Math.min(92, ((bPos.z + 23) / 46) * 100)));
+      if (Math.abs(bossX - lastBossX) >= 1 || Math.abs(bossZ - lastBossZ) >= 1) {
+        lastBossX = bossX;
+        lastBossZ = bossZ;
+        if (hudCache.bossDot) {
+          hudCache.bossDot.style.left = `${bossX}%`;
+          hudCache.bossDot.style.top = `${bossZ}%`;
+        }
+      }
+    }
+  }
+
+  const tgtStation = state.currentTask.targetStation;
+  if (tgtStation !== lastTargetStation) {
+    lastTargetStation = tgtStation;
+    const targetC = stationCoords[tgtStation] || [-10.5, -13.0];
+    const tgtX = Math.round(Math.max(10, Math.min(90, ((targetC[0] + 30) / 60) * 100)));
+    const tgtZ = Math.round(Math.max(10, Math.min(90, ((targetC[1] + 23) / 46) * 100)));
+    if (hudCache.targetDot) {
+      hudCache.targetDot.style.left = `${tgtX}%`;
+      hudCache.targetDot.style.top = `${tgtZ}%`;
+    }
   }
 
   // Speech Bubble
-  const bubble = host.querySelector('#hudSpeechBubble') as HTMLElement;
-  if (bubble && stage) {
+  if (hudCache.speechBubble && stage) {
     const speech = stage.getActiveSpeechScreenData();
     if (speech) {
-      bubble.style.display = 'block';
-      bubble.style.left = `${speech.x}px`;
-      bubble.style.top = `${speech.y}px`;
+      hudCache.speechBubble.style.display = 'block';
+      hudCache.speechBubble.style.left = `${speech.x}px`;
+      hudCache.speechBubble.style.top = `${speech.y}px`;
 
-      const avatar = host.querySelector('#speechAvatar') as HTMLElement;
-      if (avatar) {
-        avatar.textContent = speech.emoji;
-        avatar.style.background = speech.avatarBg;
+      if (hudCache.speechAvatar) {
+        hudCache.speechAvatar.textContent = speech.emoji;
+        hudCache.speechAvatar.style.background = speech.avatarBg;
       }
-
-      const spk = host.querySelector('#speechSpeaker');
-      if (spk) spk.textContent = speech.speaker;
-
-      const role = host.querySelector('#speechRole');
-      if (role) role.textContent = `· ${speech.role}`;
-
-      const txt = host.querySelector('#speechText');
-      if (txt) txt.textContent = speech.text;
+      if (hudCache.speechSpeaker) hudCache.speechSpeaker.textContent = speech.speaker;
+      if (hudCache.speechRole) hudCache.speechRole.textContent = `· ${speech.role}`;
+      if (hudCache.speechText) hudCache.speechText.textContent = speech.text;
     } else {
-      bubble.style.display = 'none';
+      hudCache.speechBubble.style.display = 'none';
     }
   }
 }

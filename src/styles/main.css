@@ -1428,9 +1428,9 @@ p {
   top: 8px;
   left: 8px;
   right: 8px;
-  height: 32px;
-  background: rgba(15, 23, 42, 0.90);
-  backdrop-filter: blur(8px);
+  height: 36px;
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(10px);
   border: 1.5px solid rgba(255, 255, 255, 0.22);
   border-radius: 10px;
   display: flex;
@@ -1439,30 +1439,32 @@ p {
   padding: 0 10px;
   z-index: 10;
   pointer-events: auto;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
   color: #ffffff;
+  -webkit-font-smoothing: antialiased;
 }
 
 .ribbonClock {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 12px;
+  gap: 5px;
+  font-size: 13.5px;
   font-weight: 900;
   color: #ffffff;
+  letter-spacing: 0.3px;
 }
 
 .ribbonClock .clockIcon {
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .ribbonDay {
   background: #4f46e5;
   color: #fff;
-  font-size: 9px;
-  padding: 1px 5px;
-  border-radius: 4px;
-  font-weight: 800;
+  font-size: 10.5px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-weight: 900;
   margin-left: 2px;
 }
 
@@ -1475,16 +1477,16 @@ p {
 .meterGroup {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 9.5px;
+  gap: 5px;
+  font-size: 11px;
   font-weight: 900;
 }
 
 .meterTrack {
   width: 44px;
-  height: 6px;
+  height: 7px;
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
+  border-radius: 4px;
   overflow: hidden;
 }
 
@@ -1496,36 +1498,38 @@ p {
 .ribbonOrders {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 11.5px;
+  gap: 5px;
+  font-size: 13px;
   font-weight: 900;
   color: #facc15;
+  letter-spacing: 0.3px;
 }
 
 /* ==================== QUEST BANNER & MINI RADAR ==================== */
 .shiftQuestBanner {
   position: absolute;
-  top: 46px;
+  top: 50px;
   left: 8px;
   right: 68px; /* stops before radar at right: 8px + 54px */
-  min-height: 44px;
-  background: rgba(15, 23, 42, 0.90);
-  backdrop-filter: blur(8px);
-  border: 1.5px solid rgba(255, 255, 255, 0.18);
-  border-left: 3.5px solid #f59e0b;
+  min-height: 48px;
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-left: 4px solid #f59e0b;
   border-radius: 10px;
-  padding: 5px 8px;
+  padding: 6px 10px;
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   z-index: 10;
   pointer-events: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
   box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
 }
 
 .questPulseIcon {
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1;
   flex-shrink: 0;
   animation: bounceQuest 1.4s infinite alternate;
@@ -1547,7 +1551,7 @@ p {
 .questTagRow {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   margin-bottom: 2px;
   overflow: hidden;
   white-space: nowrap;
@@ -1556,29 +1560,31 @@ p {
 .questZoneBadge {
   background: #3b82f6;
   color: #ffffff;
-  font-size: 8.5px;
+  font-size: 10px;
   font-weight: 900;
-  padding: 1px 5px;
-  border-radius: 4px;
+  padding: 2px 6px;
+  border-radius: 5px;
   text-transform: uppercase;
   flex-shrink: 0;
+  letter-spacing: 0.3px;
 }
 
 .questOrderName {
-  font-size: 9.5px;
-  font-weight: 800;
+  font-size: 11.5px;
+  font-weight: 900;
   color: #fde047;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  letter-spacing: 0.2px;
 }
 
 .questInstruction {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
   color: #ffffff;
-  line-height: 1.25;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  line-height: 1.35;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -1588,7 +1594,7 @@ p {
 /* ==================== CIRCULAR MINI RADAR ==================== */
 .shiftMiniRadar {
   position: absolute;
-  top: 44px;
+  top: 48px;
   right: 8px;
   width: 54px;
   height: 54px;
@@ -1675,17 +1681,17 @@ p {
 /* Camera Diorama Switcher Button */
 .shiftCamToggleBtn {
   position: absolute;
-  top: 104px;
+  top: 106px;
   right: 8px;
-  background: rgba(15, 23, 42, 0.88);
-  backdrop-filter: blur(6px);
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(8px);
   color: #f8fafc;
-  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
   border-radius: 8px;
-  padding: 4px 8px;
-  font-size: 10px;
-  font-weight: 800;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 900;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
   cursor: pointer;
   pointer-events: auto;
   z-index: 15;
@@ -1706,17 +1712,17 @@ p {
 /* Mode Switcher Button (Tap Auto-Work vs Action Card) */
 .shiftModeToggleBtn {
   position: absolute;
-  top: 134px;
+  top: 138px;
   right: 8px;
-  background: rgba(15, 23, 42, 0.88);
-  backdrop-filter: blur(6px);
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(8px);
   color: #facc15;
-  border: 1.5px solid rgba(250, 204, 21, 0.4);
+  border: 1.5px solid rgba(250, 204, 21, 0.5);
   border-radius: 8px;
-  padding: 4px 8px;
-  font-size: 10px;
-  font-weight: 800;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 900;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
   cursor: pointer;
   pointer-events: auto;
   z-index: 15;
@@ -1909,14 +1915,14 @@ p {
 }
 
 .colleagueSpeechBubble .bubbleSpeaker {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 900;
   color: #1e1b4b;
 }
 
 .colleagueSpeechBubble .bubbleRole {
-  font-size: 8px;
-  font-weight: 700;
+  font-size: 10px;
+  font-weight: 800;
   color: #64748b;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1924,10 +1930,10 @@ p {
 }
 
 .colleagueSpeechBubble .bubbleText {
-  font-size: 10.5px;
+  font-size: 12.5px;
   font-weight: 800;
   color: #1e293b;
-  line-height: 1.3;
+  line-height: 1.35;
 }
 
 @keyframes speechPop {
@@ -2053,16 +2059,16 @@ body:has(#dialogHost:not(:empty)) .virtualControlsOverlay {
 
 .joyHelperText {
   position: absolute;
-  top: -18px;
+  top: -20px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 8.5px;
+  font-size: 10px;
   font-weight: 900;
   color: #4338ca;
   background: #e0e7ff;
-  border: 1px solid #6366f1;
-  border-radius: 4px;
-  padding: 1px 5px;
+  border: 1.5px solid #6366f1;
+  border-radius: 5px;
+  padding: 1px 6px;
   white-space: nowrap;
   pointer-events: none;
 }

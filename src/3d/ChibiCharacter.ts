@@ -256,29 +256,33 @@ export class ChibiCharacter {
 
   private createNametag(name: string, isNpc: boolean): void {
     const canvas = document.createElement('canvas');
-    canvas.width = 320;
-    canvas.height = 80;
+    canvas.width = 720;
+    canvas.height = 180;
     const ctx = canvas.getContext('2d')!;
 
-    ctx.fillStyle = isNpc ? '#ef4444' : '#4f46e5';
+    ctx.fillStyle = isNpc ? '#dc2626' : '#4f46e5';
     ctx.beginPath();
-    ctx.roundRect(10, 10, 300, 60, 24);
+    ctx.roundRect(14, 14, 692, 152, 44);
     ctx.fill();
 
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 8;
     ctx.strokeStyle = '#ffffff';
     ctx.stroke();
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 26px Nunito, sans-serif';
+    ctx.font = '900 50px Nunito, -apple-system, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(`${isNpc ? '🚨' : '🟢'} ${name}`, 160, 50);
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${isNpc ? '🚨' : '🟢'} ${name}`, 360, 92);
 
     const texture = new THREE.CanvasTexture(canvas);
+    texture.generateMipmaps = true;
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
+    texture.magFilter = THREE.LinearFilter;
     const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false });
     this.nametagMesh = new THREE.Sprite(spriteMat);
-    this.nametagMesh.scale.set(1.4, 0.35, 1);
-    this.nametagMesh.position.set(0, 1.65, 0);
+    this.nametagMesh.scale.set(1.5, 0.38, 1);
+    this.nametagMesh.position.set(0, 1.7, 0);
     this.group.add(this.nametagMesh);
   }
 

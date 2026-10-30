@@ -12,7 +12,9 @@ import {
   updateShiftHUD,
   renderShiftFinishModal,
   showStationActionCard,
-  hideStationActionCard
+  hideStationActionCard,
+  getCachedInteractionMode,
+  setCachedInteractionMode
 } from './ui/ShiftRenderer';
 import {
   renderBattlerHUD,
@@ -96,7 +98,7 @@ function renderShiftMode(): void {
   // Direct 3D Click / Tap Raycaster Handling (Both Auto-Work and Card confirmation modes!)
   shiftStage.onStationClickCallback = (st) => {
     sounds.click();
-    const mode = localStorage.getItem('os_interaction_mode') || 'auto_work';
+    const mode = getCachedInteractionMode();
     if (mode === 'card') {
       selectedStationForCard = st;
       const details = shiftEngine!.getStationActionDetails(st);
@@ -463,9 +465,9 @@ document.addEventListener('click', (ev) => {
       break;
     case 'toggle_interaction_mode': {
       sounds.click();
-      const current = localStorage.getItem('os_interaction_mode') || 'auto_work';
+      const current = getCachedInteractionMode();
       const next = current === 'auto_work' ? 'card' : 'auto_work';
-      localStorage.setItem('os_interaction_mode', next);
+      setCachedInteractionMode(next);
       showToast(next === 'auto_work' ? '⚡ Đã chuyển sang: Chạm là Chibi tự chạy đến làm việc ngay!' : '📋 Đã chuyển sang: Chạm mở Thẻ xác nhận công việc!');
       const uiHostEl = document.getElementById('shiftUIHost');
       if (uiHostEl && shiftEngine && shiftStage) {
