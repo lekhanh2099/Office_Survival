@@ -30,6 +30,7 @@ import {
   openDonateModal,
   openHelpModal,
   openShiftHelpModal,
+  openCampusMapModal,
   openDilemmaModal,
   openHistoryModal,
   openRankingsModal,
@@ -512,6 +513,32 @@ document.addEventListener('click', (ev) => {
         }
       }
       break;
+    case 'open_campus_map': {
+      if (shiftEngine && shiftStage) {
+        sounds.click();
+        const curTask = shiftEngine.getState().currentTask;
+        const curZone = shiftStage.currentZoneName;
+        openCampusMapModal(HOST, curZone, curTask.targetStation, (chosenStationType) => {
+          const targetSt = shiftStage?.stations.find(s => s.type === chosenStationType);
+          if (targetSt) {
+            showToast(`🏃 Đang tự động chạy tới: ${targetSt.name}...`);
+            shiftStage?.startAutoWalkTo(targetSt, () => {
+              const intMode = getCachedInteractionMode();
+              if (intMode === 'auto_work') {
+                shiftEngine?.doAction(targetSt);
+              } else {
+                selectedStationForCard = targetSt;
+                const hostEl = document.getElementById('shiftUIHost');
+                if (hostEl) {
+                  showStationActionCard(hostEl, shiftEngine!.getStationActionDetails(targetSt));
+                }
+              }
+            });
+          }
+        });
+      }
+      break;
+    }
     case 'recenter_camera':
       if (shiftStage) {
         sounds.click();
@@ -522,14 +549,14 @@ document.addEventListener('click', (ev) => {
     case 'zoom_in':
       if (shiftStage) {
         sounds.click();
-        shiftStage.zoomIn(5.0);
+        shiftStage.zoomIn(6.0);
         showToast('🔍 Đã phóng to camera (gần hơn)!');
       }
       break;
     case 'zoom_out':
       if (shiftStage) {
         sounds.click();
-        shiftStage.zoomOut(5.0);
+        shiftStage.zoomOut(6.0);
         showToast('🔍 Đã thu nhỏ camera (toàn cảnh)!');
       }
       break;

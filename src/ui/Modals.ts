@@ -569,3 +569,140 @@ export function openDilemmaModal(
     onChoose('B');
   });
 }
+
+export function openCampusMapModal(
+  host: HTMLElement,
+  currentZone: string,
+  targetStation: string,
+  onFastTravel: (stationType: string) => void
+): void {
+  sounds.click();
+
+  const zones = [
+    {
+      id: 'z1',
+      title: '🏢 VĂN PHÒNG ĐIỀU HÀNH',
+      sub: 'Góc Tây-Bắc (Bàn làm việc, Máy in, Ban Giám Đốc)',
+      bg: '#1e1b4b',
+      border: '#6366f1',
+      stations: [
+        { type: 'desk', name: '💻 Bàn Merchandiser', desc: 'Nhận đơn hàng mới' },
+        { type: 'printer', name: '🖨️ Máy In Techpack', desc: 'In hồ sơ & bảng màu' },
+        { type: 'altar', name: '🙏 Bàn Thờ Thần Tài', desc: 'Thắp nhang cầu may' },
+        { type: 'boss_desk', name: '👔 Phòng Sếp Hùng', desc: 'Báo cáo tiến độ' }
+      ]
+    },
+    {
+      id: 'z2',
+      title: '🔬 XƯỞNG CẮT & PHÒNG LAB',
+      sub: 'Góc Đông-Bắc (Đèn D65, Kiểm tra màu vải)',
+      bg: '#0f2942',
+      border: '#38bdf8',
+      stations: [
+        { type: 'lab', name: '🔬 Phòng Lab Soi Màu D65', desc: 'Đo độ lệch Delta E' },
+        { type: 'whiteboard', name: '📊 Bảng Chiến Lược Q4', desc: 'Phòng họp VIP Boardroom' }
+      ]
+    },
+    {
+      id: 'z0',
+      title: '🧋 CĂN TIN TRUNG TÂM & PANTRY',
+      sub: 'Khu vực giữa (Nghỉ ngơi, Nạp năng lượng)',
+      bg: '#2e1065',
+      border: '#a855f7',
+      stations: [
+        { type: 'coffee', name: '☕ Quầy Trà Sữa & Cà Phê', desc: 'Hồi 50% ⚡ & Bứt tốc' },
+        { type: 'water', name: '🚰 Cây Nước Mát Lạnh', desc: 'Giải nhiệt -15% Stress' },
+        { type: 'sofa', name: '🛋️ Sofa Thư Giãn', desc: 'Nghỉ trưa xả stress' },
+        { type: 'mirror', name: '🪞 Gương Soi Tỉnh Táo', desc: 'Rửa mặt lấy lại tỉnh táo' }
+      ]
+    },
+    {
+      id: 'z3',
+      title: '🧵 KHO VẢI ĐẠI NGÀN',
+      sub: 'Góc Tây-Nam (Kệ vải, Kế toán kho, Tủ Server IT)',
+      bg: '#451a03',
+      border: '#f59e0b',
+      stations: [
+        { type: 'fabric', name: '🧵 Kệ Vải Spandex', desc: 'Gặp Chị Nga lấy cây vải' },
+        { type: 'server', name: '🖥️ Tủ Server IT', desc: 'Khởi động máy chủ ERP' }
+      ]
+    },
+    {
+      id: 'z4',
+      title: '🚢 CẢNG CONT CÁT LÁI',
+      sub: 'Góc Đông-Nam (Cổng xuất khẩu, Xe cẩu container)',
+      bg: '#14532d',
+      border: '#22c55e',
+      stations: [
+        { type: 'shipping', name: '🚢 Cổng Cont Cát Lái', desc: 'Bàn giao hàng cho Anh Tuấn' }
+      ]
+    }
+  ];
+
+  host.innerHTML = `
+    <div class="dialogShade" role="presentation">
+      <section class="dialog campusMapDialog" role="dialog" aria-modal="true" style="max-width:540px;max-height:92vh;overflow-y:auto;border-radius:18px;border:2.5px solid #6366f1;box-shadow:0 14px 44px rgba(0,0,0,0.6);background:#0f172a;color:#ffffff;padding:0">
+        <!-- Header -->
+        <div style="background:linear-gradient(135deg, #1e1b4b, #312e81);padding:14px 16px;border-bottom:2px solid #6366f1;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:28px">🗺️</span>
+            <div>
+              <h2 style="font-size:16px;font-weight:900;color:#ffffff;margin:0 0 2px">BẢN ĐỒ TOÀN KHU DỆT MAY & XUẤT KHẨU</h2>
+              <div style="font-size:11px;color:#94a3b8;font-weight:700">Vị trí hiện tại: <span style="color:#38bdf8">${currentZone || '🏢 Văn Phòng Điều Hành'}</span> · Chạm để Chibi tự chạy đến</div>
+            </div>
+          </div>
+          <button class="secondary" id="btnCloseMap" type="button" style="padding:4px 10px;font-size:12px;font-weight:900">✕ ĐÓNG</button>
+        </div>
+
+        <!-- Body Zones Grid -->
+        <div style="padding:14px;display:flex;flex-direction:column;gap:10px">
+          ${zones.map(z => `
+            <div style="background:${z.bg};border:1.5px solid ${z.border};border-radius:12px;padding:10px 12px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                <div style="font-weight:900;font-size:12.5px;color:#ffffff">${z.title}</div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.6)">${z.sub}</div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:6px">
+                ${z.stations.map(st => {
+                  const isTarget = st.type === targetStation;
+                  return `
+                    <button class="mapNavBtn" data-station="${st.type}" type="button" style="text-align:left;background:rgba(255,255,255,0.08);border:1.5px solid ${isTarget ? '#facc15' : 'rgba(255,255,255,0.18)'};border-radius:8px;padding:6px 8px;cursor:pointer;transition:all 0.15s ease;position:relative;${isTarget ? 'box-shadow:0 0 10px rgba(250,204,21,0.5);background:#312e81' : ''}">
+                      ${isTarget ? '<span style="position:absolute;top:-6px;right:-4px;background:#facc15;color:#0f172a;font-size:8px;font-weight:900;padding:1px 4px;border-radius:4px">MỤC TIÊU ⭐</span>' : ''}
+                      <div style="font-weight:900;font-size:11.5px;color:${isTarget ? '#fde047' : '#ffffff'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${st.name}</div>
+                      <div style="font-size:9.5px;color:rgba(255,255,255,0.7);margin-top:1px">${st.desc}</div>
+                    </button>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </section>
+    </div>
+  `;
+
+  document.getElementById('btnCloseMap')?.addEventListener('click', () => {
+    sounds.click();
+    host.innerHTML = '';
+  });
+
+  const shade = host.querySelector('.dialogShade');
+  shade?.addEventListener('click', (e) => {
+    if (e.target === shade) {
+      sounds.click();
+      host.innerHTML = '';
+    }
+  });
+
+  const navBtns = host.querySelectorAll('.mapNavBtn');
+  navBtns.forEach(b => {
+    b.addEventListener('click', () => {
+      const stType = (b as HTMLElement).dataset.station;
+      if (stType) {
+        sounds.click();
+        host.innerHTML = '';
+        onFastTravel(stType);
+      }
+    });
+  });
+}

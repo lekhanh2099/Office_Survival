@@ -137,8 +137,13 @@ export class OfficeStage {
     lastY: number;
     moved: boolean;
   }>();
-  private lastPinchDist: number | null = null;
-  private lastPinchMid = { x: 0, y: 0 };
+  // Native Multi-Touch Tracking for Mobile (iOS Safari & Android)
+  private touch1Start = { x: 0, y: 0, time: 0 };
+  private touch1Last = { x: 0, y: 0 };
+  private touch1Moved = false;
+  private touchPinchDist = 0;
+  private touchStartCamDist = 17.5;
+  private touchMidPoint = { x: 0, y: 0 };
 
   // Dynamic Colleague Speech Bubble System
   public activeSpeech: ColleagueSpeech | null = null;
@@ -1813,11 +1818,11 @@ export class OfficeStage {
     this.velocityPitch = 0;
   }
 
-  public zoomIn(amount = 4.5): void {
+  public zoomIn(amount = 6.0): void {
     this.targetDistance = Math.max(6.5, this.targetDistance - amount);
   }
 
-  public zoomOut(amount = 4.5): void {
+  public zoomOut(amount = 6.0): void {
     this.targetDistance = Math.min(42.0, this.targetDistance + amount);
   }
 
@@ -1860,14 +1865,120 @@ export class OfficeStage {
     this.renderer.setSize(width, height);
   };
 
-  private onPointerDownHandler = (e: PointerEvent): void => {
-    if ((e.target as HTMLElement).closest('#joyPadArea, #joyActionBtn, .shiftTopRibbon, .shiftQuestBanner, .shiftMiniRadar, .shiftRightRail, #hudActionCard, #hudGestureTip')) {
+  // Native Mobile Multi-Touch Gestures (100% Reliable on iOS Safari & Android WebKit)
+  private onTouchStart = (e: TouchEvent): void => {
+    const target = e.target as HTMLElement;
+    if (target.closest('#joyPadArea, #joyActionBtn, .shiftTopRibbon, .shiftQuestBanner, .shiftMiniRadar, .shiftRightRail, #hudActionCard, #hudGestureTip, .dialog, .dialogShade')) {
       return;
     }
 
-    try {
-      (e.target as HTMLElement)?.setPointerCapture?.(e.pointerId);
-    } catch {}
+    if (e.touches.length === 1) {
+      const t = e.touches[0];
+      this.touch1Start = { x: t.clientX, y: t.clientY, time: performance.now() };
+      this.touch1Last = { x: t.clientX, y: t.clientY };
+      this.touch1Moved = false;
+      this.velocityAzimuth = 0;
+      this.velocityPitch = 0;
+    } else if (e.touches.length >= 2) {
+      const t0 = e.touches[0];
+      const t1 = e.touches[1];
+      this.touchPinchDist = Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
+      this.touchStartCamDist = this.targetDistance;
+      this.touchMidPoint = { x: (t0.clientX + t1.clientX) / 2, y: (t0.clientY + t1.clientY) / 2 };
+      this.touch1Moved = true;
+    }
+  };
+
+  private onTouchMove = (e: TouchEvent): void => {
+    const target = e.target as HTMLElement;
+    if (target.closest('#joyPadArea, #joyActionBtn, .shiftTopRibbon, .shiftQuestBanner, .shiftMiniRadar, .shiftRightRail, #hudActionCard, #hudGestureTip, .dialog, .dialogShade')) {
+      return;
+    }
+
+    if (e.touches.length >= 2 && this.touchPinchDist > 0) {
+      e.preventDefault();
+      const t0 = e.touches[0];
+      const t1 = e.touches[1];
+      const curDist = Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
+
+      // Pinch to Zoom
+      const ratio = curDist / this.touchPinchDist;
+      this.targetDistance = Math.max(6.5, Math.min(42.0, this.touchStartCamDist / ratio));
+
+      // 2-Finger Pan on Floor
+      const midX = (t0.clientX + t1.clientX) / 2;
+      const midY = (t0.clientY + t1.clientY) / 2;
+      const dMidX = midX - this.touchMidPoint.x;
+      const dMidY = midY - this.touchMidPoint.y;
+      this.touchMidPoint = { x: midX, y: midY };
+
+      const panSpeed = (this.camDistance / 18.0) * 0.045;
+      const cosA = Math.cos(this.camAzimuth);
+      const sinA = Math.sin(this.camAzimuth);
+      this.camPanOffset.x -= (dMidX * cosA + dMidY * sinA) * panSpeed;
+      this.camPanOffset.y += (dMidX * sinA - dMidY * cosA) * panSpeed;
+      this.camPanOffset.x = Math.max(-28, Math.min(28, this.camPanOffset.x));
+      this.camPanOffset.y = Math.max(-22, Math.min(22, this.camPanOffset.y));
+    } else if (e.touches.length === 1) {
+      const t = e.touches[0];
+      const dx = t.clientX - this.touch1Last.x;
+      const dy = t.clientY - this.touch1Last.y;
+      const totalDist = Math.hypot(t.clientX - this.touch1Start.x, t.clientY - this.touch1Start.y);
+
+      if (totalDist > 7) {
+        this.touch1Moved = true;
+      }
+
+      this.touch1Last = { x: t.clientX, y: t.clientY };
+
+      if (this.touch1Moved) {
+        e.preventDefault();
+        if (this.dragMode === 'orbit') {
+          this.targetAzimuth -= dx * 0.009;
+          this.targetPitch = Math.max(0.18, Math.min(1.42, this.targetPitch + dy * 0.006));
+          this.velocityAzimuth = -dx * 0.007;
+          this.velocityPitch = dy * 0.005;
+        } else {
+          const panSpeed = (this.camDistance / 18.0) * 0.045;
+          const cosA = Math.cos(this.camAzimuth);
+          const sinA = Math.sin(this.camAzimuth);
+          this.camPanOffset.x -= (dx * cosA + dy * sinA) * panSpeed;
+          this.camPanOffset.y += (dx * sinA - dy * cosA) * panSpeed;
+          this.camPanOffset.x = Math.max(-28, Math.min(28, this.camPanOffset.x));
+          this.camPanOffset.y = Math.max(-22, Math.min(22, this.camPanOffset.y));
+        }
+      }
+    }
+  };
+
+  private onTouchEnd = (e: TouchEvent): void => {
+    if (e.touches.length === 0) {
+      const dt = performance.now() - this.touch1Start.time;
+      const dist = Math.hypot(this.touch1Last.x - this.touch1Start.x, this.touch1Last.y - this.touch1Start.y);
+
+      if (!this.touch1Moved && dist < 12 && dt < 450) {
+        this.handlePointerTap(this.touch1Start.x, this.touch1Start.y);
+      }
+      this.touchPinchDist = 0;
+    } else if (e.touches.length === 1) {
+      this.touch1Moved = true;
+      this.touchPinchDist = 0;
+      const t = e.touches[0];
+      this.touch1Last = { x: t.clientX, y: t.clientY };
+    }
+  };
+
+  private onTouchCancel = (): void => {
+    this.touchPinchDist = 0;
+    this.touch1Moved = true;
+  };
+
+  // Desktop Pointer Handlers (Mouse Only)
+  private onPointerDownHandler = (e: PointerEvent): void => {
+    if (e.pointerType === 'touch') return;
+    if ((e.target as HTMLElement).closest('#joyPadArea, #joyActionBtn, .shiftTopRibbon, .shiftQuestBanner, .shiftMiniRadar, .shiftRightRail, #hudActionCard, #hudGestureTip, .dialog, .dialogShade')) {
+      return;
+    }
 
     this.activePointers.set(e.pointerId, {
       x: e.clientX,
@@ -1882,17 +1993,11 @@ export class OfficeStage {
 
     this.velocityAzimuth = 0;
     this.velocityPitch = 0;
-
-    if (this.activePointers.size >= 2) {
-      const pts = Array.from(this.activePointers.values());
-      this.lastPinchDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-      this.lastPinchMid = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
-    }
   };
 
   private onPointerMoveHandler = (e: PointerEvent): void => {
+    if (e.pointerType === 'touch') return;
     if (!this.activePointers.has(e.pointerId)) return;
-    e.preventDefault();
     const ptr = this.activePointers.get(e.pointerId)!;
 
     const dx = e.clientX - ptr.lastX;
@@ -1907,100 +2012,79 @@ export class OfficeStage {
     ptr.x = e.clientX;
     ptr.y = e.clientY;
 
-    if (this.activePointers.size === 1) {
-      if (ptr.moved) {
-        if (this.dragMode === 'orbit') {
-          // Orbit 360: Horizontal Azimuth + Vertical Pitch
-          this.targetAzimuth -= dx * 0.009;
-          this.targetPitch = Math.max(0.18, Math.min(1.42, this.targetPitch + dy * 0.006));
-          this.velocityAzimuth = -dx * 0.007;
-          this.velocityPitch = dy * 0.005;
-        } else {
-          // Pan camera along floor plane
-          const panSpeed = (this.camDistance / 18.0) * 0.042;
-          const cosA = Math.cos(this.camAzimuth);
-          const sinA = Math.sin(this.camAzimuth);
-          this.camPanOffset.x -= (dx * cosA - dy * -sinA) * panSpeed;
-          this.camPanOffset.y -= (dx * -sinA - dy * -cosA) * panSpeed;
-          this.camPanOffset.x = Math.max(-28, Math.min(28, this.camPanOffset.x));
-          this.camPanOffset.y = Math.max(-22, Math.min(22, this.camPanOffset.y));
-        }
-      }
-    } else if (this.activePointers.size >= 2) {
-      const pts = Array.from(this.activePointers.values());
-      pts[0].moved = true;
-      pts[1].moved = true;
-      const curDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-      const midX = (pts[0].x + pts[1].x) / 2;
-      const midY = (pts[0].y + pts[1].y) / 2;
-
-      if (this.lastPinchDist !== null && this.lastPinchMid !== null) {
-        // Pinch Zoom
-        const dDist = curDist - this.lastPinchDist;
-        this.targetDistance = Math.max(6.5, Math.min(42.0, this.targetDistance - dDist * 0.085));
-
-        // Two-finger Pan
-        const midDx = midX - this.lastPinchMid.x;
-        const midDy = midY - this.lastPinchMid.y;
-        const panSpeed = (this.camDistance / 18.0) * 0.042;
+    if (ptr.moved) {
+      if (this.dragMode === 'orbit') {
+        this.targetAzimuth -= dx * 0.009;
+        this.targetPitch = Math.max(0.18, Math.min(1.42, this.targetPitch + dy * 0.006));
+        this.velocityAzimuth = -dx * 0.007;
+        this.velocityPitch = dy * 0.005;
+      } else {
+        const panSpeed = (this.camDistance / 18.0) * 0.045;
         const cosA = Math.cos(this.camAzimuth);
         const sinA = Math.sin(this.camAzimuth);
-        this.camPanOffset.x -= (midDx * cosA - midDy * -sinA) * panSpeed;
-        this.camPanOffset.y -= (midDx * -sinA - midDy * -cosA) * panSpeed;
+        this.camPanOffset.x -= (dx * cosA + dy * sinA) * panSpeed;
+        this.camPanOffset.y += (dx * sinA - dy * cosA) * panSpeed;
         this.camPanOffset.x = Math.max(-28, Math.min(28, this.camPanOffset.x));
         this.camPanOffset.y = Math.max(-22, Math.min(22, this.camPanOffset.y));
       }
-
-      this.lastPinchDist = curDist;
-      this.lastPinchMid = { x: midX, y: midY };
     }
   };
 
   private onPointerUpHandler = (e: PointerEvent): void => {
-    try {
-      (e.target as HTMLElement)?.releasePointerCapture?.(e.pointerId);
-    } catch {}
-
+    if (e.pointerType === 'touch') return;
     if (!this.activePointers.has(e.pointerId)) return;
     const ptr = this.activePointers.get(e.pointerId)!;
     const dt = performance.now() - ptr.startTime;
     const totalDist = Math.hypot(e.clientX - ptr.startX, e.clientY - ptr.startY);
 
-    // If clean stationary tap (< 400ms, < 12px)
-    if (!ptr.moved && totalDist < 12 && dt < 400) {
+    if (!ptr.moved && totalDist < 8 && dt < 400) {
       this.handlePointerTap(e.clientX, e.clientY);
     }
 
     this.activePointers.delete(e.pointerId);
-    if (this.activePointers.size < 2) {
-      this.lastPinchDist = null;
-    }
   };
 
   private onPointerCancelHandler = (e: PointerEvent): void => {
-    try {
-      (e.target as HTMLElement)?.releasePointerCapture?.(e.pointerId);
-    } catch {}
     this.activePointers.delete(e.pointerId);
-    if (this.activePointers.size < 2) {
-      this.lastPinchDist = null;
-    }
   };
 
+  // Mouse Wheel & Laptop Trackpad Pinch-to-Zoom
   private onWheelHandler = (e: WheelEvent): void => {
     e.preventDefault();
-    this.targetDistance = Math.max(6.5, Math.min(42.0, this.targetDistance + e.deltaY * 0.025));
+    let delta = 0;
+    if (e.ctrlKey) {
+      // Trackpad pinch-to-zoom (deltaY typically small 1-5)
+      delta = e.deltaY * 0.18;
+    } else if (Math.abs(e.deltaY) < 40) {
+      // Smooth 2-finger trackpad scroll
+      delta = e.deltaY * 0.08;
+    } else {
+      // Discrete mouse scroll wheel step
+      delta = Math.sign(e.deltaY) * 2.5;
+    }
+    this.targetDistance = Math.max(6.5, Math.min(42.0, this.targetDistance + delta));
   };
 
   private setupPointerRaycaster(): void {
+    const el = this.renderer?.domElement || this.container;
     this.container.style.touchAction = 'none';
     if (this.renderer?.domElement) {
       this.renderer.domElement.style.touchAction = 'none';
     }
-    this.container.addEventListener('pointerdown', this.onPointerDownHandler, { passive: false });
-    window.addEventListener('pointermove', this.onPointerMoveHandler, { passive: false });
+
+    // Native mobile touch events
+    el.addEventListener('touchstart', this.onTouchStart, { passive: false });
+    el.addEventListener('touchmove', this.onTouchMove, { passive: false });
+    el.addEventListener('touchend', this.onTouchEnd, { passive: false });
+    el.addEventListener('touchcancel', this.onTouchCancel, { passive: false });
+
+    // Desktop pointer events
+    this.container.addEventListener('pointerdown', this.onPointerDownHandler);
+    window.addEventListener('pointermove', this.onPointerMoveHandler);
     window.addEventListener('pointerup', this.onPointerUpHandler);
     window.addEventListener('pointercancel', this.onPointerCancelHandler);
+
+    // Mouse wheel & trackpad zoom
     this.container.addEventListener('wheel', this.onWheelHandler, { passive: false });
   }
 
@@ -2463,6 +2547,13 @@ export class OfficeStage {
     this.isDestroyed = true;
     if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
     window.removeEventListener('resize', this.onResize);
+
+    const el = this.renderer?.domElement || this.container;
+    el.removeEventListener('touchstart', this.onTouchStart);
+    el.removeEventListener('touchmove', this.onTouchMove);
+    el.removeEventListener('touchend', this.onTouchEnd);
+    el.removeEventListener('touchcancel', this.onTouchCancel);
+
     this.container.removeEventListener('pointerdown', this.onPointerDownHandler);
     window.removeEventListener('pointermove', this.onPointerMoveHandler);
     window.removeEventListener('pointerup', this.onPointerUpHandler);

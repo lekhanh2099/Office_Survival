@@ -185,8 +185,8 @@ export function mountShiftHUD(host: HTMLElement): void {
 
     <!-- Right Control Rail: Radar + Sleek Vertical Icon Action Tools (Zero Overlap!) -->
     <aside class="shiftRightRail">
-      <!-- Circular Mini Radar -->
-      <div class="shiftMiniRadar" title="Radar khuôn viên dệt may">
+      <!-- Circular Mini Radar (Interactive Map & Fast Travel) -->
+      <div class="shiftMiniRadar" id="hudMiniRadar" data-act="open_campus_map" title="🗺️ Chạm để mở Bản Đồ Toàn Khu & Fast Travel">
         <div class="radarQuadrant q1" title="Văn Phòng">VP</div>
         <div class="radarQuadrant q2" title="Lab Màu">LAB</div>
         <div class="radarQuadrant q3" title="Kho Vải">KHO</div>
@@ -199,10 +199,17 @@ export function mountShiftHUD(host: HTMLElement): void {
         <div class="radarPlayerDot" id="hudPlayerDot"></div>
         <!-- Boss Dot (Red) -->
         <div class="radarBossDot" id="hudBossDot"></div>
+
+        <div class="radarTapLabel">🗺️ BẢN ĐỒ</div>
       </div>
 
       <!-- Vertical Icon Tool Stack (32px circular buttons) -->
       <div class="shiftToolStack">
+        <!-- Campus Map & Fast Travel Modal Button -->
+        <button class="shiftRailBtn" id="hudMapBtn" data-act="open_campus_map" type="button" title="Mở bản đồ toàn khu dệt may (Fast Travel)">
+          🗺️
+        </button>
+
         <!-- Camera Toggle: Bám Sát / Toàn Cảnh -->
         <button class="shiftRailBtn" id="hudCamBtn" data-act="toggle_camera" type="button" title="Chuyển đổi góc máy: Bám Sát Chibi / Toàn Cảnh">
           🎥

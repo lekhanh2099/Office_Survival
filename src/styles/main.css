@@ -1820,18 +1820,44 @@ p {
 /* Mini Radar */
 .shiftMiniRadar {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: #0f172a;
   border: 2px solid #6366f1;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 3px 10px rgba(99, 102, 241, 0.45);
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
   overflow: hidden;
-  pointer-events: none;
+  pointer-events: auto !important;
+  cursor: pointer;
   flex-shrink: 0;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.shiftMiniRadar:hover,
+.shiftMiniRadar:active {
+  transform: scale(1.08);
+  border-color: #facc15;
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.65);
+}
+
+.radarTapLabel {
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.92);
+  color: #fde047;
+  font-size: 6px;
+  font-weight: 900;
+  padding: 1px 3px;
+  border-radius: 3px;
+  white-space: nowrap;
+  pointer-events: none;
+  border: 0.5px solid rgba(250, 204, 21, 0.5);
+  letter-spacing: 0.2px;
 }
 
 .radarQuadrant {
