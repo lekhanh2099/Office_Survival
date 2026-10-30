@@ -256,8 +256,8 @@ document.addEventListener('click', (ev) => {
     case 'start':
       if (loadGameState() && !confirm('Bắt đầu run mới? Tiến trình cũ sẽ bị thay thế.')) return;
       sounds.click();
-      openRoleSelectionModal(HOST, (roleId, name) => {
-        engine.newRun(roleId, name);
+      openRoleSelectionModal(HOST, (roleId, name, traitId) => {
+        engine.newRun(roleId, name, '🐱📱', traitId);
       });
       break;
     case 'continue': {
@@ -266,8 +266,8 @@ document.addEventListener('click', (ev) => {
       if (saved) {
         engine.setState(saved);
       } else {
-        openRoleSelectionModal(HOST, (roleId, name) => {
-          engine.newRun(roleId, name);
+        openRoleSelectionModal(HOST, (roleId, name, traitId) => {
+          engine.newRun(roleId, name, '🐱📱', traitId);
         });
       }
       break;
@@ -280,8 +280,8 @@ document.addEventListener('click', (ev) => {
       break;
     case 'restart':
       sounds.click();
-      openRoleSelectionModal(HOST, (roleId, name) => {
-        engine.newRun(roleId, name);
+      openRoleSelectionModal(HOST, (roleId, name, traitId) => {
+        engine.newRun(roleId, name, '🐱📱', traitId);
       });
       break;
     case 'end_turn':

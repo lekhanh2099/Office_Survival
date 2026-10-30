@@ -41,10 +41,11 @@ export class GameEngine {
     this.onStateChange(this.state);
   }
 
-  newRun(roleId = 'genz', playerName = 'Nhân Viên Gương Mẫu', avatar = '🐱📱'): void {
+  newRun(roleId = 'genz', playerName = 'Nhân Viên Gương Mẫu', avatar = '🐱📱', traitId = 'sassy'): void {
     const role = ROLES[roleId] || ROLES.genz;
     this.state = createInitialState();
     this.state.role = role.id;
+    this.state.trait = traitId;
     this.state.playerName = playerName;
     this.state.avatar = avatar;
     this.state.e = role.initE;
@@ -205,6 +206,10 @@ export class GameEngine {
     if (choice.roll) {
       let bonus = this.hasPerk('power_strip') ? 0.15 : 0;
       if (this.state.role === 'sales') bonus += 0.15;
+      if (this.state.trait === 'gambler') bonus += 0.15;
+      if (this.hasPerk('magic_tape') && /aql|kiểm|qc|soi|thước/i.test(cardObj.title + ' ' + cardObj.id)) bonus += 0.20;
+      if (this.hasPerk('cat_lai_vip') && /cát lái|hãng tàu|cảng|cont/i.test(cardObj.title + ' ' + cardObj.id)) bonus += 0.25;
+
       const chance = Math.min(0.95, choice.roll.chance + bonus);
       const win = this.rng.next() < chance;
       const part = win ? choice.roll.win : choice.roll.lose;
@@ -217,6 +222,27 @@ export class GameEngine {
         sounds.success();
       } else {
         sounds.fail();
+      }
+    }
+
+    // Trait Buffs
+    if (this.state.trait === 'sassy') {
+      const isSassy = /cãi|đàm phán|giải thích|ranh giới|từ chối|hẹn|thuyết phục|chốt|quy chuẩn|chứng minh/i.test(choice.label + ' ' + choice.hint);
+      if (isSassy && this.state.r < 5) {
+        this.state.r = Math.min(5, this.state.r + 1);
+        failureNotes.push('🦹 Tính cách [Lươn Chúa Bật Sếp]: Đàm phán đanh thép, +1 Uy Tín (⭐ +1)!');
+      }
+    } else if (this.state.trait === 'delegator') {
+      const isDelegating = /đổ|né|trốn|chuyền|thực tập|phụ|nhờ|bỏ|quên|vịt|tiền cúng/i.test(choice.label + ' ' + choice.hint);
+      if (isDelegating && this.state.b > 0) {
+        this.state.b = Math.max(0, this.state.b - 1);
+        failureNotes.push('🦥 Tính cách [Bậc Thầy Đùn Đẩy]: Đùn việc trót lọt, giảm thêm 1 Việc Tồn (📋 -1)!');
+      }
+    } else if (this.state.trait === 'boba_addict') {
+      const isFood = /trà sữa|cà phê|bánh mì|ăn|uống|buffet/i.test(choice.label + ' ' + cardObj.title);
+      if (isFood && this.state.e < 10) {
+        this.state.e = Math.min(10, this.state.e + 2);
+        failureNotes.push('🧋 Tính cách [Tâm Hồn Nghiện Trà Sữa]: Nạp đường hồi thêm 2 Năng Lượng (⚡ +2)!');
       }
     }
 
@@ -408,6 +434,9 @@ export class GameEngine {
     let energyRecover = this.hasPerk('thermos') ? 5 : 4;
     if (this.state.role === 'genz') energyRecover = Math.max(energyRecover, 5);
     this.state.e = Math.min(10, this.state.e + energyRecover);
+    if (this.hasPerk('sewing_oil')) {
+      this.state.b = Math.max(0, this.state.b - 1);
+    }
     this.state.modifier = this.state.day <= 2 ? 'normal' : this.rng.pick(MODIFIERS).id;
     this.state.dailyStart = { lives: this.state.lives, e: this.state.e, b: this.state.b, r: this.state.r, score: this.state.score };
     this.prepare();

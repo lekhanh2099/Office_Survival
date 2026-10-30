@@ -131,6 +131,7 @@ export interface GameState {
   perks: string[];
   deathReason: string;
   role?: string;
+  trait?: string;
   playerName?: string;
   avatar?: string;
   lastTurnLostLife?: boolean;

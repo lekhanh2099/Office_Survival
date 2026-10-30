@@ -111,7 +111,8 @@ export function createInitialState(seed?: number): GameState {
     maxDay: 0,
     triggerCount: 0,
     perks: [],
-    deathReason: ''
+    deathReason: '',
+    trait: 'sassy'
   };
 }
 

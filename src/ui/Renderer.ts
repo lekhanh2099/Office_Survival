@@ -3,6 +3,7 @@ import { CARDS } from '../data/cards';
 import { ALL_PERKS } from '../data/perks';
 import { MODIFIERS } from '../data/modifiers';
 import { ROLES } from '../data/roles';
+import { ALL_TRAITS } from '../data/traits';
 import { TIMES } from '../core/GameEngine';
 import { getDiscoveredCards, getHighScores, loadGameState } from '../core/GameState';
 
@@ -23,6 +24,7 @@ function meter(val: number, max: number, color: string): string {
 export function renderHUD(state: GameState): string {
   const m = MODIFIERS.find(mod => mod.id === state.modifier) || MODIFIERS[0];
   const role = ROLES[state.role || 'genz'] || ROLES.genz;
+  const trait = ALL_TRAITS.find(t => t.id === state.trait) || ALL_TRAITS[0];
   const maxB = state.role === 'senior' ? 9 : 8;
   const eDanger = state.e <= 2 ? ' dangerPulse' : '';
   const bDanger = state.b >= (maxB - 2) ? ' dangerPulse' : '';
@@ -35,9 +37,10 @@ export function renderHUD(state: GameState): string {
 
   return `<div class="screenHeader">
     <div>
-      <div class="eyebrow" style="display:flex;align-items:center;gap:6px">
-        <span>Sinh tồn chốn công sở</span>
+      <div class="eyebrow" style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+        <span>Sinh tồn Dệt May &amp; XNK</span>
         <span style="background:#e0dcfe;color:#433299;font-weight:900;padding:1px 6px;border-radius:4px;font-size:10px">${role.emoji} ${esc(role.name)}</span>
+        <span style="background:#fef3c7;color:#b45309;font-weight:900;padding:1px 6px;border-radius:4px;font-size:10px" title="${esc(trait.buff)}">${trait.emoji} ${esc(trait.name)}</span>
       </div>
       <div class="dayName">NGÀY ${String(state.day).padStart(2, '0')}</div>
       <div class="daySub">Lượt ${Math.min(state.turn + 1, 8)}/8 · Trụ càng lâu điểm càng cao</div>
@@ -195,15 +198,15 @@ export function renderDay(state: GameState): string {
   const hasThermos = ownedPerks.includes('thermos');
 
   return `<section class="panel">
-    <div class="eyebrow">ĐÃ QUA 18:00, VẪN CÒN SỐNG</div>
-    <div class="emojiLarge" style="font-size:72px;text-align:center">🏃‍♂️💼</div>
-    <h2>Tan ca thành công.<br>Ngày mai tính tiếp.</h2>
-    <div class="badgeText">🏆 NHÂN VIÊN CHƯA BỊ SA THẢI</div>
+    <div class="eyebrow" style="color:#15803d">🎉 SỐNG SÓT QUA NGÀY ${state.day}!</div>
+    <div class="emojiLarge" style="font-size:64px;text-align:center;margin:4px 0">🏃‍♂️🚢✨</div>
+    <h2 style="margin:2px 0 6px">HẠ BÃI THÀNH CÔNG.<br>NGÀY MAI CHIẾN TIẾP!</h2>
+    <div class="badgeText" style="transform:none;margin-bottom:10px">🏆 CHIẾN THẦN XUẤT NHẬP KHẨU</div>
     <div class="summaryGrid">
       <div class="summaryBox">Đã vượt qua<strong>${state.day} ngày</strong></div>
       <div class="summaryBox">Điểm run<strong>${state.score.toLocaleString('vi-VN')}</strong></div>
       <div class="summaryBox">Mạng còn<strong>${state.lives}/3</strong></div>
-      <div class="summaryBox">Việc tồn<strong>${state.b}/8</strong></div>
+      <div class="summaryBox">Việc tồn<strong>${state.b}/${state.role === 'senior' ? 9 : 8}</strong></div>
     </div>
     <div class="statusBrief">
       ${z.notes.map(t => `<div>• ${esc(t)}</div>`).join('')}
@@ -211,7 +214,7 @@ export function renderDay(state: GameState): string {
     </div>
     ${perkChoices.length ? `
       <div class="divider"></div>
-      <div class="eyebrow" style="margin-bottom:8px">🎁 PHÚC LỢI CHO NGÀY MAI (CHỌN 1)</div>
+      <div class="eyebrow" style="margin-bottom:8px;color:#b45309">🎁 THƯỞNG NÓNG PHÚC LỢI (CHỌN 1 MANG THEO):</div>
       <div class="perkSelection">
         ${perkChoices.map(p => `
           <button class="perkCard" type="button" data-perk="${esc(p.id)}">
@@ -220,7 +223,7 @@ export function renderDay(state: GameState): string {
           </button>
         `).join('')}
       </div>
-      <button class="secondary" data-act="nextday" style="margin-top:6px">Bỏ qua & Đi làm ngay ☀️</button>
+      <button class="secondary" data-act="nextday" style="margin-top:6px">Bỏ qua &amp; Đi làm ngay ☀️</button>
     ` : `
       <div style="height:17px"></div>
       <button class="primary" data-act="nextday">☀️ ĐI LÀM NGÀY TIẾP THEO →</button>

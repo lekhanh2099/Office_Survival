@@ -935,27 +935,73 @@ p {
   border: var(--border);
   box-shadow: var(--shadow);
   border-radius: 20px;
-  padding: 16px;
-  max-width: 460px;
+  padding: 0;
+  max-width: 480px;
   width: 100%;
   max-height: 88dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.dialog:not(:has(.dialogBody)) {
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.dialogHeader {
+  padding: 14px 18px 10px;
+  border-bottom: 2px solid var(--ink);
+  background: #fcfaff;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.dialogHeader h2 {
+  margin: 0 0 3px;
+  font-size: 19px;
+  line-height: 1.25;
+}
+
+.dialogHeader .note {
+  margin: 0;
+  font-size: 11.5px;
+  color: #6b6782;
+}
+
+.dialogBody {
+  flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+  padding: 14px 18px;
   scrollbar-width: thin;
-  scrollbar-color: var(--purple) transparent;
+  scrollbar-color: var(--purple) #f3f0ff;
+  -webkit-overflow-scrolling: touch;
 }
 
-.dialog::-webkit-scrollbar {
-  width: 5px;
+.dialogBody::-webkit-scrollbar {
+  width: 6px;
 }
 
-.dialog::-webkit-scrollbar-thumb {
+.dialogBody::-webkit-scrollbar-thumb {
   background: var(--purple);
   border-radius: 10px;
 }
 
-.dialog::-webkit-scrollbar-track {
-  background: transparent;
+.dialogBody::-webkit-scrollbar-track {
+  background: #f3f0ff;
+  border-radius: 10px;
+}
+
+.dialogFooter {
+  padding: 10px 18px 14px;
+  border-top: 2px solid var(--ink);
+  background: #fcfaff;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
 }
 
 .dialog p {
