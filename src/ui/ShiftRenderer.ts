@@ -64,6 +64,7 @@ let lastBossZ = -999;
 let lastEnergyColor = '';
 let lastTargetStation = '';
 let cachedInteractionMode = '';
+let lastTaskIsCrisis = false;
 
 export function getCachedInteractionMode(): 'auto_work' | 'card' {
   if (!cachedInteractionMode) {
@@ -99,6 +100,7 @@ export function mountShiftHUD(host: HTMLElement): void {
   lastBossZ = -999;
   lastEnergyColor = '';
   lastTargetStation = '';
+  lastTaskIsCrisis = false;
 
   host.innerHTML = `
     <!-- Top Status Ribbon (Single sleek integrated row across top) -->
@@ -129,7 +131,7 @@ export function mountShiftHUD(host: HTMLElement): void {
 
       <div class="ribbonOrders" title="Đơn hàng đã xuất">
         <span class="orderIcon">📦</span>
-        <span class="orderCount" id="hudOrders">0/3</span>
+        <span class="orderCount" id="hudOrders">0/5</span>
       </div>
 
       <!-- Quick Shift Help Guide Button -->
@@ -138,30 +140,40 @@ export function mountShiftHUD(host: HTMLElement): void {
       </button>
     </header>
 
-    <!-- Main Interactive Quest & Supply Chain Stepper Banner (Clickable to Auto-Navigate) -->
-    <div class="shiftQuestBanner" id="hudQuestBanner" data-act="auto_walk_to_quest" title="Bấm để Chibi tự động chạy tới mục tiêu">
+    <!-- Main Interactive Quest & Supply Chain Stepper Banner (Clickable & Collapsible) -->
+    <div class="shiftQuestBanner" id="hudQuestBanner">
       <div class="questBannerTop">
-        <div class="questTagRow">
+        <div class="questTagRow" data-act="auto_walk_to_quest" title="Bấm để Chibi tự chạy đến mục tiêu">
           <span class="questZoneBadge" id="hudZoneBadge">🏢 VĂN PHÒNG</span>
           <span class="questOrderName" id="hudOrderName">ĐƠN HÀNG</span>
         </div>
-        <span class="questAutoNavBadge">⚡ Tự chạy ➔</span>
+        <div class="questTopRightActions">
+          <button class="questAutoNavBadge" id="hudAutoNavBtn" data-act="auto_walk_to_quest" type="button" title="Chibi tự chạy đến mục tiêu">
+            ⚡ Tự chạy ➔
+          </button>
+          <button class="questCollapseBtn" id="hudQuestCollapseBtn" data-act="toggle_quest_collapse" type="button" title="Thu gọn / Mở rộng bảng nhiệm vụ">
+            <span id="questCollapseArrow">▲</span>
+          </button>
+        </div>
       </div>
 
-      <!-- 5-Step Supply Chain Flow Stepper -->
-      <div class="questFlowStepper" id="hudQuestStepper">
-        <div class="flowStepItem" data-step="desk_receive"><span class="stepIcon">💻</span>1. Nhận Đơn</div>
-        <div class="flowArrow">›</div>
-        <div class="flowStepItem" data-step="printer_techpack"><span class="stepIcon">🖨️</span>2. In Techpack</div>
-        <div class="flowArrow">›</div>
-        <div class="flowStepItem" data-step="lab_check"><span class="stepIcon">🔬</span>3. Soi Lab</div>
-        <div class="flowArrow">›</div>
-        <div class="flowStepItem" data-step="fabric_pick"><span class="stepIcon">🧵</span>4. Lấy Vải</div>
-        <div class="flowArrow">›</div>
-        <div class="flowStepItem" data-step="shipping_deliver"><span class="stepIcon">🚢</span>5. Xuất Cảng</div>
-      </div>
+      <!-- Collapsible Body (5-Step Stepper + Instruction Text) -->
+      <div class="questCollapsibleBody" id="hudQuestCollapsibleBody" data-act="auto_walk_to_quest" title="Bấm để Chibi tự chạy đến mục tiêu">
+        <!-- 5-Step Supply Chain Flow Stepper -->
+        <div class="questFlowStepper" id="hudQuestStepper">
+          <div class="flowStepItem" data-step="desk_receive"><span class="stepIcon">💻</span>1. Nhận Đơn</div>
+          <div class="flowArrow">›</div>
+          <div class="flowStepItem" data-step="printer_techpack"><span class="stepIcon">🖨️</span>2. In Techpack</div>
+          <div class="flowArrow">›</div>
+          <div class="flowStepItem" data-step="lab_check"><span class="stepIcon">🔬</span>3. Soi Lab</div>
+          <div class="flowArrow">›</div>
+          <div class="flowStepItem" data-step="fabric_pick"><span class="stepIcon">🧵</span>4. Lấy Vải</div>
+          <div class="flowArrow">›</div>
+          <div class="flowStepItem" data-step="shipping_deliver"><span class="stepIcon">🚢</span>5. Xuất Cảng</div>
+        </div>
 
-      <div class="questInstruction" id="hudQuestText">Nhiệm vụ đang tải...</div>
+        <div class="questInstruction" id="hudQuestText">Nhiệm vụ đang tải...</div>
+      </div>
     </div>
 
     <!-- Right Control Rail: Radar + Sleek Vertical Icon Action Tools (Zero Overlap!) -->
@@ -341,21 +353,59 @@ export function updateShiftHUD(host: HTMLElement, state: ShiftState, stage?: Off
     if (hudCache.questText) hudCache.questText.textContent = state.currentTask.stepDescription;
   }
 
-  if (state.currentTask.step !== lastTaskStep) {
+  const isCrisis = Boolean(state.currentTask.isCrisis);
+  if (state.currentTask.step !== lastTaskStep || isCrisis !== lastTaskIsCrisis) {
     lastTaskStep = state.currentTask.step;
-    const steps = ['desk_receive', 'printer_techpack', 'lab_check', 'fabric_pick', 'shipping_deliver'];
-    const curIdx = steps.indexOf(lastTaskStep);
+    lastTaskIsCrisis = isCrisis;
+
+    const bannerEl = host.querySelector('#hudQuestBanner');
+    if (bannerEl) {
+      if (isCrisis) {
+        bannerEl.classList.add('isCrisis');
+      } else {
+        bannerEl.classList.remove('isCrisis');
+      }
+    }
+
+    if (hudCache.zoneBadge) {
+      if (isCrisis) {
+        hudCache.zoneBadge.textContent = '🚨 KHẨN CẤP';
+        hudCache.zoneBadge.style.background = '#ef4444';
+      } else {
+        hudCache.zoneBadge.style.background = '#3b82f6';
+      }
+    }
+
     if (hudCache.questStepper) {
-      const items = hudCache.questStepper.querySelectorAll('.flowStepItem');
-      items.forEach((item, idx) => {
-        if (idx < curIdx) {
-          item.className = 'flowStepItem stepCompleted';
-        } else if (idx === curIdx) {
-          item.className = 'flowStepItem stepActive';
-        } else {
-          item.className = 'flowStepItem stepUpcoming';
-        }
-      });
+      if (isCrisis) {
+        hudCache.questStepper.innerHTML = `
+          <div class="flowStepItem crisisActive"><span class="stepIcon">🚨</span>Khủng Hoảng Khẩn Cấp: Khắc Phục Ngay!</div>
+        `;
+      } else {
+        hudCache.questStepper.innerHTML = `
+          <div class="flowStepItem" data-step="desk_receive"><span class="stepIcon">💻</span>1. Nhận Đơn</div>
+          <div class="flowArrow">›</div>
+          <div class="flowStepItem" data-step="printer_techpack"><span class="stepIcon">🖨️</span>2. In Techpack</div>
+          <div class="flowArrow">›</div>
+          <div class="flowStepItem" data-step="lab_check"><span class="stepIcon">🔬</span>3. Soi Lab</div>
+          <div class="flowArrow">›</div>
+          <div class="flowStepItem" data-step="fabric_pick"><span class="stepIcon">🧵</span>4. Lấy Vải</div>
+          <div class="flowArrow">›</div>
+          <div class="flowStepItem" data-step="shipping_deliver"><span class="stepIcon">🚢</span>5. Xuất Cảng</div>
+        `;
+        const steps = ['desk_receive', 'printer_techpack', 'lab_check', 'fabric_pick', 'shipping_deliver'];
+        const curIdx = steps.indexOf(lastTaskStep);
+        const items = hudCache.questStepper.querySelectorAll('.flowStepItem');
+        items.forEach((item, idx) => {
+          if (idx < curIdx) {
+            item.className = 'flowStepItem stepCompleted';
+          } else if (idx === curIdx) {
+            item.className = 'flowStepItem stepActive';
+          } else {
+            item.className = 'flowStepItem stepUpcoming';
+          }
+        });
+      }
     }
   }
 
@@ -456,13 +506,13 @@ export function updateShiftHUD(host: HTMLElement, state: ShiftState, stage?: Off
 }
 
 export function renderShiftFinishModal(state: ShiftState): string {
-  let quote = 'Mr. David (Buyer New York): "Outstanding! 3 đơn hàng may chuẩn form, lab-dip màu D65 xuất sắc, cont hàng lên tàu đúng hạn!"';
+  let quote = 'Mr. David (Buyer New York): "Outstanding! 5 đơn hàng may chuẩn form, lab-dip màu D65 xuất sắc, xử lý sự cố khẩn cấp thần tốc, cont hàng lên tàu đúng hạn!"';
   let badgeColor = '#22c55e';
 
   if (state.grade === 'S') {
-    quote = 'Sếp Hùng: "Chiến thần Merchandiser thực thụ! Xuyên suốt cả xưởng cắt lẫn kho vải không phạm một sai lầm nào!"';
+    quote = 'Sếp Hùng: "Chiến thần Merchandiser thực thụ! 5 đơn hàng xuất xưởng hoàn hảo, dập tắt 4 cuộc khủng hoảng mà không phạm một sai lầm nào!"';
     badgeColor = '#eab308';
-  } else if (state.grade === 'C' || state.grade === 'F') {
+  } else if (state.grade === 'C' || state.grade === 'D' || state.grade === 'F') {
     quote = 'Chị Nga Kế Toán: "Suýt nữa là trễ Closing time cảng Cát Lái và thất thoát vải thun nhé! Mai phải chạy việc nhanh hơn!"';
     badgeColor = '#f97316';
   }

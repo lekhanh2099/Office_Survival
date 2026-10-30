@@ -6,10 +6,11 @@ export interface ShiftTask {
   id: string;
   orderName: string;
   client: string;
-  step: 'desk_receive' | 'printer_techpack' | 'lab_check' | 'fabric_pick' | 'shipping_deliver';
+  step: 'desk_receive' | 'printer_techpack' | 'lab_check' | 'fabric_pick' | 'shipping_deliver' | 'emergency_crisis';
   stepDescription: string;
-  targetStation: 'desk' | 'printer' | 'lab' | 'fabric' | 'shipping';
+  targetStation: string;
   targetZone: string;
+  isCrisis?: boolean;
 }
 
 export interface ShiftState {
@@ -25,7 +26,7 @@ export interface ShiftState {
   currentTask: ShiftTask;
   activePrompt: string | null;
   currentZone: string;
-  grade?: 'S' | 'A' | 'B' | 'C' | 'F';
+  grade?: 'S' | 'A' | 'B' | 'C' | 'D' | 'F';
 }
 
 export class ShiftGameEngine {
@@ -42,7 +43,8 @@ export class ShiftGameEngine {
     { orderName: '500 Áo Polo Navy Xuất Mỹ', client: 'Mr. David (New York)' },
     { orderName: '1.200 Quần Khaki Xuất EU', client: 'Buyer Hamburg' },
     { orderName: '800 Áo Hoodie Nỉ Bông', client: 'Khách Seoul' },
-    { orderName: '3.000 Bộ Đồ Thun Spandex', client: 'Buyer Tokyo' }
+    { orderName: '3.000 Bộ Đồ Thun Spandex', client: 'Buyer Tokyo' },
+    { orderName: '5.000 Áo Khoác Gió Chống Nước VIP', client: 'Zara Madrid' }
   ];
 
   constructor(stage: OfficeStage, day = 1, onStateChange: (state: ShiftState) => void = () => {}) {
@@ -57,7 +59,7 @@ export class ShiftGameEngine {
       energy: 100,
       stress: 10,
       ordersCompleted: 0,
-      targetOrders: 3,
+      targetOrders: 5,
       score: 0,
       currentTask: this.createNewTask(0),
       activePrompt: null,
@@ -74,7 +76,21 @@ export class ShiftGameEngine {
       step: 'desk_receive',
       stepDescription: `Đến BÀN MERCHANDISER nhận hợp đồng: "${o.orderName}"`,
       targetStation: 'desk',
-      targetZone: 'Văn Phòng Điều Hành'
+      targetZone: 'Văn Phòng Điều Hành',
+      isCrisis: false
+    };
+  }
+
+  private createCrisisTask(id: string, orderName: string, targetStation: string, targetZone: string, stepDescription: string): ShiftTask {
+    return {
+      id,
+      orderName,
+      client: 'SỰ CỐ NỘI BỘ',
+      step: 'emergency_crisis',
+      stepDescription,
+      targetStation,
+      targetZone,
+      isCrisis: true
     };
   }
 
@@ -87,9 +103,9 @@ export class ShiftGameEngine {
 
     this.state.currentZone = this.stage.currentZoneName;
 
-    // 1. Clock Progression (9:00 -> 17:00 in ~240s)
+    // 1. Clock Progression (9:00 -> 17:00 in ~336s, approx 5.6 mins)
     this.clockTimer += delta;
-    if (this.clockTimer >= 0.50) {
+    if (this.clockTimer >= 0.70) {
       this.clockTimer = 0;
       this.state.timeMinute += 1;
       if (this.state.timeMinute >= 60) {
@@ -178,6 +194,12 @@ export class ShiftGameEngine {
   }
 
   private getPromptActionText(type: Workstation['type']): string {
+    if (this.state.currentTask.isCrisis && type === this.state.currentTask.targetStation) {
+      if (type === 'server') return 'Khởi Động Lại Server IT 🖥️';
+      if (type === 'lab') return 'Hiệu Chỉnh Màu Vải Lab 🔬';
+      if (type === 'whiteboard') return 'Báo Cáo Đoàn VIP Boardroom 📊';
+      if (type === 'fabric') return 'Đối Chiếu Sổ Sách Kho Vải 📑';
+    }
     switch (type) {
       case 'desk': return 'Nhận Đơn Hàng Mới 💻';
       case 'printer': return 'In Bảng Techpack 🖨️';
@@ -204,7 +226,10 @@ export class ShiftGameEngine {
     let desc = '';
     let buttonText = '🚀 LÀM VIỆC NGAY';
 
-    if (st.type === 'coffee') {
+    if (this.state.currentTask.isCrisis && isTarget) {
+      desc = `🚨 SỰ CỐ KHẨN CẤP: ${this.state.currentTask.stepDescription}. Hãy xử lý ngay để giữ tiến độ xuất hàng!`;
+      buttonText = `🚨 KHẮC PHỤC NGAY (+180 đ)`;
+    } else if (st.type === 'coffee') {
       desc = 'Pha 1 ly cà phê phin hoặc trà sữa trân châu full topping: Hồi phục +50% Năng Lượng ⚡, xả -15% Stress 🔥 và bật tốc chạy trong 9 giây!';
       buttonText = '☕ PHA CÀ PHÊ (+50% ⚡)';
     } else if (st.type === 'altar') {
@@ -352,6 +377,37 @@ export class ShiftGameEngine {
 
     // Task progression check
     const task = this.state.currentTask;
+
+    // Handle Active Emergency Crisis
+    if (task.isCrisis && task.step === 'emergency_crisis') {
+      if (activeSt.type === task.targetStation) {
+        sounds.success();
+        this.state.score += 180;
+        this.state.stress = Math.max(0, this.state.stress - 25);
+        this.state.energy = Math.min(100, this.state.energy + 20);
+
+        let resMsg = '🎉 ĐÃ XỬ LÝ SỰ CỐ KHẨN CẤP THÀNH CÔNG! (+180 điểm KPI, -25% Stress)';
+        if (task.id === 'crisis_server') {
+          resMsg = '🟢 ĐÃ KHỞI ĐỘNG LẠI SERVER IT! ERP hoạt động ổn định, xuất hóa đơn thông suốt! (+180 đ)';
+        } else if (task.id === 'crisis_lab') {
+          resMsg = '🔬 ĐÃ HIỆU CHỈNH CÔNG THỨC NHUỘM! Sắc tố Navy đạt chuẩn Delta E 0.2! (+180 đ)';
+        } else if (task.id === 'crisis_boardroom') {
+          resMsg = '📊 THUYẾT TRÌNH XUẤT SẮC! Ban Giám Đốc và Buyer Mỹ vỗ tay khen ngợi! (+180 đ)';
+        } else if (task.id === 'crisis_inventory') {
+          resMsg = '📑 ĐÃ ĐỐI CHIẾU SỔ SÁCH! Tìm thấy 500m vải lót ở kho dự phòng! (+180 đ)';
+        }
+
+        showToast(resMsg);
+        this.state.currentTask = this.createNewTask(this.state.ordersCompleted);
+        this.sync();
+        return;
+      } else {
+        sounds.click();
+        showToast(`🚨 ĐANG CÓ SỰ CỐ KHẨN CẤP! Cần đến: ${task.targetZone.toUpperCase()} (${task.targetStation.toUpperCase()}) trước!`);
+        return;
+      }
+    }
+
     if (activeSt.type !== task.targetStation) {
       sounds.click();
       showToast(`⚠️ Cần đến: ${task.targetZone.toUpperCase()} (${task.targetStation.toUpperCase()}) trước!`);
@@ -404,11 +460,55 @@ export class ShiftGameEngine {
       this.state.score += 200;
       this.state.stress = Math.max(0, this.state.stress - 20);
 
-      showToast(`🎉 XUẤT XƯỞNG THÀNH CÔNG ĐƠN HÀNG #${this.state.ordersCompleted}! (+200 điểm)`);
+      showToast(`🎉 XUẤT XƯỞNG THÀNH CÔNG ĐƠN HÀNG #${this.state.ordersCompleted}/${this.state.targetOrders}! (+200 điểm)`);
 
       if (this.state.ordersCompleted >= this.state.targetOrders) {
         this.finishShift();
         return;
+      }
+
+      // Trigger one of the 4 Emergency Crises between orders!
+      const crisisIndex = this.state.ordersCompleted - 1; // 0, 1, 2, 3
+      if (crisisIndex === 0) {
+        this.state.currentTask = this.createCrisisTask(
+          'crisis_server',
+          '🚨 SẬP MẠNG NỘI BỘ IT',
+          'server',
+          'Khu Vực Kỹ Thuật',
+          '🚨 Máy chủ Server ERP quá tải! Chạy gấp đến TỦ SERVER (-21, 10) khởi động lại!'
+        );
+        sounds.perk();
+        showToast('🚨 BÁO ĐỘNG ĐỎ: Máy chủ ERP phòng IT sập! Chạy ngay đến phòng Server khắc phục!');
+      } else if (crisisIndex === 1) {
+        this.state.currentTask = this.createCrisisTask(
+          'crisis_lab',
+          '⚠️ LỆCH MÀU LAB DELTA E > 1.5',
+          'lab',
+          'Xưởng Cắt & Lab',
+          '⚠️ Mẫu vải nhuộm bị ánh vàng lệch D65! Chạy ngay đến PHÒNG LAB kiểm định lại công thức!'
+        );
+        sounds.perk();
+        showToast('⚠️ CẢNH BÁO: Mẫu vải nhuộm bị lệch màu! Chạy gấp sang Phòng Lab hiệu chỉnh!');
+      } else if (crisisIndex === 2) {
+        this.state.currentTask = this.createCrisisTask(
+          'crisis_boardroom',
+          '👔 SẾP HÙNG GỌI HỌP KHẨN',
+          'whiteboard',
+          'Phòng Họp VIP',
+          '👔 Đoàn Buyer Mỹ & Ban Giám Đốc bất ngờ tới! Chạy ngay vào PHÒNG HỌP báo cáo tiến độ!'
+        );
+        sounds.perk();
+        showToast('👔 SẾP HÙNG GỌI KHẨN: Đoàn Buyer Mỹ đến xưởng! Vào ngay Phòng Họp báo cáo!');
+      } else if (crisisIndex === 3) {
+        this.state.currentTask = this.createCrisisTask(
+          'crisis_inventory',
+          '📦 LỆCH TỒN KHO THỰC TẾ',
+          'fabric',
+          'Kho Vải Đại Ngàn',
+          '📦 Kho báo thiếu 500m vải lót! Chạy xuống BÀN KẾ TOÁN KHO VẢI đối chiếu sổ sách!'
+        );
+        sounds.perk();
+        showToast('📦 KHO BÁO ĐỘNG: Thiếu 500m vải lót! Chạy xuống Bàn Kế Toán Kho Vải kiểm tra!');
       } else {
         this.state.currentTask = this.createNewTask(this.state.ordersCompleted);
       }
@@ -420,14 +520,16 @@ export class ShiftGameEngine {
   private finishShift(): void {
     this.state.isFinished = true;
 
-    if (this.state.ordersCompleted >= 3 && this.state.stress <= 30) {
+    if (this.state.ordersCompleted >= 5 && this.state.stress <= 35) {
       this.state.grade = 'S';
-    } else if (this.state.ordersCompleted >= 2) {
+    } else if (this.state.ordersCompleted >= 4) {
       this.state.grade = 'A';
-    } else if (this.state.ordersCompleted >= 1) {
+    } else if (this.state.ordersCompleted >= 3) {
       this.state.grade = 'B';
-    } else {
+    } else if (this.state.ordersCompleted >= 2) {
       this.state.grade = 'C';
+    } else {
+      this.state.grade = 'D';
     }
 
     sounds.success();

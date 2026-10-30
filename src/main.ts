@@ -501,15 +501,30 @@ document.addEventListener('click', (ev) => {
     case 'zoom_in':
       if (shiftStage) {
         sounds.click();
-        shiftStage.zoomIn();
+        shiftStage.zoomIn(5.0);
+        showToast('🔍 Đã phóng to camera (gần hơn)!');
       }
       break;
     case 'zoom_out':
       if (shiftStage) {
         sounds.click();
-        shiftStage.zoomOut();
+        shiftStage.zoomOut(5.0);
+        showToast('🔍 Đã thu nhỏ camera (toàn cảnh)!');
       }
       break;
+    case 'toggle_quest_collapse': {
+      sounds.click();
+      const banner = document.getElementById('hudQuestBanner');
+      const arrow = document.getElementById('questCollapseArrow');
+      if (banner) {
+        const isCollapsed = banner.classList.toggle('isCollapsed');
+        if (arrow) {
+          arrow.textContent = isCollapsed ? '▼' : '▲';
+        }
+        showToast(isCollapsed ? 'Thu gọn bảng nhiệm vụ (rộng màn hình 3D)' : 'Mở rộng bảng nhiệm vụ');
+      }
+      break;
+    }
     case 'toggle_interaction_mode': {
       sounds.click();
       const current = getCachedInteractionMode();

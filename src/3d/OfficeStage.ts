@@ -223,6 +223,7 @@ export class OfficeStage {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.35;
+    this.renderer.domElement.style.touchAction = 'none';
     this.container.appendChild(this.renderer.domElement);
 
     // 3. Realistic Layered Lighting
@@ -1811,11 +1812,11 @@ export class OfficeStage {
     this.velocityPitch = 0;
   }
 
-  public zoomIn(amount = 3.0): void {
+  public zoomIn(amount = 4.5): void {
     this.targetDistance = Math.max(6.5, this.targetDistance - amount);
   }
 
-  public zoomOut(amount = 3.0): void {
+  public zoomOut(amount = 4.5): void {
     this.targetDistance = Math.min(42.0, this.targetDistance + amount);
   }
 
@@ -1859,9 +1860,13 @@ export class OfficeStage {
   };
 
   private onPointerDownHandler = (e: PointerEvent): void => {
-    if ((e.target as HTMLElement).closest('#joyPadArea, #joyActionBtn, .shiftTopRibbon, .shiftQuestBanner, .shiftMiniRadar, .shiftCamToggleBtn, #hudModeToggleBtn, #hudActionCard, .shiftCamToolbar, .shiftHudBtn')) {
+    if ((e.target as HTMLElement).closest('#joyPadArea, #joyActionBtn, .shiftTopRibbon, .shiftQuestBanner, .shiftMiniRadar, .shiftRightRail, #hudActionCard, #hudGestureTip')) {
       return;
     }
+
+    try {
+      (e.target as HTMLElement)?.setPointerCapture?.(e.pointerId);
+    } catch {}
 
     this.activePointers.set(e.pointerId, {
       x: e.clientX,
@@ -1886,12 +1891,13 @@ export class OfficeStage {
 
   private onPointerMoveHandler = (e: PointerEvent): void => {
     if (!this.activePointers.has(e.pointerId)) return;
+    e.preventDefault();
     const ptr = this.activePointers.get(e.pointerId)!;
 
     const dx = e.clientX - ptr.lastX;
     const dy = e.clientY - ptr.lastY;
     const totalDist = Math.hypot(e.clientX - ptr.startX, e.clientY - ptr.startY);
-    if (totalDist > 9) {
+    if (totalDist > 6) {
       ptr.moved = true;
     }
 
@@ -1902,15 +1908,15 @@ export class OfficeStage {
 
     if (this.activePointers.size === 1) {
       if (ptr.moved) {
-        if (this.dragMode === 'orbit' && this.cameraMode !== 'overview') {
+        if (this.dragMode === 'orbit') {
           // Orbit 360: Horizontal Azimuth + Vertical Pitch
-          this.targetAzimuth -= dx * 0.007;
-          this.targetPitch = Math.max(0.18, Math.min(1.42, this.targetPitch + dy * 0.005));
-          this.velocityAzimuth = -dx * 0.006;
-          this.velocityPitch = dy * 0.004;
+          this.targetAzimuth -= dx * 0.009;
+          this.targetPitch = Math.max(0.18, Math.min(1.42, this.targetPitch + dy * 0.006));
+          this.velocityAzimuth = -dx * 0.007;
+          this.velocityPitch = dy * 0.005;
         } else {
           // Pan camera along floor plane
-          const panSpeed = (this.camDistance / 18.0) * 0.038;
+          const panSpeed = (this.camDistance / 18.0) * 0.042;
           const cosA = Math.cos(this.camAzimuth);
           const sinA = Math.sin(this.camAzimuth);
           this.camPanOffset.x -= (dx * cosA - dy * -sinA) * panSpeed;
@@ -1927,15 +1933,15 @@ export class OfficeStage {
       const midX = (pts[0].x + pts[1].x) / 2;
       const midY = (pts[0].y + pts[1].y) / 2;
 
-      if (this.lastPinchDist !== null) {
+      if (this.lastPinchDist !== null && this.lastPinchMid !== null) {
         // Pinch Zoom
         const dDist = curDist - this.lastPinchDist;
-        this.targetDistance = Math.max(6.5, Math.min(42.0, this.targetDistance - dDist * 0.06));
+        this.targetDistance = Math.max(6.5, Math.min(42.0, this.targetDistance - dDist * 0.085));
 
         // Two-finger Pan
         const midDx = midX - this.lastPinchMid.x;
         const midDy = midY - this.lastPinchMid.y;
-        const panSpeed = (this.camDistance / 18.0) * 0.038;
+        const panSpeed = (this.camDistance / 18.0) * 0.042;
         const cosA = Math.cos(this.camAzimuth);
         const sinA = Math.sin(this.camAzimuth);
         this.camPanOffset.x -= (midDx * cosA - midDy * -sinA) * panSpeed;
@@ -1950,6 +1956,10 @@ export class OfficeStage {
   };
 
   private onPointerUpHandler = (e: PointerEvent): void => {
+    try {
+      (e.target as HTMLElement)?.releasePointerCapture?.(e.pointerId);
+    } catch {}
+
     if (!this.activePointers.has(e.pointerId)) return;
     const ptr = this.activePointers.get(e.pointerId)!;
     const dt = performance.now() - ptr.startTime;
@@ -1967,6 +1977,9 @@ export class OfficeStage {
   };
 
   private onPointerCancelHandler = (e: PointerEvent): void => {
+    try {
+      (e.target as HTMLElement)?.releasePointerCapture?.(e.pointerId);
+    } catch {}
     this.activePointers.delete(e.pointerId);
     if (this.activePointers.size < 2) {
       this.lastPinchDist = null;
@@ -1980,8 +1993,11 @@ export class OfficeStage {
 
   private setupPointerRaycaster(): void {
     this.container.style.touchAction = 'none';
-    this.container.addEventListener('pointerdown', this.onPointerDownHandler);
-    window.addEventListener('pointermove', this.onPointerMoveHandler);
+    if (this.renderer?.domElement) {
+      this.renderer.domElement.style.touchAction = 'none';
+    }
+    this.container.addEventListener('pointerdown', this.onPointerDownHandler, { passive: false });
+    window.addEventListener('pointermove', this.onPointerMoveHandler, { passive: false });
     window.addEventListener('pointerup', this.onPointerUpHandler);
     window.addEventListener('pointercancel', this.onPointerCancelHandler);
     this.container.addEventListener('wheel', this.onWheelHandler, { passive: false });
