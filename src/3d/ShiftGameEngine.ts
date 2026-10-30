@@ -151,6 +151,8 @@ export class ShiftGameEngine {
     if (activeSt) {
       if (activeSt.type === 'coffee') {
         this.state.activePrompt = '🧋 UỐNG TRÀ SỮA (Hồi Năng Lượng & Tăng Tốc)';
+      } else if (activeSt.type === 'altar') {
+        this.state.activePrompt = '🙏 THẮP HƯƠNG CẦU MAY (Xả Stress & Tăng KPI)';
       } else if (activeSt.type === this.state.currentTask.targetStation) {
         this.state.activePrompt = `⚡ BẤM ĐỂ: ${this.getPromptActionText(activeSt.type)}`;
       } else {
@@ -168,6 +170,7 @@ export class ShiftGameEngine {
       case 'lab': return 'Soi Màu Vải Lab-dip D65 🔬';
       case 'fabric': return 'Bốc Cuộn Vải Spandex 🧵';
       case 'shipping': return 'Giao Hàng Cho Anh Tuấn Lên Cont 🚢';
+      case 'altar': return 'Thắp Hương Cầu May 🙏';
       default: return 'Làm Việc';
     }
   }
@@ -195,6 +198,21 @@ export class ShiftGameEngine {
       }, 3500);
 
       showToast('🧋 Nạp Trà Sữa Full Top: Hồi phục +50% Năng Lượng & Bật Tốc Chạy 9s ⚡');
+      this.sync();
+      return;
+    }
+
+    // Bàn Thờ Thần Tài & Thổ Địa
+    if (activeSt.type === 'altar') {
+      if (this.state.stress <= 5 && this.state.energy >= 95) {
+        showToast('🙏 Tâm tịnh như nước, tài lộc đang đầy ắp! Tiếp tục chiến thôi!');
+        return;
+      }
+      sounds.perk();
+      this.state.energy = Math.min(100, this.state.energy + 25);
+      this.state.stress = Math.max(0, this.state.stress - 25);
+      this.state.score += 100;
+      showToast('🙏 Thần Tài - Thổ Địa phù hộ: Vía lành tài lộc, tâm hồn thanh thản! (+25% ⚡, -25% 🔥, +100 đ)');
       this.sync();
       return;
     }

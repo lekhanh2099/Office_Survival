@@ -408,6 +408,13 @@ document.addEventListener('click', (ev) => {
       engine.getState().stage = 'welcome';
       render();
       break;
+    case 'toggle_camera':
+      if (shiftStage) {
+        sounds.click();
+        const mode = shiftStage.toggleCameraMode();
+        showToast(mode === 'overview' ? '🎥 Góc máy Toàn Cảnh (Diorama Overview)!' : '🏃 Góc máy Bám Sát Chibi!');
+      }
+      break;
     case 'start':
       if (loadGameState() && !confirm('Bắt đầu run mới? Tiến trình cũ sẽ bị thay thế.')) return;
       sounds.click();

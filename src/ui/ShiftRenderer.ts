@@ -42,11 +42,37 @@ export function renderShiftHUD(state: ShiftState, stage?: OfficeStage): string {
     lab: [12, -10],
     fabric: [-14, 10],
     shipping: [14, 14],
-    coffee: [0, 0]
+    coffee: [0, 0],
+    altar: [-14, -20]
   };
   const targetC = stationCoords[state.currentTask.targetStation] || [-10, -8];
   const tgtX = Math.max(10, Math.min(90, ((targetC[0] + 30) / 60) * 100));
   const tgtZ = Math.max(10, Math.min(90, ((targetC[1] + 23) / 46) * 100));
+
+  let speechBubbleHTML = '';
+  if (stage) {
+    const speech = stage.getActiveSpeechScreenData();
+    if (speech) {
+      speechBubbleHTML = `
+      <div class="colleagueSpeechBubble" style="left:${speech.x}px;top:${speech.y}px">
+        <div class="bubbleTail"></div>
+        <div class="bubbleHeader">
+          <span class="bubbleAvatar" style="background:${speech.avatarBg}">${speech.emoji}</span>
+          <span class="bubbleSpeaker">${esc(speech.speaker)}</span>
+          <span class="bubbleRole">· ${esc(speech.role)}</span>
+        </div>
+        <div class="bubbleText">${esc(speech.text)}</div>
+      </div>
+      `;
+    }
+  }
+
+  const camLabel = stage?.cameraMode === 'overview' ? '🏃 Bám Sát' : '🎥 Toàn Cảnh';
+  const camBtnHTML = `
+  <button class="shiftCamToggleBtn" data-act="toggle_camera" title="Chuyển đổi góc máy Toàn Cảnh / Theo Dõi Chibi">
+    ${camLabel}
+  </button>
+  `;
 
   return `
   <!-- Top Status Ribbon (Single sleek integrated row across top) -->
@@ -110,6 +136,12 @@ export function renderShiftHUD(state: ShiftState, stage?: OfficeStage): string {
     <!-- Boss Dot (Red) -->
     <div class="radarBossDot" style="left:${bossX}%;top:${bossZ}%"></div>
   </div>
+
+  <!-- Camera Diorama Switcher Button -->
+  ${camBtnHTML}
+
+  <!-- Active Colleague Speech Bubble (Comic dialogue in world projection) -->
+  ${speechBubbleHTML}
   `;
 }
 

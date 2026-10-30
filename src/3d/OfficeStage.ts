@@ -8,7 +8,7 @@ export interface Workstation {
   emoji: string;
   position: THREE.Vector3;
   radius: number;
-  type: 'desk' | 'printer' | 'fabric' | 'coffee' | 'shipping' | 'lab' | 'qc';
+  type: 'desk' | 'printer' | 'fabric' | 'coffee' | 'shipping' | 'lab' | 'qc' | 'altar';
   mesh: THREE.Group;
   indicatorMesh: THREE.Mesh;
   billboardSprite?: THREE.Sprite;
@@ -20,6 +20,15 @@ export interface MapPickup {
   position: THREE.Vector3;
   mesh: THREE.Group;
   collected: boolean;
+}
+
+export interface ColleagueSpeech {
+  speaker: string;
+  role: string;
+  emoji: string;
+  text: string;
+  avatarBg: string;
+  worldPos: THREE.Vector3;
 }
 
 export class OfficeStage {
@@ -46,11 +55,72 @@ export class OfficeStage {
   private currentBossWpIdx = 0;
   private bossVisionMesh!: THREE.Mesh;
 
-  // Expansive World Bounds (64 x 50 units - 16x larger than before!)
+  // Animated Server LEDs
+  private ledMeshes: { mesh: THREE.Mesh; baseColor: number; speed: number; offset: number }[] = [];
+
+  // Expansive World Bounds (64 x 50 units)
   public readonly bounds = { minX: -30, maxX: 30, minZ: -23, maxZ: 23 };
 
   // Current Zone tracking
   public currentZoneName = 'Văn Phòng Điều Hành';
+
+  // Camera Mode: 'follow' (action camera) or 'overview' (panoramic diorama)
+  public cameraMode: 'follow' | 'overview' = 'follow';
+
+  // Dynamic Colleague Speech Bubble System
+  public activeSpeech: ColleagueSpeech | null = null;
+  private speechTimer = 2.5;
+  private speechLibrary: Omit<ColleagueSpeech, 'worldPos'>[] = [
+    {
+      speaker: 'Sếp Hùng',
+      role: 'Giám Đốc Điều Hành',
+      emoji: '👔',
+      avatarBg: '#475569',
+      text: 'Đơn 500 áo Polo đi New York tuyệt đối không được rớt AQL 2.5 nhé!'
+    },
+    {
+      speaker: 'Sếp Hùng',
+      role: 'Giám Đốc Điều Hành',
+      emoji: '👔',
+      avatarBg: '#475569',
+      text: 'Server pipeline đang test tự động, ai push code lỗi là trực đêm đấy!'
+    },
+    {
+      speaker: 'Chị Nga',
+      role: 'Kế Toán Kho',
+      emoji: '🧮',
+      avatarBg: '#dc2626',
+      text: 'Cuối quý lệch 3000m vải thun, ai ký phiếu xuất mang qua chị duyệt!'
+    },
+    {
+      speaker: 'Chị Nga',
+      role: 'Kế Toán Kho',
+      emoji: '🧋',
+      avatarBg: '#dc2626',
+      text: 'Ai order trà sữa Phúc Long không? Chị đang ghép đơn freeship này!'
+    },
+    {
+      speaker: 'Anh Tuấn',
+      role: 'Tài Xế Cont Cát Lái',
+      emoji: '🚛',
+      avatarBg: '#0284c7',
+      text: 'Cầu Phú Mỹ kẹt xe cont dài 3 cây số, chuẩn bị bốc hàng thần tốc!'
+    },
+    {
+      speaker: 'Anh Tuấn',
+      role: 'Tài Xế Cont Cát Lái',
+      emoji: '🚢',
+      avatarBg: '#0284c7',
+      text: 'Cont 40HQ cập cảng Cát Lái rồi, giấy tờ xuất khẩu xong chưa em?!'
+    },
+    {
+      speaker: 'Thần Tài Thổ Địa',
+      role: 'Tâm Linh Công Sở',
+      emoji: '🙏',
+      avatarBg: '#b91c1c',
+      text: 'Vía may tài lộc, đơn hàng hanh thông! Nhớ thắp hương xả stress nhé!'
+    }
+  ];
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -61,10 +131,10 @@ export class OfficeStage {
     const width = Math.max(300, this.container.clientWidth || window.innerWidth);
     const height = Math.max(240, this.container.clientHeight || window.innerHeight);
 
-    // 1. Scene & Cinematic Perspective Camera
+    // 1. Scene with Deep Atmospheric Midnight Ambiance
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color('#cbd5e1');
-    this.scene.fog = new THREE.FogExp2('#cbd5e1', 0.018);
+    this.scene.background = new THREE.Color('#0c101c');
+    this.scene.fog = new THREE.FogExp2('#0c101c', 0.013);
 
     const aspect = width / height;
     const initFov = aspect < 0.8 ? 52 : (aspect < 1.1 ? 46 : 42);
@@ -72,21 +142,23 @@ export class OfficeStage {
     this.camera.position.set(0, 14, 13);
     this.camera.lookAt(0, 0.8, 0);
 
-    // 2. WebGL Renderer
+    // 2. WebGL Renderer with Tone Mapping (Cozy Night Diorama Look)
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     this.renderer.setSize(width, height);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.25;
     this.container.appendChild(this.renderer.domElement);
 
-    // 3. Lighting (Sunlight + Department Lamps)
+    // 3. Lighting (Hemisphere + Sunlight + Department Pools of Light)
     this.setupLighting();
 
-    // 4. Large Multi-Zone World
+    // 4. Large Multi-Zone World & Exterior Street Environment
     this.setupGrandCampus();
 
-    // 5. Workstations across departments
+    // 5. Workstations across departments & Altar
     this.setupDepartmentWorkstations();
 
     // 6. Scattered Collectibles (Trà sữa, Tiền thưởng, Cà phê)
@@ -105,11 +177,13 @@ export class OfficeStage {
   }
 
   private setupLighting(): void {
-    const ambient = new THREE.AmbientLight(0xffffff, 0.95);
-    this.scene.add(ambient);
+    // Warm Hemisphere Ambient Light (Warm sky glow, cool dark ground shadow)
+    const hemi = new THREE.HemisphereLight(0xfff1e6, 0x0f172a, 1.15);
+    this.scene.add(hemi);
 
-    const sun = new THREE.DirectionalLight(0xffedd5, 1.3);
-    sun.position.set(24, 35, 20);
+    // Directional Sunlight (Warm moonlight & street key light)
+    const sun = new THREE.DirectionalLight(0xffedd5, 1.5);
+    sun.position.set(22, 34, 18);
     sun.castShadow = true;
     sun.shadow.mapSize.width = 2048;
     sun.shadow.mapSize.height = 2048;
@@ -123,35 +197,42 @@ export class OfficeStage {
     sun.shadow.bias = -0.0008;
     this.scene.add(sun);
 
-    // Warm zone lights
-    const l1 = new THREE.PointLight(0xa78bfa, 1.2, 22);
-    l1.position.set(-10, 5, -8);
-    this.scene.add(l1);
+    // Warm Pools of Light (Cozy interior diorama feel)
+    // 1. Office Center Warm Chandelier
+    const lOffice = new THREE.PointLight(0xfbbf24, 2.0, 24);
+    lOffice.position.set(-14, 5.5, -12);
+    this.scene.add(lOffice);
 
-    const l2 = new THREE.PointLight(0x38bdf8, 1.2, 24);
-    l2.position.set(12, 5, -8);
-    this.scene.add(l2);
+    // 2. Lab D65 Color Grading Light
+    const lLab = new THREE.PointLight(0x38bdf8, 2.0, 22);
+    lLab.position.set(14, 5.5, -10);
+    this.scene.add(lLab);
 
-    const l3 = new THREE.PointLight(0xf59e0b, 1.2, 24);
-    l3.position.set(-12, 5, 10);
-    this.scene.add(l3);
+    // 3. Warehouse Amber Industrial Lamp
+    const lWarehouse = new THREE.PointLight(0xf59e0b, 1.9, 24);
+    lWarehouse.position.set(-14, 5.5, 12);
+    this.scene.add(lWarehouse);
+
+    // 4. Port Logistics Floodlight
+    const lPort = new THREE.PointLight(0x60a5fa, 2.2, 26);
+    lPort.position.set(14, 5.5, 14);
+    this.scene.add(lPort);
   }
 
   private setupGrandCampus(): void {
-    // Huge Campus Ground
+    // Huge Campus Floor
     const groundGeo = new THREE.PlaneGeometry(64, 50);
-    const groundMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.85 });
+    const groundMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.85 });
     const ground = new THREE.Mesh(groundGeo, groundMat);
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     this.scene.add(ground);
 
     // ==================== ZONE 1: CORPORATE OFFICE (VĂN PHÒNG ĐIỀU HÀNH) ====================
-    // Top-Left: [-26 to -2, -22 to -2]
     this.createZoneFloor(-14, -12, 24, 20, '#f8fafc', '#e2e8f0');
     this.createZoneSign(-14, 3.8, -21.5, '🏢 VĂN PHÒNG ĐIỀU HÀNH & MERCHANDISER', '#4f46e5');
 
-    // Desks, Office Partitions & Potted Plants
+    // Desks with warm wood top, metal arched desk lamps, laptops & plants
     for (let i = 0; i < 3; i++) {
       this.createColleagueDesk(-18 + i * 5, -14);
       this.createColleagueDesk(-18 + i * 5, -9);
@@ -160,11 +241,13 @@ export class OfficeStage {
     this.createPlant(-24, -20);
     this.createPlant(-4, -20);
 
-    // Glass Meeting Room for Boss
-    this.createMeetingRoom(-20, -18, 7, 5);
+    // Boardroom (Phòng Họp VIP with Whiteboard & Glass Partitions)
+    this.createBoardroom(-20, -18, 7, 5);
+
+    // IT Server Racks with Blinking LEDs
+    this.createServerRacks(-24, -9);
 
     // ==================== ZONE 2: COLOR LAB & CUTTING (PHÒNG LAB & XƯỞNG CẮT) ====================
-    // Top-Right: [2 to 26, -22 to -2]
     this.createZoneFloor(14, -12, 24, 20, '#ecfdf5', '#a7f3d0');
     this.createZoneSign(14, 3.2, -21.5, '✂️ XƯỞNG CẮT RẬP & PHÒNG LAB MÀU D65', '#059669');
 
@@ -175,11 +258,10 @@ export class OfficeStage {
     this.createCuttingTable(16, -7);
 
     // ==================== ZONE 3: MEGA FABRIC WAREHOUSE (KHO VẢI ĐẠI NGÀN) ====================
-    // Bottom-Left: [-26 to -2, 2 to 22]
     this.createZoneFloor(-14, 12, 24, 20, '#fffbeb', '#fde68a');
     this.createZoneSign(-14, 3.2, 2.5, '🧵 KHO VẢI CUỘN & NGUYÊN PHỤ LIỆU', '#d97706');
 
-    // Massive Storage Racks
+    // Storage Racks
     for (let r = 0; r < 3; r++) {
       this.createWarehouseRack(-22 + r * 7, 8);
       this.createWarehouseRack(-22 + r * 7, 16);
@@ -187,23 +269,27 @@ export class OfficeStage {
     this.createForklift(-5, 14);
 
     // ==================== ZONE 4: LOGISTICS PORT & DOCK (CẢNG BIỂN & XUẤT CONT) ====================
-    // Bottom-Right: [2 to 26, 2 to 22]
     this.createZoneFloor(14, 12, 24, 20, '#1e293b', '#334155');
     this.createZoneSign(14, 3.2, 2.5, '🚢 CẢNG XUẤT HÀNG & BÃI CONT 40HQ', '#0284c7');
 
-    // 2 Giant Shipping Containers
+    // Giant Shipping Containers
     this.createShippingContainer(8, 12, '#0284c7', 'CÁT LÁI EXPRESS');
     this.createShippingContainer(18, 12, '#e11d48', 'MAERSK LINE 40HQ');
     this.createShippingContainer(14, 18, '#16a34a', 'ONE OCEAN NETWORK');
 
     // ==================== ZONE 5: CENTRAL PANTRY & CANTEEN LOUNGE ====================
-    // Center: [-4 to 4, -4 to 4]
     this.createZoneFloor(0, 0, 10, 8, '#fdf4ff', '#f5d0fe');
     this.createZoneSign(0, 2.8, -3.6, '🧋 CĂN TIN TRÀ SỮA & PANTRY THƯ GIÃN', '#9333ea');
     this.createLoungeCoffeeBar(0, 0);
 
+    // Fairy String Lights hanging along the corridor
+    this.createFairyLights();
+
     // Perimeter Fences / Boundary Walls
     this.createPerimeterWalls();
+
+    // Street, Zebra Crossings, Parked Scooters & City Skyline
+    this.createStreetAndVehicles();
   }
 
   private createZoneFloor(cx: number, cz: number, w: number, h: number, color1: string, color2: string): void {
@@ -267,53 +353,488 @@ export class OfficeStage {
     const g = new THREE.Group();
     g.position.set(x, 0, z);
 
-    const top = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.1, 1.2), new THREE.MeshStandardMaterial({ color: 0xe2e8f0 }));
+    // Warm wood table top
+    const top = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.1, 1.2), new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.4 }));
     top.position.y = 0.75;
     top.castShadow = true;
     g.add(top);
 
+    // Metal table legs
+    const legMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.6 });
+    for (const lx of [-1.0, 1.0]) {
+      for (const lz of [-0.45, 0.45]) {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.7, 8), legMat);
+        leg.position.set(lx, 0.35, lz);
+        g.add(leg);
+      }
+    }
+
     // Partition Screen
-    const part = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.5, 0.05), new THREE.MeshStandardMaterial({ color: 0x818cf8 }));
+    const part = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.5, 0.05), new THREE.MeshStandardMaterial({ color: 0x4f46e5 }));
     part.position.set(0, 1.05, -0.58);
     g.add(part);
 
     // Laptop & Monitor
-    const mon = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.4, 0.04), new THREE.MeshBasicMaterial({ color: 0x38bdf8 }));
+    const mon = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.42, 0.04), new THREE.MeshBasicMaterial({ color: 0x38bdf8 }));
     mon.position.set(0, 1.05, -0.2);
     g.add(mon);
 
+    // Arched metal desk lamp casting warm light
+    const lampArm = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.4, 8), legMat);
+    lampArm.position.set(0.7, 1.0, -0.2);
+    lampArm.rotation.z = -0.3;
+    g.add(lampArm);
+
+    const lampShade = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.14, 8), new THREE.MeshStandardMaterial({ color: 0xfacc15 }));
+    lampShade.position.set(0.6, 1.15, -0.2);
+    g.add(lampShade);
+
+    // Coffee mug
+    const mug = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.12, 10), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+    mug.position.set(-0.7, 0.86, 0.1);
+    g.add(mug);
+
     // Chair
-    const chair = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshStandardMaterial({ color: 0x334155 }));
+    const chair = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshStandardMaterial({ color: 0x1e293b }));
     chair.position.set(0, 0.35, 0.6);
     g.add(chair);
 
     this.scene.add(g);
   }
 
-  private createMeetingRoom(x: number, z: number, w: number, h: number): void {
+  private createBoardroom(x: number, z: number, w: number, h: number): void {
     const g = new THREE.Group();
     g.position.set(x, 0, z);
 
-    // Glass walls
+    // Modern black mullion glass walls
     const glassMat = new THREE.MeshStandardMaterial({
       color: 0x93c5fd,
       transparent: true,
       opacity: 0.35,
       roughness: 0.1
     });
+    const frameMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.5, metalness: 0.8 });
 
-    const wall1 = new THREE.Mesh(new THREE.BoxGeometry(w, 2.4, 0.1), glassMat);
-    wall1.position.set(0, 1.2, -h / 2);
-    g.add(wall1);
+    // North Glass Wall
+    const wallN = new THREE.Mesh(new THREE.BoxGeometry(w, 2.6, 0.08), glassMat);
+    wallN.position.set(0, 1.3, -h / 2);
+    g.add(wallN);
 
-    const wall2 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.4, h), glassMat);
-    wall2.position.set(-w / 2, 1.2, 0);
-    g.add(wall2);
+    // Frame top border
+    const frameTop = new THREE.Mesh(new THREE.BoxGeometry(w, 0.08, 0.12), frameMat);
+    frameTop.position.set(0, 2.56, -h / 2);
+    g.add(frameTop);
 
-    // Meeting Table
-    const table = new THREE.Mesh(new THREE.BoxGeometry(w * 0.7, 0.12, h * 0.5), new THREE.MeshStandardMaterial({ color: 0x92400e }));
-    table.position.y = 0.8;
+    // West Glass Wall
+    const wallW = new THREE.Mesh(new THREE.BoxGeometry(0.08, 2.6, h), glassMat);
+    wallW.position.set(-w / 2, 1.3, 0);
+    g.add(wallW);
+
+    // Mahogany Conference Table
+    const table = new THREE.Mesh(new THREE.BoxGeometry(w * 0.72, 0.14, h * 0.48), new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.4 }));
+    table.position.y = 0.82;
+    table.castShadow = true;
     g.add(table);
+
+    // Swivel chairs around table
+    const chairMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 });
+    const chairOffsets = [
+      [-w * 0.24, -h * 0.32],
+      [0, -h * 0.32],
+      [w * 0.24, -h * 0.32],
+      [-w * 0.24, h * 0.32],
+      [0, h * 0.32],
+      [w * 0.24, h * 0.32]
+    ];
+    for (const [cx, cz] of chairOffsets) {
+      const chair = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.6, 0.5), chairMat);
+      chair.position.set(cx, 0.4, cz);
+      g.add(chair);
+    }
+
+    // Whiteboard with Vietnamese Garment Export Chart
+    this.createWhiteboard(g, 0, 1.6, -h / 2 + 0.1);
+
+    // Warm overhead pendant light
+    const pLight = new THREE.PointLight(0xffedd5, 1.8, 12);
+    pLight.position.set(0, 2.4, 0);
+    g.add(pLight);
+
+    this.scene.add(g);
+  }
+
+  private createWhiteboard(parent: THREE.Group, x: number, y: number, z: number): void {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d')!;
+
+    // Whiteboard background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, 512, 256);
+
+    // Header Title
+    ctx.fillStyle = '#1e1b4b';
+    ctx.font = 'bold 22px Nunito, sans-serif';
+    ctx.fillText('📊 KẾ HOẠCH XUẤT KHẨU Q4 · THỊ TRƯỜNG US & EU', 20, 36);
+
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(20, 48); ctx.lineTo(492, 48);
+    ctx.stroke();
+
+    // Draw Bar Chart
+    const categories = [
+      { label: 'Polo US', value: 85, color: '#22c55e' },
+      { label: 'Khaki EU', value: 65, color: '#3b82f6' },
+      { label: 'Hoodie Seoul', value: 92, color: '#f59e0b' },
+      { label: 'Spandex Tokyo', value: 78, color: '#a855f7' }
+    ];
+
+    const chartX = 40;
+    const chartY = 210;
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(chartX, 70); ctx.lineTo(chartX, chartY); ctx.lineTo(470, chartY);
+    ctx.stroke();
+
+    categories.forEach((cat, idx) => {
+      const bx = chartX + 30 + idx * 100;
+      const barH = (cat.value / 100) * 120;
+      ctx.fillStyle = cat.color;
+      ctx.fillRect(bx, chartY - barH, 44, barH);
+
+      ctx.fillStyle = '#1e293b';
+      ctx.font = 'bold 13px Nunito, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${cat.value}%`, bx + 22, chartY - barH - 6);
+      ctx.fillText(cat.label, bx + 22, chartY + 18);
+    });
+
+    // AQL Pass Stamp
+    ctx.fillStyle = '#15803d';
+    ctx.font = 'bold 15px Nunito, sans-serif';
+    ctx.fillText('✅ CHUẨN AQL 2.5: ĐẠT 100%', 320, 80);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    const boardGeo = new THREE.BoxGeometry(3.2, 1.6, 0.05);
+    const boardMat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.2 });
+    const board = new THREE.Mesh(boardGeo, boardMat);
+    board.position.set(x, y, z);
+    parent.add(board);
+  }
+
+  private createServerRacks(x: number, z: number): void {
+    const g = new THREE.Group();
+    g.position.set(x, 0, z);
+
+    const rackMat = new THREE.MeshStandardMaterial({ color: 0x111827, metalness: 0.6, roughness: 0.4 });
+    const glassMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, transparent: true, opacity: 0.45, roughness: 0.2 });
+
+    for (let rackIdx = 0; rackIdx < 2; rackIdx++) {
+      const rx = rackIdx * 1.5;
+      const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.6, 0.9), rackMat);
+      body.position.set(rx, 1.3, 0);
+      body.castShadow = true;
+      g.add(body);
+
+      const glassDoor = new THREE.Mesh(new THREE.BoxGeometry(1.15, 2.5, 0.04), glassMat);
+      glassDoor.position.set(rx, 1.3, 0.46);
+      g.add(glassDoor);
+
+      // Blinking LED slots
+      const ledColors = [0x22c55e, 0x10b981, 0xef4444, 0xf59e0b, 0x38bdf8];
+      for (let row = 0; row < 5; row++) {
+        for (let col = 0; col < 4; col++) {
+          const color = ledColors[(row + col * 2 + rackIdx) % ledColors.length];
+          const ledGeo = new THREE.BoxGeometry(0.06, 0.04, 0.02);
+          const ledMat = new THREE.MeshBasicMaterial({ color });
+          const led = new THREE.Mesh(ledGeo, ledMat);
+          led.position.set(rx - 0.35 + col * 0.23, 0.5 + row * 0.45, 0.44);
+          g.add(led);
+
+          this.ledMeshes.push({
+            mesh: led,
+            baseColor: color,
+            speed: 1.5 + (row * 0.7 + col * 1.1),
+            offset: row + col
+          });
+        }
+      }
+    }
+
+    // Cyan server room ambient light
+    const srvLight = new THREE.PointLight(0x06b6d4, 1.6, 9);
+    srvLight.position.set(0.75, 1.8, 0.6);
+    g.add(srvLight);
+
+    this.scene.add(g);
+  }
+
+  public createThanTaiAltar(x: number, z: number): THREE.Group {
+    const g = new THREE.Group();
+    g.position.set(x, 0, z);
+
+    const redMat = new THREE.MeshStandardMaterial({ color: 0x991b1b, roughness: 0.4 });
+    const goldMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.7, roughness: 0.3 });
+    const darkRedMat = new THREE.MeshStandardMaterial({ color: 0x7f1d1d, roughness: 0.5 });
+
+    // Plinth / Base
+    const base = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.22, 1.1), darkRedMat);
+    base.position.y = 0.11;
+    base.castShadow = true;
+    g.add(base);
+
+    // Altar cabinet back and sides
+    const back = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.4, 0.08), redMat);
+    back.position.set(0, 0.8, -0.45);
+    g.add(back);
+
+    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.4, 0.9), redMat);
+    leftWall.position.set(-0.62, 0.8, 0);
+    g.add(leftWall);
+
+    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.4, 0.9), redMat);
+    rightWall.position.set(0.62, 0.8, 0);
+    g.add(rightWall);
+
+    // Traditional Roof with curved golden eaves
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.18, 1.2), redMat);
+    roof.position.set(0, 1.5, 0);
+    g.add(roof);
+
+    const goldTrim = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.06, 1.26), goldMat);
+    goldTrim.position.set(0, 1.58, 0);
+    g.add(goldTrim);
+
+    // Mini Golden Statues (Thần Tài & Thổ Địa)
+    const thanTai = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 0.42, 12), goldMat);
+    thanTai.position.set(-0.3, 0.42, -0.2);
+    g.add(thanTai);
+
+    const thoDia = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 0.38, 12), goldMat);
+    thoDia.position.set(0.3, 0.40, -0.2);
+    g.add(thoDia);
+
+    // Bát Hương (Incense bowl) & 3 glowing incense sticks
+    const incenseBowl = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.10, 0.12, 12), goldMat);
+    incenseBowl.position.set(0, 0.28, 0.05);
+    g.add(incenseBowl);
+
+    const stickMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+    for (let i = -1; i <= 1; i++) {
+      const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.32, 6), stickMat);
+      stick.position.set(i * 0.04, 0.45, 0.05);
+      stick.rotation.z = i * 0.08;
+      g.add(stick);
+    }
+
+    // Golden Thiềm Thừ (Money Toad) on side
+    const toad = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 10), goldMat);
+    toad.scale.set(1.2, 0.7, 1);
+    toad.position.set(-0.52, 0.28, 0.35);
+    g.add(toad);
+
+    // Plate of Offering (Mâm Ngũ Quả / Oranges)
+    const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.12, 0.04, 12), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+    plate.position.set(0.42, 0.24, 0.3);
+    g.add(plate);
+
+    const fruitMat = new THREE.MeshStandardMaterial({ color: 0xf97316 });
+    const fruit1 = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), fruitMat);
+    fruit1.position.set(0.42, 0.30, 0.3);
+    g.add(fruit1);
+
+    // Red Spiritual Point Light
+    const altarLight = new THREE.PointLight(0xef4444, 2.2, 8);
+    altarLight.position.set(0, 0.8, 0.2);
+    g.add(altarLight);
+
+    this.scene.add(g);
+    return g;
+  }
+
+  private createFairyLights(): void {
+    const g = new THREE.Group();
+    const bulbGeo = new THREE.SphereGeometry(0.08, 8, 8);
+    const bulbColors = [0xfef08a, 0xfde047, 0xfbbf24, 0xf472b6, 0x38bdf8];
+
+    // String hanging along corridor from x: -24 to 24 at z = -2.0, y = 2.4
+    for (let x = -24; x <= 24; x += 1.6) {
+      const sag = Math.sin((x + 24) * 0.8) * 0.18;
+      const color = bulbColors[Math.abs(Math.round(x)) % bulbColors.length];
+      const bulbMat = new THREE.MeshBasicMaterial({ color });
+      const bulb = new THREE.Mesh(bulbGeo, bulbMat);
+      bulb.position.set(x, 2.3 + sag, -2.0);
+      g.add(bulb);
+    }
+    this.scene.add(g);
+  }
+
+  private createStreetAndVehicles(): void {
+    // 1. Asphalt Road at z: [-34 to -24]
+    const roadGeo = new THREE.PlaneGeometry(70, 10);
+    const roadMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.95 });
+    const road = new THREE.Mesh(roadGeo, roadMat);
+    road.rotation.x = -Math.PI / 2;
+    road.position.set(0, 0.005, -29);
+    road.receiveShadow = true;
+    this.scene.add(road);
+
+    // 2. White Zebra Crossing Stripes (Crosswalk)
+    const stripeGeo = new THREE.PlaneGeometry(0.8, 3.8);
+    const stripeMat = new THREE.MeshBasicMaterial({ color: 0xe2e8f0 });
+    for (let i = -4; i <= 4; i++) {
+      const stripe = new THREE.Mesh(stripeGeo, stripeMat);
+      stripe.rotation.x = -Math.PI / 2;
+      stripe.position.set(i * 1.6, 0.015, -29);
+      this.scene.add(stripe);
+    }
+
+    // 3. Sidewalk Curb
+    const curbGeo = new THREE.BoxGeometry(70, 0.16, 0.6);
+    const curbMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.8 });
+    const curb = new THREE.Mesh(curbGeo, curbMat);
+    curb.position.set(0, 0.08, -24.4);
+    this.scene.add(curb);
+
+    // 4. Streetlamps (Tall poles with warm glowing lantern)
+    this.createStreetlamp(-20, -26);
+    this.createStreetlamp(0, -26);
+    this.createStreetlamp(20, -26);
+
+    // 5. Parked Scooters / Motorbikes (Xe máy)
+    this.createScooterMesh(-16, -24.8, 0.2, 0x0284c7); // Cyan Honda Wave
+    this.createScooterMesh(-13.5, -24.8, -0.15, 0xe11d48); // Red Vespa
+    this.createScooterMesh(14, -24.8, 0.3, 0x10b981); // Mint scooter
+
+    // 6. Distant City Skyline Silhouettes
+    this.createCitySkyline();
+  }
+
+  private createStreetlamp(x: number, z: number): void {
+    const g = new THREE.Group();
+    g.position.set(x, 0, z);
+
+    const poleMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8, roughness: 0.3 });
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.14, 5.0, 10), poleMat);
+    pole.position.y = 2.5;
+    g.add(pole);
+
+    // Horizontal arm
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.4, 8), poleMat);
+    arm.rotateZ(Math.PI / 2);
+    arm.position.set(0.6, 4.9, 0);
+    g.add(arm);
+
+    // Lantern head
+    const head = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.4, 8), poleMat);
+    head.position.set(1.2, 4.7, 0);
+    g.add(head);
+
+    // Glowing bulb
+    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
+    bulb.position.set(1.2, 4.5, 0);
+    g.add(bulb);
+
+    // Warm amber street PointLight
+    const lampLight = new THREE.PointLight(0xfef08a, 2.2, 18);
+    lampLight.position.set(1.2, 4.4, 0);
+    g.add(lampLight);
+
+    this.scene.add(g);
+  }
+
+  private createScooterMesh(x: number, z: number, rotationY: number, color: number): void {
+    const g = new THREE.Group();
+    g.position.set(x, 0, z);
+    g.rotation.y = rotationY;
+
+    const darkMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.8 });
+    const bodyMat = new THREE.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.2 });
+    const chromeMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.8, roughness: 0.2 });
+
+    // Wheels
+    const wheelGeo = new THREE.CylinderGeometry(0.28, 0.28, 0.14, 16);
+    wheelGeo.rotateZ(Math.PI / 2);
+    const wFront = new THREE.Mesh(wheelGeo, darkMat);
+    wFront.position.set(0, 0.28, 0.7);
+    g.add(wFront);
+
+    const wRear = new THREE.Mesh(wheelGeo, darkMat);
+    wRear.position.set(0, 0.28, -0.7);
+    g.add(wRear);
+
+    // Main body / floorboard
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.12, 0.9), bodyMat);
+    deck.position.set(0, 0.25, 0);
+    g.add(deck);
+
+    // Front shield / apron
+    const apron = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.55, 0.16), bodyMat);
+    apron.position.set(0, 0.52, 0.6);
+    apron.rotation.x = -0.15;
+    g.add(apron);
+
+    // Headlight
+    const light = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.06, 12), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
+    light.rotateX(Math.PI / 2);
+    light.position.set(0, 0.72, 0.68);
+    g.add(light);
+
+    // Handlebars
+    const bars = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.65, 8), chromeMat);
+    bars.rotateZ(Math.PI / 2);
+    bars.position.set(0, 0.78, 0.55);
+    g.add(bars);
+
+    // Seat
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.14, 0.65), new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.9 }));
+    seat.position.set(0, 0.52, -0.25);
+    g.add(seat);
+
+    // Helmet sitting on seat
+    const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 12), new THREE.MeshStandardMaterial({ color: 0xef4444 }));
+    helmet.scale.set(1, 0.85, 1);
+    helmet.position.set(0, 0.68, -0.15);
+    g.add(helmet);
+
+    this.scene.add(g);
+  }
+
+  private createCitySkyline(): void {
+    const g = new THREE.Group();
+    const bldgMat = new THREE.MeshStandardMaterial({ color: 0x070b14, roughness: 0.9 });
+    const winMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+
+    const bldgData = [
+      { x: -32, w: 7, h: 18, z: -42 },
+      { x: -22, w: 9, h: 26, z: -45 },
+      { x: -10, w: 6, h: 16, z: -40 },
+      { x: 2, w: 10, h: 30, z: -46 },
+      { x: 15, w: 8, h: 22, z: -42 },
+      { x: 26, w: 7, h: 19, z: -44 },
+      { x: 35, w: 9, h: 28, z: -48 }
+    ];
+
+    for (const b of bldgData) {
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(b.w, b.h, 6), bldgMat);
+      mesh.position.set(b.x, b.h / 2, b.z);
+      g.add(mesh);
+
+      // Lit windows on skyscraper
+      for (let wy = 3; wy < b.h - 2; wy += 3.2) {
+        for (let wx = -b.w / 2 + 1.2; wx < b.w / 2 - 1.0; wx += 2.0) {
+          if (Math.sin(b.x + wy + wx) > -0.2) {
+            const win = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 1.2), winMat);
+            win.position.set(b.x + wx, wy, b.z + 3.02);
+            g.add(win);
+          }
+        }
+      }
+    }
 
     this.scene.add(g);
   }
@@ -426,7 +947,7 @@ export class OfficeStage {
   }
 
   private createPerimeterWalls(): void {
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0x64748b });
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0x475569 });
     const h = 2.4;
 
     // North Wall
@@ -505,6 +1026,10 @@ export class OfficeStage {
     const shipG = new THREE.Group();
     shipG.position.set(14, 0, 14);
     this.addStation('shipping', 'Cổng Xuất Cont Cát Lái', 'Cảng Biển & Xuất Khẩu', '🚢', shipG.position, 2.8, shipG);
+
+    // 7. Bàn Thờ Thần Tài & Thổ Địa (Altar of Fortune)
+    const altarG = this.createThanTaiAltar(-14, -20);
+    this.addStation('altar', 'Bàn Thờ Thần Tài - Thổ Địa', 'Văn Phòng Điều Hành', '🙏', altarG.position, 2.4, altarG);
   }
 
   private addStation(
@@ -518,7 +1043,7 @@ export class OfficeStage {
   ): void {
     const ringGeo = new THREE.RingGeometry(radius * 0.65, radius * 0.82, 28);
     const ringMat = new THREE.MeshBasicMaterial({
-      color: 0x6366f1,
+      color: type === 'altar' ? 0xef4444 : 0x6366f1,
       transparent: true,
       opacity: 0.45,
       side: THREE.DoubleSide
@@ -533,12 +1058,12 @@ export class OfficeStage {
     canvas.width = 340;
     canvas.height = 80;
     const ctx = canvas.getContext('2d')!;
-    ctx.fillStyle = '#1e1b4b';
+    ctx.fillStyle = type === 'altar' ? '#7f1d1d' : '#1e1b4b';
     ctx.beginPath();
     ctx.roundRect(8, 8, 324, 64, 20);
     ctx.fill();
     ctx.lineWidth = 4;
-    ctx.strokeStyle = '#facc15';
+    ctx.strokeStyle = type === 'altar' ? '#ef4444' : '#facc15';
     ctx.stroke();
 
     ctx.fillStyle = '#ffffff';
@@ -602,7 +1127,7 @@ export class OfficeStage {
   }
 
   private setupColleagues(): void {
-    // 1. Sếp Hùng (Patrols Executive Boardroom Corridor, away from player desk)
+    // 1. Sếp Hùng (Patrols Executive Boardroom Corridor)
     this.bossNpc = new ChibiCharacter('#ffedd5', '#475569', true, 'SẾP HÙNG (ĐI TUẦN)');
     this.bossNpc.group.position.set(-20, 0, -16);
     this.bossNpc.moveSpeed = 1.9;
@@ -633,6 +1158,38 @@ export class OfficeStage {
     this.scene.add(this.truckerNpc.group);
   }
 
+  public toggleCameraMode(): 'follow' | 'overview' {
+    this.cameraMode = this.cameraMode === 'follow' ? 'overview' : 'follow';
+    return this.cameraMode;
+  }
+
+  public getActiveSpeechScreenData(): { speaker: string; role: string; emoji: string; text: string; avatarBg: string; x: number; y: number } | null {
+    if (!this.activeSpeech || !this.camera || !this.container) return null;
+
+    const width = this.container.clientWidth;
+    const height = this.container.clientHeight;
+    if (!width || !height) return null;
+
+    const p = this.activeSpeech.worldPos.clone().project(this.camera);
+    if (p.z > 1 || p.z < -1) return null;
+
+    const sx = ((p.x + 1) * width) / 2;
+    const sy = ((-p.y + 1) * height) / 2;
+
+    const clampedX = Math.max(130, Math.min(width - 130, sx));
+    const clampedY = Math.max(70, Math.min(height - 110, sy));
+
+    return {
+      speaker: this.activeSpeech.speaker,
+      role: this.activeSpeech.role,
+      emoji: this.activeSpeech.emoji,
+      text: this.activeSpeech.text,
+      avatarBg: this.activeSpeech.avatarBg,
+      x: clampedX,
+      y: clampedY
+    };
+  }
+
   private onResize = (): void => {
     if (!this.container || !this.renderer || !this.camera) return;
     const width = Math.max(300, this.container.clientWidth || window.innerWidth);
@@ -640,7 +1197,6 @@ export class OfficeStage {
 
     const aspect = width / height;
     this.camera.aspect = aspect;
-    // On vertical portrait screens (aspect < 1.0), slightly widen FOV for a broader view
     this.camera.fov = aspect < 0.8 ? 52 : (aspect < 1.1 ? 46 : 42);
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);
@@ -650,18 +1206,28 @@ export class OfficeStage {
     // 1. Update Player
     this.player.update(delta, playerDirX, playerDirZ, this.bounds);
 
-    // 2. Camera Smooth Follow (Dynamic Isometric Zoom)
-    const pPos = this.player.getPosition();
-    const targetCamX = pPos.x + 9.5;
-    const targetCamY = 12.0;
-    const targetCamZ = pPos.z + 10.0;
-
-    this.camera.position.x += (targetCamX - this.camera.position.x) * 6 * delta;
-    this.camera.position.y += (targetCamY - this.camera.position.y) * 6 * delta;
-    this.camera.position.z += (targetCamZ - this.camera.position.z) * 6 * delta;
-    this.camera.lookAt(pPos.x, 0.9, pPos.z);
+    // 2. Camera Smooth Follow or Overview Diorama Lerp
+    if (this.cameraMode === 'overview') {
+      const targetCamX = 0;
+      const targetCamY = 32.0;
+      const targetCamZ = 28.0;
+      this.camera.position.x += (targetCamX - this.camera.position.x) * 3.5 * delta;
+      this.camera.position.y += (targetCamY - this.camera.position.y) * 3.5 * delta;
+      this.camera.position.z += (targetCamZ - this.camera.position.z) * 3.5 * delta;
+      this.camera.lookAt(0, 0, 0);
+    } else {
+      const pPos = this.player.getPosition();
+      const targetCamX = pPos.x + 9.5;
+      const targetCamY = 12.0;
+      const targetCamZ = pPos.z + 10.0;
+      this.camera.position.x += (targetCamX - this.camera.position.x) * 6 * delta;
+      this.camera.position.y += (targetCamY - this.camera.position.y) * 6 * delta;
+      this.camera.position.z += (targetCamZ - this.camera.position.z) * 6 * delta;
+      this.camera.lookAt(pPos.x, 0.9, pPos.z);
+    }
 
     // 3. Update Zone by Player Coordinates
+    const pPos = this.player.getPosition();
     if (pPos.x < 0 && pPos.z < 0) this.currentZoneName = '🏢 Văn Phòng Điều Hành';
     else if (pPos.x >= 0 && pPos.z < 0) this.currentZoneName = '✂️ Xưởng Cắt & Phòng Lab';
     else if (pPos.x < 0 && pPos.z >= 0) this.currentZoneName = '🧵 Kho Vải Đại Ngàn';
@@ -696,6 +1262,36 @@ export class OfficeStage {
       if (!pu.collected) {
         pu.mesh.rotation.y += delta * 2;
         pu.mesh.position.y = 0.5 + Math.sin(Date.now() * 0.005 + pu.position.x) * 0.1;
+      }
+    }
+
+    // 7. Blinking Server LEDs Animation
+    const now = Date.now() * 0.001;
+    for (const item of this.ledMeshes) {
+      const isLit = Math.sin(now * item.speed + item.offset) > -0.15;
+      (item.mesh.material as THREE.MeshBasicMaterial).color.setHex(isLit ? item.baseColor : 0x050505);
+    }
+
+    // 8. Dynamic Colleague Speech Bubble System
+    this.speechTimer -= delta;
+    if (this.speechTimer <= 0) {
+      if (this.activeSpeech) {
+        this.activeSpeech = null;
+        this.speechTimer = 3.0; // 3 seconds silent interval
+      } else {
+        const item = this.speechLibrary[Math.floor(Math.random() * this.speechLibrary.length)];
+        let worldPos: THREE.Vector3;
+        if (item.speaker === 'Sếp Hùng' && this.bossNpc) {
+          worldPos = this.bossNpc.group.position.clone().add(new THREE.Vector3(0, 1.8, 0));
+        } else if (item.speaker === 'Chị Nga' && this.accountantNpc) {
+          worldPos = this.accountantNpc.group.position.clone().add(new THREE.Vector3(0, 1.8, 0));
+        } else if (item.speaker === 'Anh Tuấn' && this.truckerNpc) {
+          worldPos = this.truckerNpc.group.position.clone().add(new THREE.Vector3(0, 1.8, 0));
+        } else {
+          worldPos = new THREE.Vector3(-14, 2.2, -20);
+        }
+        this.activeSpeech = { ...item, worldPos };
+        this.speechTimer = 5.5; // Display for 5.5s
       }
     }
   }
