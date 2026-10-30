@@ -100,8 +100,36 @@ export class OfficeStage {
   // Current Zone tracking
   public currentZoneName = 'Văn Phòng Điều Hành';
 
-  // Camera Mode: 'follow' (action camera) or 'overview' (panoramic diorama)
+  // Camera & Touch Gestures Orbit / Pan / Zoom State
   public cameraMode: 'follow' | 'overview' = 'follow';
+  public dragMode: 'orbit' | 'pan' = 'orbit';
+
+  public camAzimuth = 0.76;      // Horizontal angle (~43.5 deg isometric)
+  public camPitch = 0.66;        // Vertical elevation angle (~38 deg)
+  public camDistance = 17.5;     // Camera distance from target
+  private targetAzimuth = 0.76;
+  private targetPitch = 0.66;
+  private targetDistance = 17.5;
+
+  private velocityAzimuth = 0;
+  private velocityPitch = 0;
+
+  private camPanOffset = new THREE.Vector2(0, 0); // Panning offset on floor (X, Z)
+  private currentLookAt = new THREE.Vector3(-10.5, 0.9, -11.5);
+
+  // Multi-Touch Pointer Tracking
+  private activePointers = new Map<number, {
+    x: number;
+    y: number;
+    startX: number;
+    startY: number;
+    startTime: number;
+    lastX: number;
+    lastY: number;
+    moved: boolean;
+  }>();
+  private lastPinchDist: number | null = null;
+  private lastPinchMid = { x: 0, y: 0 };
 
   // Dynamic Colleague Speech Bubble System
   public activeSpeech: ColleagueSpeech | null = null;
@@ -1745,8 +1773,41 @@ export class OfficeStage {
   }
 
   public toggleCameraMode(): 'follow' | 'overview' {
-    this.cameraMode = this.cameraMode === 'follow' ? 'overview' : 'follow';
+    if (this.cameraMode === 'follow') {
+      this.cameraMode = 'overview';
+      this.targetDistance = 35.0;
+      this.targetPitch = 0.95;
+      this.targetAzimuth = 0.76;
+    } else {
+      this.cameraMode = 'follow';
+      this.targetDistance = 17.5;
+      this.targetPitch = 0.66;
+      this.targetAzimuth = 0.76;
+      this.camPanOffset.set(0, 0);
+    }
     return this.cameraMode;
+  }
+
+  public toggleDragMode(): 'orbit' | 'pan' {
+    this.dragMode = this.dragMode === 'orbit' ? 'pan' : 'orbit';
+    return this.dragMode;
+  }
+
+  public recenterCamera(): void {
+    this.targetAzimuth = 0.76;
+    this.targetPitch = this.cameraMode === 'overview' ? 0.95 : 0.66;
+    this.targetDistance = this.cameraMode === 'overview' ? 35.0 : 17.5;
+    this.camPanOffset.set(0, 0);
+    this.velocityAzimuth = 0;
+    this.velocityPitch = 0;
+  }
+
+  public zoomIn(amount = 3.0): void {
+    this.targetDistance = Math.max(6.5, this.targetDistance - amount);
+  }
+
+  public zoomOut(amount = 3.0): void {
+    this.targetDistance = Math.min(42.0, this.targetDistance + amount);
   }
 
   public getActiveSpeechScreenData(): { speaker: string; role: string; emoji: string; text: string; avatarBg: string; x: number; y: number } | null {
@@ -1788,33 +1849,133 @@ export class OfficeStage {
     this.renderer.setSize(width, height);
   };
 
-  private tapStartX = 0;
-  private tapStartY = 0;
-  private tapStartTime = 0;
-
   private onPointerDownHandler = (e: PointerEvent): void => {
-    if ((e.target as HTMLElement).closest('#joyPadArea, #joyActionBtn, .shiftTopRibbon, .shiftQuestBanner, .shiftMiniRadar, .shiftCamToggleBtn, #hudModeToggleBtn, #hudActionCard')) {
+    if ((e.target as HTMLElement).closest('#joyPadArea, #joyActionBtn, .shiftTopRibbon, .shiftQuestBanner, .shiftMiniRadar, .shiftCamToggleBtn, #hudModeToggleBtn, #hudActionCard, .shiftCamToolbar, .shiftHudBtn')) {
       return;
     }
-    this.tapStartX = e.clientX;
-    this.tapStartY = e.clientY;
-    this.tapStartTime = performance.now();
+
+    this.activePointers.set(e.pointerId, {
+      x: e.clientX,
+      y: e.clientY,
+      startX: e.clientX,
+      startY: e.clientY,
+      startTime: performance.now(),
+      lastX: e.clientX,
+      lastY: e.clientY,
+      moved: false
+    });
+
+    this.velocityAzimuth = 0;
+    this.velocityPitch = 0;
+
+    if (this.activePointers.size >= 2) {
+      const pts = Array.from(this.activePointers.values());
+      this.lastPinchDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      this.lastPinchMid = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+    }
+  };
+
+  private onPointerMoveHandler = (e: PointerEvent): void => {
+    if (!this.activePointers.has(e.pointerId)) return;
+    const ptr = this.activePointers.get(e.pointerId)!;
+
+    const dx = e.clientX - ptr.lastX;
+    const dy = e.clientY - ptr.lastY;
+    const totalDist = Math.hypot(e.clientX - ptr.startX, e.clientY - ptr.startY);
+    if (totalDist > 9) {
+      ptr.moved = true;
+    }
+
+    ptr.lastX = e.clientX;
+    ptr.lastY = e.clientY;
+    ptr.x = e.clientX;
+    ptr.y = e.clientY;
+
+    if (this.activePointers.size === 1) {
+      if (ptr.moved) {
+        if (this.dragMode === 'orbit' && this.cameraMode !== 'overview') {
+          // Orbit 360: Horizontal Azimuth + Vertical Pitch
+          this.targetAzimuth -= dx * 0.007;
+          this.targetPitch = Math.max(0.18, Math.min(1.42, this.targetPitch + dy * 0.005));
+          this.velocityAzimuth = -dx * 0.006;
+          this.velocityPitch = dy * 0.004;
+        } else {
+          // Pan camera along floor plane
+          const panSpeed = (this.camDistance / 18.0) * 0.038;
+          const cosA = Math.cos(this.camAzimuth);
+          const sinA = Math.sin(this.camAzimuth);
+          this.camPanOffset.x -= (dx * cosA - dy * -sinA) * panSpeed;
+          this.camPanOffset.y -= (dx * -sinA - dy * -cosA) * panSpeed;
+          this.camPanOffset.x = Math.max(-28, Math.min(28, this.camPanOffset.x));
+          this.camPanOffset.y = Math.max(-22, Math.min(22, this.camPanOffset.y));
+        }
+      }
+    } else if (this.activePointers.size >= 2) {
+      const pts = Array.from(this.activePointers.values());
+      pts[0].moved = true;
+      pts[1].moved = true;
+      const curDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      const midX = (pts[0].x + pts[1].x) / 2;
+      const midY = (pts[0].y + pts[1].y) / 2;
+
+      if (this.lastPinchDist !== null) {
+        // Pinch Zoom
+        const dDist = curDist - this.lastPinchDist;
+        this.targetDistance = Math.max(6.5, Math.min(42.0, this.targetDistance - dDist * 0.06));
+
+        // Two-finger Pan
+        const midDx = midX - this.lastPinchMid.x;
+        const midDy = midY - this.lastPinchMid.y;
+        const panSpeed = (this.camDistance / 18.0) * 0.038;
+        const cosA = Math.cos(this.camAzimuth);
+        const sinA = Math.sin(this.camAzimuth);
+        this.camPanOffset.x -= (midDx * cosA - midDy * -sinA) * panSpeed;
+        this.camPanOffset.y -= (midDx * -sinA - midDy * -cosA) * panSpeed;
+        this.camPanOffset.x = Math.max(-28, Math.min(28, this.camPanOffset.x));
+        this.camPanOffset.y = Math.max(-22, Math.min(22, this.camPanOffset.y));
+      }
+
+      this.lastPinchDist = curDist;
+      this.lastPinchMid = { x: midX, y: midY };
+    }
   };
 
   private onPointerUpHandler = (e: PointerEvent): void => {
-    if ((e.target as HTMLElement).closest('#joyPadArea, #joyActionBtn, .shiftTopRibbon, .shiftQuestBanner, .shiftMiniRadar, .shiftCamToggleBtn, #hudModeToggleBtn, #hudActionCard')) {
-      return;
-    }
-    const dt = performance.now() - this.tapStartTime;
-    const dist = Math.hypot(e.clientX - this.tapStartX, e.clientY - this.tapStartY);
-    if (dt < 450 && dist < 14) {
+    if (!this.activePointers.has(e.pointerId)) return;
+    const ptr = this.activePointers.get(e.pointerId)!;
+    const dt = performance.now() - ptr.startTime;
+    const totalDist = Math.hypot(e.clientX - ptr.startX, e.clientY - ptr.startY);
+
+    // If clean stationary tap (< 400ms, < 12px)
+    if (!ptr.moved && totalDist < 12 && dt < 400) {
       this.handlePointerTap(e.clientX, e.clientY);
+    }
+
+    this.activePointers.delete(e.pointerId);
+    if (this.activePointers.size < 2) {
+      this.lastPinchDist = null;
     }
   };
 
+  private onPointerCancelHandler = (e: PointerEvent): void => {
+    this.activePointers.delete(e.pointerId);
+    if (this.activePointers.size < 2) {
+      this.lastPinchDist = null;
+    }
+  };
+
+  private onWheelHandler = (e: WheelEvent): void => {
+    e.preventDefault();
+    this.targetDistance = Math.max(6.5, Math.min(42.0, this.targetDistance + e.deltaY * 0.025));
+  };
+
   private setupPointerRaycaster(): void {
+    this.container.style.touchAction = 'none';
     this.container.addEventListener('pointerdown', this.onPointerDownHandler);
-    this.container.addEventListener('pointerup', this.onPointerUpHandler);
+    window.addEventListener('pointermove', this.onPointerMoveHandler);
+    window.addEventListener('pointerup', this.onPointerUpHandler);
+    window.addEventListener('pointercancel', this.onPointerCancelHandler);
+    this.container.addEventListener('wheel', this.onWheelHandler, { passive: false });
   }
 
   private handlePointerTap(clientX: number, clientY: number): void {
@@ -1933,25 +2094,58 @@ export class OfficeStage {
       this.player.updateAnimation(delta, 0, 0, false);
     }
 
-    // 2. Camera Smooth Follow or Overview Diorama Lerp
+    // 2. Camera Dynamic Orbit, Pan, Zoom & Follow
+    // Inertia damping
+    if (Math.abs(this.velocityAzimuth) > 0.0001) {
+      this.targetAzimuth += this.velocityAzimuth * delta * 40;
+      this.velocityAzimuth *= 0.91;
+    }
+    if (Math.abs(this.velocityPitch) > 0.0001) {
+      this.targetPitch = Math.max(0.18, Math.min(1.42, this.targetPitch + this.velocityPitch * delta * 40));
+      this.velocityPitch *= 0.91;
+    }
+
+    // Smooth Lerp Spherical Angles and Distance
+    this.camAzimuth += (this.targetAzimuth - this.camAzimuth) * Math.min(1, 14 * delta);
+    this.camPitch += (this.targetPitch - this.camPitch) * Math.min(1, 14 * delta);
+    this.camDistance += (this.targetDistance - this.camDistance) * Math.min(1, 12 * delta);
+
+    // Target Focus Point
+    let desiredTargetX = 0;
+    let desiredTargetY = 0.9;
+    let desiredTargetZ = 0;
+
     if (this.cameraMode === 'overview') {
-      const targetCamX = 0;
-      const targetCamY = 32.0;
-      const targetCamZ = 28.0;
-      this.camera.position.x += (targetCamX - this.camera.position.x) * 3.5 * delta;
-      this.camera.position.y += (targetCamY - this.camera.position.y) * 3.5 * delta;
-      this.camera.position.z += (targetCamZ - this.camera.position.z) * 3.5 * delta;
-      this.camera.lookAt(0, 0, 0);
+      desiredTargetX = this.camPanOffset.x;
+      desiredTargetY = 0.5;
+      desiredTargetZ = this.camPanOffset.y;
     } else {
       const pPos = this.player.getPosition();
-      const targetCamX = pPos.x + 9.5;
-      const targetCamY = 12.0;
-      const targetCamZ = pPos.z + 10.0;
-      this.camera.position.x += (targetCamX - this.camera.position.x) * 6 * delta;
-      this.camera.position.y += (targetCamY - this.camera.position.y) * 6 * delta;
-      this.camera.position.z += (targetCamZ - this.camera.position.z) * 6 * delta;
-      this.camera.lookAt(pPos.x, 0.9, pPos.z);
+      // If moving with joystick, gently ease pan offset back so player stays in focus
+      if (hasManualInput) {
+        this.camPanOffset.x *= Math.max(0, 1 - 2.0 * delta);
+        this.camPanOffset.y *= Math.max(0, 1 - 2.0 * delta);
+      }
+      desiredTargetX = pPos.x + this.camPanOffset.x;
+      desiredTargetY = 0.9;
+      desiredTargetZ = pPos.z + this.camPanOffset.y;
     }
+
+    this.currentLookAt.x += (desiredTargetX - this.currentLookAt.x) * Math.min(1, 9 * delta);
+    this.currentLookAt.y += (desiredTargetY - this.currentLookAt.y) * Math.min(1, 9 * delta);
+    this.currentLookAt.z += (desiredTargetZ - this.currentLookAt.z) * Math.min(1, 9 * delta);
+
+    // Calculate Eye Position from Spherical Coordinates
+    const rHoriz = this.camDistance * Math.cos(this.camPitch);
+    const eyeX = this.currentLookAt.x + rHoriz * Math.sin(this.camAzimuth);
+    const eyeY = this.currentLookAt.y + this.camDistance * Math.sin(this.camPitch);
+    const eyeZ = this.currentLookAt.z + rHoriz * Math.cos(this.camAzimuth);
+
+    this.camera.position.x = eyeX;
+    this.camera.position.y = eyeY;
+    this.camera.position.z = eyeZ;
+
+    this.camera.lookAt(this.currentLookAt);
 
     // 3. Update Zone by Player Coordinates
     const pPos = this.player.getPosition();
@@ -2070,7 +2264,10 @@ export class OfficeStage {
     if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
     window.removeEventListener('resize', this.onResize);
     this.container.removeEventListener('pointerdown', this.onPointerDownHandler);
-    this.container.removeEventListener('pointerup', this.onPointerUpHandler);
+    window.removeEventListener('pointermove', this.onPointerMoveHandler);
+    window.removeEventListener('pointerup', this.onPointerUpHandler);
+    window.removeEventListener('pointercancel', this.onPointerCancelHandler);
+    this.container.removeEventListener('wheel', this.onWheelHandler);
     this.renderer?.dispose();
     this.container.innerHTML = '';
   }

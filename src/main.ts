@@ -461,6 +461,40 @@ document.addEventListener('click', (ev) => {
         sounds.click();
         const mode = shiftStage.toggleCameraMode();
         showToast(mode === 'overview' ? '🎥 Góc máy Toàn Cảnh (Diorama Overview)!' : '🏃 Góc máy Bám Sát Chibi!');
+        const uiHostEl = document.getElementById('shiftUIHost');
+        if (uiHostEl && shiftEngine) {
+          updateShiftHUD(uiHostEl, shiftEngine.getState(), shiftStage);
+        }
+      }
+      break;
+    case 'toggle_drag_mode':
+      if (shiftStage) {
+        sounds.click();
+        const mode = shiftStage.toggleDragMode();
+        showToast(mode === 'orbit' ? '🔄 Vuốt 1 ngón: Xoay 360° tự do!' : '✋ Vuốt 1 ngón: Kéo trượt bản đồ!');
+        const uiHostEl = document.getElementById('shiftUIHost');
+        if (uiHostEl && shiftEngine) {
+          updateShiftHUD(uiHostEl, shiftEngine.getState(), shiftStage);
+        }
+      }
+      break;
+    case 'recenter_camera':
+      if (shiftStage) {
+        sounds.click();
+        shiftStage.recenterCamera();
+        showToast('🎯 Đã căn lại góc máy chuẩn trên Chibi!');
+      }
+      break;
+    case 'zoom_in':
+      if (shiftStage) {
+        sounds.click();
+        shiftStage.zoomIn();
+      }
+      break;
+    case 'zoom_out':
+      if (shiftStage) {
+        sounds.click();
+        shiftStage.zoomOut();
       }
       break;
     case 'toggle_interaction_mode': {

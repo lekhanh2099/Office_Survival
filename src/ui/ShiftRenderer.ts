@@ -34,6 +34,7 @@ interface HUDElementCache {
   bossDot: HTMLElement | null;
   targetDot: HTMLElement | null;
   camBtn: HTMLElement | null;
+  dragModeBtn: HTMLElement | null;
   modeBtn: HTMLElement | null;
   speechBubble: HTMLElement | null;
   speechAvatar: HTMLElement | null;
@@ -52,6 +53,7 @@ let lastZone = '';
 let lastOrderName = '';
 let lastQuestText = '';
 let lastCamMode = '';
+let lastDragMode = '';
 let lastInteractionMode = '';
 let lastPX = -999;
 let lastPZ = -999;
@@ -86,6 +88,7 @@ export function mountShiftHUD(host: HTMLElement): void {
   lastOrderName = '';
   lastQuestText = '';
   lastCamMode = '';
+  lastDragMode = '';
   lastInteractionMode = '';
   lastPX = -999;
   lastPZ = -999;
@@ -157,15 +160,41 @@ export function mountShiftHUD(host: HTMLElement): void {
       <div class="radarBossDot" id="hudBossDot"></div>
     </div>
 
-    <!-- Camera Diorama Switcher Button -->
-    <button class="shiftCamToggleBtn" id="hudCamBtn" data-act="toggle_camera" type="button" title="Chuyển đổi góc máy Toàn Cảnh / Theo Dõi Chibi">
-      🎥 Toàn Cảnh
-    </button>
+    <!-- Camera Diorama & Touch Navigation Toolbar -->
+    <div class="shiftCamToolbar">
+      <!-- Camera Mode Toggle: Bám Sát / Toàn Cảnh -->
+      <button class="shiftHudBtn" id="hudCamBtn" data-act="toggle_camera" type="button" title="Chuyển đổi góc máy Toàn Cảnh / Theo Dõi Chibi">
+        🎥 Toàn Cảnh
+      </button>
+
+      <!-- 1-Finger Drag Action Toggle: Xoay 360° / Kéo Trượt -->
+      <button class="shiftHudBtn" id="hudDragModeBtn" data-act="toggle_drag_mode" type="button" title="Chuyển thao tác 1 ngón tay: Xoay 3D hoặc Kéo Trượt bản đồ">
+        🔄 Xoay 3D
+      </button>
+
+      <!-- Recenter Camera on Chibi -->
+      <button class="shiftHudBtn iconBtn" id="hudRecenterBtn" data-act="recenter_camera" type="button" title="Căn lại camera về góc chuẩn trên Chibi">
+        🎯
+      </button>
+
+      <!-- Zoom In / Zoom Out -->
+      <button class="shiftHudBtn iconBtn" id="hudZoomInBtn" data-act="zoom_in" type="button" title="Phóng to">
+        ➕
+      </button>
+      <button class="shiftHudBtn iconBtn" id="hudZoomOutBtn" data-act="zoom_out" type="button" title="Thu nhỏ">
+        ➖
+      </button>
+    </div>
 
     <!-- Interaction Mode Switcher Button (Auto-Run vs Confirmation Card) -->
     <button class="shiftModeToggleBtn" id="hudModeToggleBtn" data-act="toggle_interaction_mode" type="button" title="Chuyển chế độ thao tác: Tự Chạy Làm Ngay hoặc Hiện Thẻ Xác Nhận">
       ⚡ Chạy Làm Ngay
     </button>
+
+    <!-- Mobile Touch Gestures Helper Tip (Fades out automatically) -->
+    <div class="shiftGestureTip" id="hudGestureTip">
+      👆 Kéo 1 ngón để xoay 3D · 2 ngón chụm phóng to / trượt bản đồ
+    </div>
 
     <!-- Station Action Confirmation Card (Popover) -->
     <div class="stationActionCard" id="hudActionCard" style="display:none">
@@ -215,6 +244,7 @@ export function mountShiftHUD(host: HTMLElement): void {
     bossDot: host.querySelector('#hudBossDot'),
     targetDot: host.querySelector('#hudTargetDot'),
     camBtn: host.querySelector('#hudCamBtn'),
+    dragModeBtn: host.querySelector('#hudDragModeBtn'),
     modeBtn: host.querySelector('#hudModeToggleBtn'),
     speechBubble: host.querySelector('#hudSpeechBubble'),
     speechAvatar: host.querySelector('#speechAvatar'),
@@ -292,6 +322,16 @@ export function updateShiftHUD(host: HTMLElement, state: ShiftState, stage?: Off
   if (camMode !== lastCamMode) {
     lastCamMode = camMode;
     if (hudCache.camBtn) hudCache.camBtn.textContent = camMode === 'overview' ? '🏃 Bám Sát' : '🎥 Toàn Cảnh';
+  }
+
+  // Drag Mode toggle text
+  const dragMode = stage?.dragMode || 'orbit';
+  if (dragMode !== lastDragMode) {
+    lastDragMode = dragMode;
+    if (hudCache.dragModeBtn) {
+      hudCache.dragModeBtn.textContent = dragMode === 'orbit' ? '🔄 Xoay 3D' : '✋ Kéo Trượt';
+      hudCache.dragModeBtn.setAttribute('title', dragMode === 'orbit' ? 'Chế độ 1 ngón: Xoay 360° (Bấm để đổi thành Kéo Trượt bản đồ)' : 'Chế độ 1 ngón: Kéo Trượt bản đồ (Bấm để đổi thành Xoay 3D)');
+    }
   }
 
   // Mode toggle text

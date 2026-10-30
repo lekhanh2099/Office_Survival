@@ -1678,41 +1678,59 @@ p {
   100% { transform: translate(-50%, -50%) scale(1.35); opacity: 1; }
 }
 
-/* Camera Diorama Switcher Button */
-.shiftCamToggleBtn {
+/* Camera & View Controls Toolbar */
+.shiftCamToolbar {
   position: absolute;
   top: 106px;
   right: 8px;
-  background: rgba(15, 23, 42, 0.92);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(15, 23, 42, 0.94);
   backdrop-filter: blur(8px);
-  color: #f8fafc;
   border: 1.5px solid rgba(255, 255, 255, 0.28);
-  border-radius: 8px;
-  padding: 5px 9px;
+  border-radius: 9px;
+  padding: 3px 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  z-index: 15;
+  pointer-events: auto;
+}
+
+.shiftHudBtn {
+  background: transparent;
+  color: #f8fafc;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 6px;
   font-size: 11px;
   font-weight: 900;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
   cursor: pointer;
-  pointer-events: auto;
-  z-index: 15;
-  transition: all 0.15s ease;
   white-space: nowrap;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.shiftCamToggleBtn:hover {
-  background: #312e81;
-  border-color: #818cf8;
-  transform: translateY(-1px);
+.shiftHudBtn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
 }
 
-.shiftCamToggleBtn:active {
-  transform: translateY(1px);
+.shiftHudBtn:active {
+  transform: scale(0.93);
+}
+
+.shiftHudBtn.iconBtn {
+  padding: 3px 5px;
+  font-size: 11.5px;
+  min-width: 22px;
 }
 
 /* Mode Switcher Button (Tap Auto-Work vs Action Card) */
 .shiftModeToggleBtn {
   position: absolute;
-  top: 138px;
+  top: 144px;
   right: 8px;
   background: rgba(15, 23, 42, 0.92);
   backdrop-filter: blur(8px);
@@ -1738,6 +1756,34 @@ p {
 
 .shiftModeToggleBtn:active {
   transform: translateY(1px);
+}
+
+/* Floating Gestures Tip (Mobile Friendly) */
+.shiftGestureTip {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(8px);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 800;
+  pointer-events: none;
+  z-index: 15;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  animation: fadeInOutTip 6s forwards;
+}
+
+@keyframes fadeInOutTip {
+  0% { opacity: 0; transform: translate(-50%, 6px); }
+  10% { opacity: 1; transform: translate(-50%, 0); }
+  75% { opacity: 1; }
+  100% { opacity: 0; pointer-events: none; visibility: hidden; }
 }
 
 /* Interactive Station Action Card (Modal Popover) */
