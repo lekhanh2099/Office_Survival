@@ -114,3 +114,93 @@ export function openRankingsModal(host: HTMLElement): void {
     <button class="secondary" data-act="close" style="margin-top:14px">ĐÓNG</button>
   </section></div>`;
 }
+
+const GENZ_QUOTES = [
+  'Sốp chơi cuốn quá thì donate hộp cơm sườn cho dev, chứ dev gặm mì tôm 3 ngày nay rồi 🍜',
+  'Ăn xin online nhưng phong thái doanh nhân: 1 ly trà sữa = 10 sự kiện mới ra lò 🧋',
+  'Dev không cần người yêu, dev chỉ cần ly trà đào cam sả 50% đường 70% đá 🍑',
+  'Ting ting cho dev một cốc trà đá là mai sếp tự động huỷ lịch họp (nghe đồn vậy) 🔮',
+  'Cứu vớt một lập trình viên thoát khỏi kiếp deadline nửa đêm và bug tràn bờ đê 🥺',
+  'Game không quảng cáo, không hút máu, chỉ xin nhẹ cốc nước mía vỉa hè qua ngày thôi sốp 🎋',
+  'Người ta flex lương nghìn đô, còn dev ở đây flex việc bạn chơi game không bị crash 🚀',
+  'Ủng hộ 1 cốc nước mía để dev có sức code thêm tính năng "Tát sếp bằng bàn phím cơ" ⌨️'
+];
+
+export function burstHearts(): void {
+  const emojis = ['🧋', '❤️', '☕', '💖', '✨', '🍜', '🎋', '🥰', '🔥', '🌸'];
+  const count = 18;
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    el.className = 'floatingHeart';
+    el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+
+    const startX = window.innerWidth / 2 + (Math.random() - 0.5) * 160;
+    const startY = window.innerHeight * 0.65 + (Math.random() - 0.5) * 60;
+    const dx = (Math.random() - 0.5) * 180 + 'px';
+    const dx2 = (Math.random() - 0.5) * 260 + 'px';
+    const rot = (Math.random() - 0.5) * 60 + 'deg';
+
+    el.style.left = `${startX}px`;
+    el.style.top = `${startY}px`;
+    el.style.setProperty('--dx', dx);
+    el.style.setProperty('--dx2', dx2);
+    el.style.setProperty('--rot', rot);
+    el.style.animationDelay = `${Math.random() * 0.25}s`;
+
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1500);
+  }
+}
+
+export function openDonateModal(host: HTMLElement): void {
+  sounds.click();
+  const quote = GENZ_QUOTES[Math.floor(Math.random() * GENZ_QUOTES.length)];
+
+  host.innerHTML = `<div class="dialogShade"><section class="dialog" role="dialog" aria-modal="true" style="text-align:center">
+    <div style="font-size:52px;margin:6px 0">🧋🍱☕</div>
+    <h2 style="margin:4px 0 6px">QUỸ CỨU ĐÓI DEV GAME</h2>
+    <div class="badgeText" style="transform:none;margin-bottom:12px">✨ GÓC KHIỀU TRÀ SỮA GEN Z ✨</div>
+    
+    <div style="background:#f5f2ff;border:2px dashed var(--purple);border-radius:14px;padding:12px;font-size:13px;font-weight:750;line-height:1.55;color:#3f3282;margin-bottom:14px">
+      "${quote}"
+    </div>
+
+    <div class="eyebrow" style="text-align:left;margin-bottom:8px">🎁 CHỌN MÓN TIẾP TẾ CHO DEV:</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px">
+      <button class="miniButton donateOption" data-donate="10000" data-label="Cốc nước mía" style="padding:10px 6px;text-align:center;display:block">
+        <span style="font-size:20px;display:block">🎋</span>
+        <b>Cốc nước mía</b><br><span style="font-size:10px;color:#6b6782">10.000 đ</span>
+      </button>
+      <button class="miniButton donateOption" data-donate="25000" data-label="Cà phê muối" style="padding:10px 6px;text-align:center;display:block">
+        <span style="font-size:20px;display:block">☕</span>
+        <b>Cà phê muối</b><br><span style="font-size:10px;color:#6b6782">25.000 đ</span>
+      </button>
+      <button class="miniButton donateOption active" data-donate="35000" data-label="Trà sữa full top" style="padding:10px 6px;text-align:center;display:block">
+        <span style="font-size:20px;display:block">🧋</span>
+        <b>Trà sữa full top</b><br><span style="font-size:10px;color:#6b6782">35.000 đ</span>
+      </button>
+      <button class="miniButton donateOption" data-donate="45000" data-label="Cơm sườn ốp la" style="padding:10px 6px;text-align:center;display:block">
+        <span style="font-size:20px;display:block">🍱</span>
+        <b>Cơm sườn ốp la</b><br><span style="font-size:10px;color:#6b6782">45.000 đ</span>
+      </button>
+    </div>
+
+    <div style="background:#fff;border:2px solid var(--ink);border-radius:13px;padding:12px;margin-bottom:12px;text-align:left;font-size:12px">
+      <div style="font-weight:900;color:var(--purple);margin-bottom:6px">💳 THÔNG TIN TING TING:</div>
+      <div style="line-height:1.6">
+        <div>• <b>Ngân hàng:</b> MB Bank (Quân Đội) hoặc MoMo</div>
+        <div>• <b>Số tài khoản:</b> <code id="bankAccDisplay" style="background:#eee;padding:2px 6px;border-radius:4px;font-weight:800">0901234567</code></div>
+        <div>• <b>Chủ tài khoản:</b> <b id="bankNameDisplay">LE KHANH</b></div>
+        <div>• <b>Nội dung:</b> <code id="bankMsgDisplay" style="background:#fef1bd;padding:2px 6px;border-radius:4px;font-weight:800">Office Survival tiep te dev</code></div>
+      </div>
+      <button class="secondary" data-act="copyBank" style="margin-top:10px;padding:8px 10px;font-size:11px;width:100%">
+        📋 Sao chép STK &amp; Lời nhắn (35.000 đ)
+      </button>
+    </div>
+
+    <button class="primary" data-act="freeHeart" style="margin-bottom:8px">
+      ❤️ Tui nghèo nhưng tui có tấm lòng (Bắn tim)
+    </button>
+    <button class="secondary" data-act="close">ĐÓNG LẠI ĐỂ CÀY GAME TIẾP</button>
+  </section></div>`;
+}

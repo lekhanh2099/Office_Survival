@@ -250,6 +250,7 @@ export function renderGameOver(state: GameState): string {
     <div class="buttons">
       <button class="primary" data-act="restart">🔄 ỨNG TUYỂN LẠI TỪ ĐẦU</button>
       <button class="secondary" data-act="share">📤 Chia sẻ thành tích</button>
+      <button class="secondary" data-act="donate" style="background:#fff8d6;border-color:#f59e0b;color:#854d0e;font-weight:900">🧋 Tiếp tế trà sữa cứu đói Dev</button>
       <button class="secondary" data-act="highscores">🏆 Xem bảng vàng kỷ lục</button>
       <button class="secondary" data-act="history">📖 Nhật ký tai nạn</button>
     </div>

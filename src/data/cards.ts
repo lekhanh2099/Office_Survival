@@ -485,6 +485,12 @@ addCard('duck', 'rare', 'Con vịt cao su', '🦆', 'Con vịt đòi tăng lươ
   })
 ]);
 
+addCard('dev_begging', 'rare', 'Dev Game Đói Lả', '🧑‍💻', 'Bẻ gãy bức tường thứ tư', 'Một lập trình viên phờ phạc xuất hiện trên màn hình: "Ê sốp ơi, tui gõ code game này từ 2h sáng tới giờ, đói lả rồi... Khiều nhẹ cốc nước mía hay ly trà sữa được hong?"', [
+  ch('Tiếp tế cốc nước mía 10k', 'Ủng hộ cốc nước mía giải cứu thể xác dev', { e: 1, r: 1 }, 'Dev mừng rơi nước mắt: "Đa tạ đại hiệp! Xin hồi cho bạn 1 Năng lượng và 1 Uy tín tâm linh!"'),
+  ch('Bắn tim ủng hộ tinh thần', 'Tình cảm dạt dào, nghèo tiền nhưng giàu lòng', { r: 1 }, 'Dev rơm rớm: "Tuy không no bụng nhưng ấm lòng chiến sĩ. Chúc sốp không bao giờ bị sếp dí!"'),
+  ch('Dí deadline ngược: "Thêm 10 thẻ nữa!"', 'Bắt dev tăng ca cày thêm tính năng', { b: -1 }, 'Dev sợ hãi quay về gõ phím: "Dạ dạ em làm liền, em dọn bớt 1 việc tồn cho sốp tha cho em!"')
+]);
+
 // ==================== FINALE CARDS ====================
 addCard('end_normal', 'finale', 'Sếp tổng', '🌇', '17:59 — Em ơi, một chút thôi!', 'Sếp xuất hiện ngay khi bạn đặt tay lên nút tắt máy. Câu "một chút" dài như vũ trụ.', [
   ch('Hẹn xử lý vào sáng mai, có ghi chú', 'Giữ vững ranh giới tan tầm, hẹn sếp sáng mai tính tiếp', { e: -1, b: -1, r: -1 }, 'Sếp tiếc nuối nhưng bạn đã giữ được ranh giới.'),

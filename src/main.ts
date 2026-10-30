@@ -2,7 +2,14 @@ import './styles/main.css';
 import { GameEngine } from './core/GameEngine';
 import { loadGameState } from './core/GameState';
 import { renderDay, renderGameOver, renderPlay, renderResult, renderWelcome } from './ui/Renderer';
-import { openCompendiumModal, openHelpModal, openHistoryModal, openRankingsModal } from './ui/Modals';
+import {
+  burstHearts,
+  openCompendiumModal,
+  openDonateModal,
+  openHelpModal,
+  openHistoryModal,
+  openRankingsModal
+} from './ui/Modals';
 import { sounds } from './audio/SoundManager';
 import { showToast } from './ui/Toast';
 import { CARDS } from './data/cards';
@@ -45,6 +52,7 @@ function render(): void {
 }
 
 // Initialize Engine
+let hasNudgedDonate = false;
 const savedState = loadGameState();
 engine = new GameEngine(savedState || undefined, (state) => {
   if (state.lastTurnLostLife && APPROOT) {
@@ -52,6 +60,15 @@ engine = new GameEngine(savedState || undefined, (state) => {
     void APPROOT.offsetWidth;
     APPROOT.classList.add('shake');
   }
+
+  // GenZ gentle nudge after surviving 2 days
+  if (state.day >= 2 && !hasNudgedDonate && state.stage === 'day') {
+    hasNudgedDonate = true;
+    setTimeout(() => {
+      showToast('🧋 Trụ tới ngày này là đỉnh nóc kịch trần rồi! Khiều nhẹ cốc trà sữa tiếp tế dev nha sốp~');
+    }, 1200);
+  }
+
   render();
 });
 
@@ -81,9 +98,44 @@ function shareScore(): void {
   }
 }
 
+function copyBankInfo(note = 'tiep te dev'): void {
+  const text = `MBBank: 0901234567 | LE KHANH | ND: ${note}`;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      sounds.success();
+      showToast('🎉 Đã copy STK! Cảm ơn sốp nhiều nha, dev sẽ sống sót qua hôm nay! 🧋');
+    }).catch(() => {
+      showToast('MBBank: 0901234567 - LE KHANH');
+    });
+  } else {
+    showToast('MBBank: 0901234567 - LE KHANH');
+  }
+}
+
 // Event Listeners
 document.addEventListener('click', (ev) => {
   const target = ev.target as HTMLElement;
+
+  // Donate Option click
+  const donateOpt = target.closest('.donateOption') as HTMLElement | null;
+  if (donateOpt) {
+    sounds.click();
+    document.querySelectorAll('.donateOption').forEach(el => el.classList.remove('active'));
+    donateOpt.classList.add('active');
+    const donateAmount = donateOpt.dataset.donate || '35000';
+    const donateLabel = donateOpt.dataset.label || 'Trà sữa';
+    const copyBtn = document.querySelector('[data-act="copyBank"]') as HTMLElement | null;
+    const msgCode = document.getElementById('bankMsgDisplay');
+    if (copyBtn) {
+      copyBtn.innerHTML = `📋 Sao chép STK &amp; Lời nhắn (${Number(donateAmount).toLocaleString('vi-VN')} đ)`;
+    }
+    if (msgCode) {
+      msgCode.textContent = `Office Survival ${donateAmount} ${donateLabel}`;
+    }
+    showToast(`Đã chọn ${donateLabel} (${Number(donateAmount).toLocaleString('vi-VN')} đ)!`);
+    return;
+  }
+
   const btn = target.closest('[data-act],[data-choice],[data-perk]') as HTMLElement | null;
   if (!btn) return;
 
@@ -133,6 +185,19 @@ document.addEventListener('click', (ev) => {
     case 'highscores':
       openRankingsModal(HOST);
       break;
+    case 'donate':
+      openDonateModal(HOST);
+      break;
+    case 'freeHeart':
+      burstHearts();
+      sounds.perk();
+      showToast('❤️ Dev xúc động đậy! Cảm ơn tấm lòng của sốp (+999 Aura may mắn)!');
+      break;
+    case 'copyBank': {
+      const msg = document.getElementById('bankMsgDisplay')?.textContent || 'Office Survival tiep te dev';
+      copyBankInfo(msg);
+      break;
+    }
     case 'close':
       sounds.click();
       HOST.innerHTML = '';
@@ -152,6 +217,7 @@ audioToggleBtn.addEventListener('click', () => {
 
 document.getElementById('compBtn')?.addEventListener('click', () => openCompendiumModal(HOST));
 document.getElementById('rankBtn')?.addEventListener('click', () => openRankingsModal(HOST));
+document.getElementById('donateBtn')?.addEventListener('click', () => openDonateModal(HOST));
 document.getElementById('help')?.addEventListener('click', () => openHelpModal(HOST));
 
 // HUD Interactive Indicators (Reigns style preview)
