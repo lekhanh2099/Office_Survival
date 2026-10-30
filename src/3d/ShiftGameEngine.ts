@@ -6,9 +6,10 @@ export interface ShiftTask {
   id: string;
   orderName: string;
   client: string;
-  step: 'desk_receive' | 'printer_techpack' | 'fabric_pick' | 'shipping_deliver';
+  step: 'desk_receive' | 'printer_techpack' | 'lab_check' | 'fabric_pick' | 'shipping_deliver';
   stepDescription: string;
-  targetStation: 'desk' | 'printer' | 'fabric' | 'shipping';
+  targetStation: 'desk' | 'printer' | 'lab' | 'fabric' | 'shipping';
+  targetZone: string;
 }
 
 export interface ShiftState {
@@ -23,6 +24,7 @@ export interface ShiftState {
   score: number;
   currentTask: ShiftTask;
   activePrompt: string | null;
+  currentZone: string;
   grade?: 'S' | 'A' | 'B' | 'C' | 'F';
 }
 
@@ -57,7 +59,8 @@ export class ShiftGameEngine {
       targetOrders: 3,
       score: 0,
       currentTask: this.createNewTask(0),
-      activePrompt: null
+      activePrompt: null,
+      currentZone: stage.currentZoneName
     };
   }
 
@@ -68,8 +71,9 @@ export class ShiftGameEngine {
       orderName: o.orderName,
       client: o.client,
       step: 'desk_receive',
-      stepDescription: `Đến BÀN LÀM VIỆC nhận hợp đồng: "${o.orderName}"`,
-      targetStation: 'desk'
+      stepDescription: `Đến BÀN MERCHANDISER nhận hợp đồng: "${o.orderName}"`,
+      targetStation: 'desk',
+      targetZone: 'Văn Phòng Điều Hành'
     };
   }
 
@@ -80,9 +84,11 @@ export class ShiftGameEngine {
   update(delta: number): void {
     if (this.state.isFinished) return;
 
-    // 1. Clock Progression (9:00 -> 17:00 in ~140 seconds)
+    this.state.currentZone = this.stage.currentZoneName;
+
+    // 1. Clock Progression (9:00 -> 17:00 in ~180s)
     this.clockTimer += delta;
-    if (this.clockTimer >= 0.28) {
+    if (this.clockTimer >= 0.35) {
       this.clockTimer = 0;
       this.state.timeMinute += 1;
       if (this.state.timeMinute >= 60) {
@@ -90,10 +96,8 @@ export class ShiftGameEngine {
         this.state.timeHour += 1;
       }
 
-      // Natural energy decay
-      this.state.energy = Math.max(0, this.state.energy - 0.08);
+      this.state.energy = Math.max(0, this.state.energy - 0.06);
 
-      // Check Shift End at 17:00
       if (this.state.timeHour >= 17) {
         this.finishShift();
         return;
@@ -103,17 +107,33 @@ export class ShiftGameEngine {
     // 2. Speed Boost handling
     if (this.speedBoostTimer > 0) {
       this.speedBoostTimer -= delta;
-      this.stage.player.moveSpeed = 6.2;
+      this.stage.player.moveSpeed = 6.8;
     } else {
-      // Slower if exhausted
-      this.stage.player.moveSpeed = this.state.energy < 20 ? 3.0 : 4.8;
+      this.stage.player.moveSpeed = this.state.energy < 20 ? 3.4 : 5.4;
     }
 
-    // 3. Sếp Patrol Warning Check
+    // 3. Check Pickups on Map
+    this.stage.checkPickupCollision((type) => {
+      sounds.success();
+      if (type === 'boba') {
+        this.state.energy = Math.min(100, this.state.energy + 35);
+        this.speedBoostTimer = 8.0;
+        showToast('🧋 Nhặt Cốc Trà Sữa: Hồi +35% Năng Lượng & Bật Tốc Chạy 8s!');
+      } else if (type === 'coffee') {
+        this.state.energy = Math.min(100, this.state.energy + 25);
+        this.state.stress = Math.max(0, this.state.stress - 15);
+        showToast('☕ Nhặt Cà Phê: Hồi +25% Năng Lượng, Giảm -15% Stress!');
+      } else if (type === 'bonus_cash') {
+        this.state.score += 100;
+        showToast('💵 Nhặt Tiền Thưởng Nóng: +100 Điểm KPI!');
+      }
+      this.sync();
+    });
+
+    // 4. Sếp Patrol Warning
     if (this.bossCooldown > 0) {
       this.bossCooldown -= delta;
     } else if (this.stage.isPlayerCaughtByBoss()) {
-      // If caught while empty handed, boss scolds!
       if (this.stage.player.carriedItem === 'none') {
         this.bossCooldown = 4.0;
         this.state.stress = Math.min(100, this.state.stress + 15);
@@ -123,7 +143,7 @@ export class ShiftGameEngine {
       }
     }
 
-    // 4. Update Station Interaction Prompt
+    // 5. Update Station Prompt
     const activeSt = this.stage.activeStation;
     if (activeSt) {
       if (activeSt.type === 'coffee') {
@@ -142,8 +162,9 @@ export class ShiftGameEngine {
     switch (type) {
       case 'desk': return 'Nhận Đơn Hàng Mới 💻';
       case 'printer': return 'In Bảng Techpack 🖨️';
-      case 'fabric': return 'Bốc Cuộn Vải Chuẩn Màu 🧵';
-      case 'shipping': return 'Nộp Kiện Hàng Vào Cont 🚢';
+      case 'lab': return 'Soi Màu Vải Lab-dip D65 🔬';
+      case 'fabric': return 'Bốc Cuộn Vải Spandex 🧵';
+      case 'shipping': return 'Giao Hàng Cho Anh Tuấn Lên Cont 🚢';
       default: return 'Làm Việc';
     }
   }
@@ -153,16 +174,16 @@ export class ShiftGameEngine {
     const activeSt = this.stage.activeStation;
     if (!activeSt) return;
 
-    // Coffee / Boba station
+    // Boba lounge
     if (activeSt.type === 'coffee') {
       if (this.state.energy >= 95) {
         showToast('🧋 Bụng no căng trà sữa rồi, chạy việc tiếp thôi!');
         return;
       }
       sounds.success();
-      this.state.energy = Math.min(100, this.state.energy + 45);
-      this.state.stress = Math.max(0, this.state.stress - 10);
-      this.speedBoostTimer = 7.0;
+      this.state.energy = Math.min(100, this.state.energy + 50);
+      this.state.stress = Math.max(0, this.state.stress - 15);
+      this.speedBoostTimer = 9.0;
       this.stage.player.setCarriedItem('coffee_cup');
       setTimeout(() => {
         if (this.stage.player.carriedItem === 'coffee_cup') {
@@ -170,7 +191,7 @@ export class ShiftGameEngine {
         }
       }, 3500);
 
-      showToast('🧋 Nạp Trà Sữa Full Top: Hồi phục +45% Năng Lượng & Bật Tốc Chạy ⚡');
+      showToast('🧋 Nạp Trà Sữa Full Top: Hồi phục +50% Năng Lượng & Bật Tốc Chạy 9s ⚡');
       this.sync();
       return;
     }
@@ -179,42 +200,58 @@ export class ShiftGameEngine {
     const task = this.state.currentTask;
     if (activeSt.type !== task.targetStation) {
       sounds.click();
-      showToast(`⚠️ Cần đến: ${task.targetStation.toUpperCase()} trước!`);
+      showToast(`⚠️ Cần đến: ${task.targetZone.toUpperCase()} (${task.targetStation.toUpperCase()}) trước!`);
       return;
     }
 
-    // Handle Task Step Transitions
+    // Step 1: Desk -> Printer
     if (task.step === 'desk_receive') {
       sounds.click();
       this.stage.player.setCarriedItem('paper_stack');
       task.step = 'printer_techpack';
       task.targetStation = 'printer';
+      task.targetZone = 'Văn Phòng Điều Hành';
       task.stepDescription = 'Mang hồ sơ tới MÁY IN 🖨️ in Techpack & Bảng màu';
-      showToast('📄 Đã nhận hồ sơ! Mau chạy qua Máy In.');
-    } else if (task.step === 'printer_techpack') {
+      showToast('📄 Đã nhận hồ sơ! Chạy qua Máy In.');
+    }
+    // Step 2: Printer -> Lab
+    else if (task.step === 'printer_techpack') {
+      sounds.success();
+      task.step = 'lab_check';
+      task.targetStation = 'lab';
+      task.targetZone = 'Xưởng Cắt & Lab';
+      task.stepDescription = 'Chạy sang PHÒNG LAB 🔬 soi mẫu vải dưới đèn D65';
+      showToast('🖨️ Đã in xong Techpack! Chạy qua Phòng Lab soi màu.');
+    }
+    // Step 3: Lab -> Fabric Warehouse
+    else if (task.step === 'lab_check') {
       sounds.success();
       task.step = 'fabric_pick';
       task.targetStation = 'fabric';
-      task.stepDescription = 'Đến KHO VẢI 🧵 bốc cuộn vải chuẩn màu Spandex';
-      showToast('🖨️ Đã in xong Techpack! Chạy qua Kho Vải lấy mẫu.');
-    } else if (task.step === 'fabric_pick') {
+      task.targetZone = 'Kho Vải Đại Ngàn';
+      task.stepDescription = 'Xuống KHO VẢI 🧵 gặp Chị Nga bốc cuộn vải chuẩn mã';
+      showToast('🔬 Mẫu vải đạt chuẩn Delta E! Xuống Kho Vải lấy cây vải.');
+    }
+    // Step 4: Fabric Warehouse -> Port Dock
+    else if (task.step === 'fabric_pick') {
       sounds.click();
       this.stage.player.setCarriedItem('fabric_roll');
       task.step = 'shipping_deliver';
       task.targetStation = 'shipping';
-      task.stepDescription = 'Vác cuộn vải tới CỔNG CONT 🚢 xuất hàng trước Cut-off!';
-      showToast('🧵 Đã bốc cuộn vải! Chạy ngay ra Cổng Cảng xuất hàng.');
-    } else if (task.step === 'shipping_deliver') {
-      // Completed 1 order!
+      task.targetZone = 'Cảng Biển & Xuất Khẩu';
+      task.stepDescription = 'Vác cuộn vải sang CẢNG CONT 🚢 giao cho Anh Tuấn trước giờ đóng máng!';
+      showToast('🧵 Đã bốc cuộn vải! Chạy ngay ra Cảng Cát Lái đóng cont.');
+    }
+    // Step 5: Deliver to Shipping Container
+    else if (task.step === 'shipping_deliver') {
       sounds.success();
       this.stage.player.setCarriedItem('none');
       this.state.ordersCompleted += 1;
-      this.state.score += 150;
-      this.state.stress = Math.max(0, this.state.stress - 15);
+      this.state.score += 200;
+      this.state.stress = Math.max(0, this.state.stress - 20);
 
-      showToast(`🎉 XUẤT XƯỞNG THÀNH CÔNG ĐƠN HÀNG #${this.state.ordersCompleted}! (+150 điểm)`);
+      showToast(`🎉 XUẤT XƯỞNG THÀNH CÔNG ĐƠN HÀNG #${this.state.ordersCompleted}! (+200 điểm)`);
 
-      // Check if target reached
       if (this.state.ordersCompleted >= this.state.targetOrders) {
         this.finishShift();
         return;
@@ -229,7 +266,6 @@ export class ShiftGameEngine {
   private finishShift(): void {
     this.state.isFinished = true;
 
-    // Calculate Grade
     if (this.state.ordersCompleted >= 3 && this.state.stress <= 30) {
       this.state.grade = 'S';
     } else if (this.state.ordersCompleted >= 2) {

@@ -100,8 +100,8 @@ function renderShiftMode(): void {
     shiftStage.renderScene();
 
     const s = shiftEngine.getState();
-    if (!s.isFinished && uiHost) {
-      uiHost.innerHTML = renderShiftHUD(s);
+    if (!s.isFinished && uiHost && shiftStage) {
+      uiHost.innerHTML = renderShiftHUD(s, shiftStage);
     }
 
     shiftAnimFrameId = requestAnimationFrame(loop);
