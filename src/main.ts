@@ -1,7 +1,15 @@
 import './styles/main.css';
 import { GameEngine } from './core/GameEngine';
+import { BattlerEngine } from './core/BattlerEngine';
 import { loadGameState } from './core/GameState';
 import { renderDay, renderGameOver, renderPlay, renderResult, renderWelcome } from './ui/Renderer';
+import {
+  renderBattlerHUD,
+  renderCrisisArena,
+  renderHand,
+  renderRewardModal,
+  renderDayClear
+} from './ui/BattlerRenderer';
 import {
   burstHearts,
   openCertificateModal,
@@ -21,15 +29,27 @@ const ROOT = document.getElementById('root') as HTMLElement;
 const HOST = document.getElementById('dialogHost') as HTMLElement;
 const APPROOT = document.getElementById('appRoot') as HTMLElement;
 const audioToggleBtn = document.getElementById('audioToggle') as HTMLButtonElement;
+const modeSwitchBtn = document.getElementById('modeSwitchBtn') as HTMLButtonElement | null;
 
+let currentMode: 'battler' | 'story' = 'battler';
 let engine: GameEngine;
+let battlerEngine: BattlerEngine;
 
 function render(): void {
-  const state = engine.getState();
   if (audioToggleBtn) {
     audioToggleBtn.textContent = sounds.isMuted() ? '🔇' : '🔊';
   }
+  if (modeSwitchBtn) {
+    modeSwitchBtn.textContent = currentMode === 'battler' ? '🃏 Đấu Thẻ Bài' : '📖 Cốt Truyện';
+  }
 
+  if (currentMode === 'battler') {
+    renderBattlerMode();
+    return;
+  }
+
+  // Classic Story Mode
+  const state = engine.getState();
   if (!state || state.stage === 'welcome') {
     ROOT.innerHTML = renderWelcome();
     return;
@@ -53,7 +73,44 @@ function render(): void {
   }
 }
 
-// Initialize Engine
+function renderBattlerMode(): void {
+  const bState = battlerEngine.getState();
+
+  switch (bState.stage) {
+    case 'battle':
+      ROOT.innerHTML = renderBattlerHUD(bState) + renderCrisisArena(bState) + renderHand(bState);
+      break;
+    case 'reward':
+      ROOT.innerHTML = renderBattlerHUD(bState) + renderRewardModal(bState);
+      break;
+    case 'day_clear':
+      ROOT.innerHTML = renderBattlerHUD(bState) + renderDayClear(bState);
+      break;
+    case 'game_over': {
+      ROOT.innerHTML = `<section class="panel" style="background:#fff0f1;text-align:center">
+        <div class="eyebrow" style="color:#e11d48">HỒ SƠ NHÂN SỰ ĐÃ ĐÓNG</div>
+        <div style="font-size:74px;margin:12px 0">💀😿</div>
+        <h1 style="font-size:42px;margin-bottom:8px">GAME<br>OVER!</h1>
+        <div class="badgeText" style="transform:none">CHIẾN THẦN ĐẤU THẺ BÀI</div>
+        <div class="alertNote" style="text-align:center;margin:12px 0"><b>Nguyên nhân thất bại:</b> ${bState.deathReason || 'Gục ngã trước bão táp công sở'}</div>
+        <div class="summaryGrid">
+          <div class="summaryBox">Ngày đạt tới<strong>${bState.day}</strong></div>
+          <div class="summaryBox">Điểm cuối<strong>${bState.score.toLocaleString('vi-VN')}</strong></div>
+          <div class="summaryBox">Số thẻ thu thập<strong>${bState.deck.length}</strong></div>
+          <div class="summaryBox">Kiếp nạn vượt qua<strong>${(bState.day - 1) * 4 + bState.encounterIndex}</strong></div>
+        </div>
+        <div class="buttons">
+          <button class="primary" data-act="certificate" style="background:linear-gradient(135deg, #e11d48, #be123c);border-color:#881337;box-shadow:3px 3px 0 #881337;font-weight:900">📜 XUẤT BIÊN BẢN SA THẢI (KHOE STORY)</button>
+          <button class="primary" data-act="battler_restart">🔄 ỨNG TUYỂN LẠI TỪ ĐẦU</button>
+          <button class="secondary" data-act="donate" style="background:#fff8d6;border-color:#f59e0b;color:#854d0e;font-weight:900">🧋 Tiếp tế trà sữa cứu đói Dev</button>
+        </div>
+      </section>`;
+      break;
+    }
+  }
+}
+
+// Initialize Engines
 let hasNudgedDonate = false;
 const savedState = loadGameState();
 engine = new GameEngine(savedState || undefined, (state) => {
@@ -74,7 +131,12 @@ engine = new GameEngine(savedState || undefined, (state) => {
   render();
 });
 
-// If no saved state, start at welcome
+battlerEngine = new BattlerEngine(() => {
+  render();
+});
+battlerEngine.startNewGame();
+
+// If no saved state, start at welcome for story mode
 if (!savedState) {
   engine.getState().stage = 'welcome';
 }
@@ -117,6 +179,25 @@ function copyBankInfo(note = 'tiep te dev'): void {
 // Event Listeners
 document.addEventListener('click', (ev) => {
   const target = ev.target as HTMLElement;
+
+  // Battler Card click to play
+  const battlerCardEl = target.closest('.battlerCard') as HTMLElement | null;
+  if (battlerCardEl && currentMode === 'battler') {
+    const handIdx = battlerCardEl.dataset.handIndex;
+    if (handIdx !== undefined) {
+      battlerEngine.playCard(Number(handIdx));
+      return;
+    }
+  }
+
+  // Pick reward card
+  const pickBtn = target.closest('[data-pick-reward]') as HTMLElement | null;
+  if (pickBtn && currentMode === 'battler') {
+    const rIdx = Number(pickBtn.dataset.pickReward);
+    const card = battlerEngine.getState().rewardChoices[rIdx];
+    if (card) battlerEngine.pickRewardCard(card);
+    return;
+  }
 
   // Donate Option click
   const donateOpt = target.closest('.donateOption') as HTMLElement | null;
@@ -185,8 +266,37 @@ document.addEventListener('click', (ev) => {
         engine.newRun(roleId, name);
       });
       break;
+    case 'end_turn':
+      battlerEngine.endTurn();
+      break;
+    case 'skip_reward':
+      battlerEngine.skipReward();
+      break;
+    case 'battler_next_day':
+      battlerEngine.nextDay();
+      break;
+    case 'battler_restart':
+      battlerEngine.startNewGame();
+      break;
     case 'certificate':
-      openCertificateModal(HOST, engine.getState());
+      if (currentMode === 'battler') {
+        const b = battlerEngine.getState();
+        const fakeState: any = {
+          day: b.day,
+          total: (b.day - 1) * 4 + b.encounterIndex,
+          lives: b.lives,
+          score: b.score,
+          b: b.backlog,
+          r: b.rep,
+          triggerCount: Math.max(0, b.deck.length - 8),
+          deathReason: b.deathReason || 'Ngã gục trước deadline và meme mèo',
+          role: 'genz',
+          playerName: 'Chiến Thần Đấu Thẻ'
+        };
+        openCertificateModal(HOST, fakeState);
+      } else {
+        openCertificateModal(HOST, engine.getState());
+      }
       break;
     case 'history':
       openHistoryModal(HOST, engine.getState());
@@ -218,6 +328,13 @@ document.addEventListener('click', (ev) => {
 });
 
 // Header Buttons
+modeSwitchBtn?.addEventListener('click', () => {
+  sounds.click();
+  currentMode = currentMode === 'battler' ? 'story' : 'battler';
+  showToast(currentMode === 'battler' ? '🃏 Đã bật chế độ Đấu Thẻ Bài Meme!' : '📖 Đã bật chế độ Cốt Truyện A/B/C!');
+  render();
+});
+
 audioToggleBtn.addEventListener('click', () => {
   const isMuted = sounds.toggle();
   audioToggleBtn.textContent = isMuted ? '🔇' : '🔊';
@@ -264,6 +381,44 @@ document.addEventListener('touchstart', (e) => {
 document.addEventListener('touchend', () => {
   clearHUDHighlights();
 }, { passive: true });
+
+// Drag & Drop for Battler Cards
+document.addEventListener('dragstart', (e) => {
+  const cardEl = (e.target as HTMLElement).closest('.battlerCard') as HTMLElement | null;
+  if (!cardEl) return;
+  const index = cardEl.dataset.handIndex;
+  if (index !== undefined && e.dataTransfer) {
+    e.dataTransfer.setData('text/plain', index);
+    e.dataTransfer.effectAllowed = 'move';
+  }
+});
+
+document.addEventListener('dragover', (e) => {
+  const target = (e.target as HTMLElement).closest('#crisisTargetArea') as HTMLElement | null;
+  if (target) {
+    e.preventDefault();
+    target.classList.add('dragOverTarget');
+  }
+});
+
+document.addEventListener('dragleave', (e) => {
+  const target = (e.target as HTMLElement).closest('#crisisTargetArea') as HTMLElement | null;
+  if (target) {
+    target.classList.remove('dragOverTarget');
+  }
+});
+
+document.addEventListener('drop', (e) => {
+  const target = (e.target as HTMLElement).closest('#crisisTargetArea') as HTMLElement | null;
+  if (target && e.dataTransfer) {
+    e.preventDefault();
+    target.classList.remove('dragOverTarget');
+    const idx = e.dataTransfer.getData('text/plain');
+    if (idx !== '') {
+      battlerEngine.playCard(Number(idx));
+    }
+  }
+});
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {

@@ -746,6 +746,114 @@ p {
   box-shadow: 0 0 0 2px #f59e0b;
 }
 
+/* Card Battler Styles */
+.handGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+@media (min-width: 520px) {
+  .handGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.battlerCard {
+  position: relative;
+  border-radius: 13px;
+  padding: 8px;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.battlerCard.playable:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 4px 6px 0 var(--ink) !important;
+}
+
+.battlerCard.playable:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.battlerCard.unplayable {
+  opacity: 0.55;
+  filter: grayscale(40%);
+  cursor: not-allowed;
+}
+
+.cardCostGem {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  font-size: 11px;
+  box-shadow: 1px 1px 0 var(--ink);
+  z-index: 5;
+}
+
+.cardGifContainer {
+  height: 85px;
+  border-radius: 9px;
+  overflow: hidden;
+  background: #111;
+  border: 1.5px solid var(--ink);
+  margin-bottom: 6px;
+}
+
+.cardGifImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cardFallbackEmoji {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  font-size: 34px;
+}
+
+.cardContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.cardTitleText {
+  font-weight: 900;
+  font-size: 12px;
+  line-height: 1.3;
+  margin-bottom: 3px;
+  color: var(--ink);
+}
+
+.cardDescText {
+  font-size: 10px;
+  color: #55526e;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.crisisArena.dragOverTarget {
+  border-color: #22c55e !important;
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.45), 5px 5px 0 var(--ink) !important;
+  transform: scale(1.02);
+  transition: transform 0.15s;
+}
+
 .outline {
   background: #fff;
   border: 2px solid var(--ink);
