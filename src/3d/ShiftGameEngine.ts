@@ -150,9 +150,23 @@ export class ShiftGameEngine {
     const activeSt = this.stage.activeStation;
     if (activeSt) {
       if (activeSt.type === 'coffee') {
-        this.state.activePrompt = '🧋 UỐNG TRÀ SỮA (Hồi Năng Lượng & Tăng Tốc)';
+        this.state.activePrompt = '☕ PHA CÀ PHÊ / TRÀ SỮA (+40% ⚡ & Tăng Tốc)';
       } else if (activeSt.type === 'altar') {
         this.state.activePrompt = '🙏 THẮP HƯƠNG CẦU MAY (Xả Stress & Tăng KPI)';
+      } else if (activeSt.type === 'water') {
+        this.state.activePrompt = '🚰 UỐNG NƯỚC HẠ HỎA (-15% Stress, +10% ⚡)';
+      } else if (activeSt.type === 'server') {
+        this.state.activePrompt = '🖥️ BẢO TRÌ SERVER IT (+50 Điểm KPI)';
+      } else if (activeSt.type === 'lamp') {
+        this.state.activePrompt = '💡 BẬT/TẮT ĐÈN PHÒNG KHÁCH (Ấm Cúng)';
+      } else if (activeSt.type === 'sofa') {
+        this.state.activePrompt = '🛋️ NGẢ LƯNG TRÊN SOFA (Hồi 35% ⚡ & Xả Stress)';
+      } else if (activeSt.type === 'whiteboard') {
+        this.state.activePrompt = '📊 ĐỌC BẢNG CHIẾN LƯỢC XUẤT KHẨU (+50 đ)';
+      } else if (activeSt.type === 'mirror') {
+        this.state.activePrompt = '🪞 RỬA MẶT SOI GƯƠNG (Tỉnh Táo +20% ⚡)';
+      } else if (activeSt.type === 'boss_desk') {
+        this.state.activePrompt = '👔 BÁO CÁO TIẾN ĐỘ SẾP HÙNG (+50 đ)';
       } else if (activeSt.type === this.state.currentTask.targetStation) {
         this.state.activePrompt = `⚡ BẤM ĐỂ: ${this.getPromptActionText(activeSt.type)}`;
       } else {
@@ -171,6 +185,14 @@ export class ShiftGameEngine {
       case 'fabric': return 'Bốc Cuộn Vải Spandex 🧵';
       case 'shipping': return 'Giao Hàng Cho Anh Tuấn Lên Cont 🚢';
       case 'altar': return 'Thắp Hương Cầu May 🙏';
+      case 'coffee': return 'Pha Cà Phê / Trà Sữa ☕';
+      case 'water': return 'Uống Nước Mát 🚰';
+      case 'server': return 'Kiểm Tra Server 🖥️';
+      case 'lamp': return 'Bật / Tắt Đèn 💡';
+      case 'sofa': return 'Nghỉ Ngơi Sofa 🛋️';
+      case 'whiteboard': return 'Xem Bảng Chiến Lược 📊';
+      case 'mirror': return 'Rửa Mặt Soi Gương 🪞';
+      case 'boss_desk': return 'Báo Cáo Sếp Hùng 👔';
       default: return 'Làm Việc';
     }
   }
@@ -197,7 +219,7 @@ export class ShiftGameEngine {
         }
       }, 3500);
 
-      showToast('🧋 Nạp Trà Sữa Full Top: Hồi phục +50% Năng Lượng & Bật Tốc Chạy 9s ⚡');
+      showToast('☕ Nạp Cà Phê Phin & Trà Sữa: Hồi phục +50% Năng Lượng & Bật Tốc Chạy 9s ⚡');
       this.sync();
       return;
     }
@@ -213,6 +235,72 @@ export class ShiftGameEngine {
       this.state.stress = Math.max(0, this.state.stress - 25);
       this.state.score += 100;
       showToast('🙏 Thần Tài - Thổ Địa phù hộ: Vía lành tài lộc, tâm hồn thanh thản! (+25% ⚡, -25% 🔥, +100 đ)');
+      this.sync();
+      return;
+    }
+
+    // Water cooler
+    if (activeSt.type === 'water') {
+      sounds.success();
+      this.state.energy = Math.min(100, this.state.energy + 10);
+      this.state.stress = Math.max(0, this.state.stress - 15);
+      showToast('🚰 Đã uống ly nước mát lạnh: Hạ nhiệt căng thẳng tức thì! (-15% Stress, +10% ⚡)');
+      this.sync();
+      return;
+    }
+
+    // Server maintenance
+    if (activeSt.type === 'server') {
+      sounds.success();
+      this.state.score += 50;
+      showToast('🖥️ Kiểm tra hệ thống IT: CI/CD Pipeline 0 lỗi, Uptime 99.99%! (+50 đ KPI)');
+      this.sync();
+      return;
+    }
+
+    // Floor lamp toggle
+    if (activeSt.type === 'lamp') {
+      sounds.click();
+      const isOn = this.stage.toggleFloorLamp();
+      showToast(isOn ? '💡 Đã bật đèn sàn: Không gian vàng ấm lung linh!' : '💡 Đã tắt đèn sàn: Tiết kiệm điện cho công ty!');
+      this.sync();
+      return;
+    }
+
+    // Sofa rest
+    if (activeSt.type === 'sofa') {
+      sounds.success();
+      this.state.energy = Math.min(100, this.state.energy + 35);
+      this.state.stress = Math.max(0, this.state.stress - 25);
+      showToast('🛋️ Ngả lưng trên sofa êm ái: Nạp lại đầy pin cho ca trực! (+35% ⚡, -25% Stress)');
+      this.sync();
+      return;
+    }
+
+    // Whiteboard study
+    if (activeSt.type === 'whiteboard') {
+      sounds.perk();
+      this.state.score += 50;
+      showToast('📊 Đọc kế hoạch xuất khẩu Q4: Nắm vững KPI và chuẩn AQL 2.5! (+50 đ)');
+      this.sync();
+      return;
+    }
+
+    // Restroom mirror wash
+    if (activeSt.type === 'mirror') {
+      sounds.success();
+      this.state.energy = Math.min(100, this.state.energy + 20);
+      this.state.stress = Math.max(0, this.state.stress - 10);
+      showToast('🪞 Rửa mặt với nước mát: Tỉnh táo 100%, sẵn sàng chạy deadline! (+20% ⚡)');
+      this.sync();
+      return;
+    }
+
+    // Boss desk report
+    if (activeSt.type === 'boss_desk') {
+      sounds.perk();
+      this.state.score += 50;
+      showToast('👔 Sếp Hùng: "Làm việc chăm chỉ lắm em, ráng chạy kịp cont cuối năm có thưởng lớn!" (+50 đ)');
       this.sync();
       return;
     }

@@ -3,12 +3,19 @@ import { OfficeStage } from '../3d/OfficeStage';
 
 const stationCoords: Record<string, [number, number]> = {
   desk: [-10.5, -13.0],
-  printer: [-4, -12],
-  lab: [12, -9.5],
-  fabric: [-14, 12],
-  shipping: [13, 15],
-  coffee: [0, 2.6],
-  altar: [-14, -18.4]
+  printer: [-4.0, -12.0],
+  lab: [12.0, -9.5],
+  fabric: [-14.0, 12.0],
+  shipping: [13.0, 15.0],
+  coffee: [-1.2, 1.5],
+  altar: [-14.0, -18.4],
+  water: [-2.8, -1.8],
+  server: [-21.25, 10.0],
+  lamp: [2.4, 4.3],
+  sofa: [0.0, 4.7],
+  whiteboard: [-18.0, -13.5],
+  mirror: [-21.0, 1.0],
+  boss_desk: [-18.0, -19.5]
 };
 
 export function mountShiftHUD(host: HTMLElement): void {
