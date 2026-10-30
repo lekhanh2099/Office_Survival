@@ -18,6 +18,66 @@ function esc(t?: string | number | null): string {
   }[x] || x));
 }
 
+export function openShiftHelpModal(host: HTMLElement): void {
+  sounds.click();
+  host.innerHTML = `<div class="dialogShade" role="presentation">
+    <section class="dialog shiftGuideModal" role="dialog" aria-modal="true" aria-labelledby="shiftHelpTitle" style="max-width:440px;max-height:88vh;overflow-y:auto">
+      <div class="dialogHeader" style="background:#dbeafe;border-bottom:2px solid var(--ink);padding:14px">
+        <div style="font-size:32px;margin:0 0 2px">🏢🏭📦</div>
+        <h2 id="shiftHelpTitle" style="font-size:18px;font-weight:900;margin:0 0 4px">HƯỚNG DẪN DÒNG CHẢY CA TRỰC 3D</h2>
+        <p class="note" style="margin:0;font-size:12px;font-weight:700">Quy trình Merchandiser & Chuỗi Cung Ứng Dệt May</p>
+      </div>
+
+      <div class="dialogBody" style="padding:14px;font-size:12px;line-height:1.45">
+        <!-- Goal Banner -->
+        <div style="background:#fef3c7;border:2px solid #b45309;border-radius:10px;padding:10px;margin-bottom:12px">
+          <div style="font-weight:900;color:#92400e;font-size:13px;margin-bottom:3px">🎯 MỤC TIÊU CA TRỰC (09:00 - 17:00):</div>
+          <div style="color:#78350f">Hoàn thành xuất xưởng <b>3 Container hàng</b> trước giờ tan ca để nhận đầy đủ lương và thưởng KPI!</div>
+        </div>
+
+        <!-- 5-Step Supply Chain Flow -->
+        <div style="font-weight:900;font-size:13px;margin:8px 0 6px;color:#1e1b4b">🔄 QUY TRÌNH 5 BƯỚC KHÉP KÍN:</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
+          <div style="display:flex;align-items:flex-start;gap:8px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:8px;padding:6px 8px">
+            <span style="background:#4f46e5;color:#fff;border-radius:50%;width:20px;height:20px;display:grid;place-items:center;font-weight:900;font-size:11px;flex-shrink:0">1</span>
+            <div><b>Bàn Merchandiser 💻:</b> Nhận hợp đồng đơn hàng mới (Ví dụ: 500 Áo Polo đi Mỹ).</div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:8px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:8px;padding:6px 8px">
+            <span style="background:#4f46e5;color:#fff;border-radius:50%;width:20px;height:20px;display:grid;place-items:center;font-weight:900;font-size:11px;flex-shrink:0">2</span>
+            <div><b>Máy In Techpack 🖨️:</b> In bảng thông số kỹ thuật áo và bảng màu cho xưởng.</div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:8px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:8px;padding:6px 8px">
+            <span style="background:#4f46e5;color:#fff;border-radius:50%;width:20px;height:20px;display:grid;place-items:center;font-weight:900;font-size:11px;flex-shrink:0">3</span>
+            <div><b>Phòng Lab Soi Màu 🔬:</b> Kiểm tra mẫu nhuộm dưới đèn chuẩn D65 đạt Delta E.</div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:8px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:8px;padding:6px 8px">
+            <span style="background:#4f46e5;color:#fff;border-radius:50%;width:20px;height:20px;display:grid;place-items:center;font-weight:900;font-size:11px;flex-shrink:0">4</span>
+            <div><b>Kho Vải Đại Ngàn 🧵:</b> Xuống kho gặp Chị Nga Kế toán bốc cuộn vải Spandex.</div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:8px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:8px;padding:6px 8px">
+            <span style="background:#4f46e5;color:#fff;border-radius:50%;width:20px;height:20px;display:grid;place-items:center;font-weight:900;font-size:11px;flex-shrink:0">5</span>
+            <div><b>Cảng Cont Cát Lái 🚢:</b> Vác cây vải giao cho Anh Tuấn tài xế đóng cont xuất xưởng!</div>
+          </div>
+        </div>
+
+        <!-- Navigation & Survival Tips -->
+        <div style="font-weight:900;font-size:13px;margin:8px 0 6px;color:#1e1b4b">💡 MẸO ĐIỀU KHIỂN & SINH TỒN:</div>
+        <div style="display:flex;flex-direction:column;gap:5px;color:#334155">
+          <div>🧭 <b>Không sợ lạc:</b> Đi theo <b>Mũi tên xanh phát sáng</b> dưới chân và <b>Cột hào quang 🎯</b> ở trạm mục tiêu.</div>
+          <div>🏃 <b>Tự động chạy:</b> Chạm thẳng vào <b>Thanh Nhiệm Vụ</b> trên đầu hoặc bàn làm việc để Chibi tự tìm đường!</div>
+          <div>☕ <b>Hồi sức:</b> Uống Cà phê / Trà sữa 🧋 để tăng tốc; Thắp hương Thần Tài 🙏 khi quá stress.</div>
+          <div>🚨 <b>Né Sếp Hùng:</b> Sếp đi tuần tra khắp văn phòng, cẩn thận kẻo bị bắt gặp trừ KPI.</div>
+          <div>👆 <b>Cảm ứng 3D:</b> Vuốt 1 ngón xoay 360°, 2 ngón chụm phóng to thu nhỏ.</div>
+        </div>
+      </div>
+
+      <div class="dialogFooter" style="padding:10px 14px 14px">
+        <button class="primary" data-act="close" style="width:100%;padding:11px;font-size:13px;font-weight:900">🚀 ĐÃ RÕ QUY TRÌNH — CHIẾN THÔI!</button>
+      </div>
+    </section>
+  </div>`;
+}
+
 export function openHelpModal(host: HTMLElement): void {
   sounds.click();
   host.innerHTML = `<div class="dialogShade" role="presentation">

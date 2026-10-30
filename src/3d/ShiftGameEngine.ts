@@ -197,7 +197,7 @@ export class ShiftGameEngine {
     }
   }
 
-  getStationActionDetails(st: Workstation): { title: string; subtitle: string; desc: string; buttonText: string; isTarget: boolean } {
+  getStationActionDetails(st: Workstation): { emoji: string; title: string; subtitle: string; desc: string; buttonText: string; isTarget: boolean } {
     const isTarget = st.type === this.state.currentTask.targetStation;
     const title = `${st.emoji} ${st.name}`;
     const subtitle = `📍 ${st.zone}`;
@@ -239,7 +239,7 @@ export class ShiftGameEngine {
       buttonText = '⚡ ĐẾN TRẠM NÀY';
     }
 
-    return { title, subtitle, desc, buttonText, isTarget };
+    return { emoji: st.emoji, title, subtitle, desc, buttonText, isTarget };
   }
 
   doAction(stationOverride?: Workstation): void {

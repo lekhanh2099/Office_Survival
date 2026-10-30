@@ -29,6 +29,7 @@ import {
   openCompendiumModal,
   openDonateModal,
   openHelpModal,
+  openShiftHelpModal,
   openHistoryModal,
   openRankingsModal,
   openRoleSelectionModal
@@ -133,6 +134,17 @@ function renderShiftMode(): void {
   // Mount HUD DOM once
   mountShiftHUD(uiHost);
 
+  // Set initial visual guidance target (Beacon pillar & floor arrow)
+  shiftStage.updateTargetGuidance(shiftEngine.getState().currentTask.targetStation);
+
+  // Check first-time onboarding guide
+  if (!localStorage.getItem('os_shift_onboarded')) {
+    localStorage.setItem('os_shift_onboarded', 'true');
+    setTimeout(() => {
+      openShiftHelpModal(HOST);
+    }, 350);
+  }
+
   lastFrameTime = performance.now();
 
   const loop = (now: number) => {
@@ -143,6 +155,7 @@ function renderShiftMode(): void {
     const vec = shiftJoystick ? shiftJoystick.getVector() : { x: 0, y: 0, active: false };
     shiftStage.update(delta, vec.x, vec.y);
     shiftEngine.update(delta);
+    shiftStage.updateTargetGuidance(shiftEngine.getState().currentTask.targetStation);
     shiftStage.renderScene();
 
     const s = shiftEngine.getState();
@@ -509,6 +522,33 @@ document.addEventListener('click', (ev) => {
       }
       break;
     }
+    case 'auto_walk_to_quest': {
+      if (shiftStage && shiftEngine) {
+        sounds.click();
+        const curTask = shiftEngine.getState().currentTask;
+        const targetSt = shiftStage.stations.find(s => s.type === curTask.targetStation);
+        if (targetSt) {
+          showToast(`🏃 Đang tự động chạy tới: ${targetSt.name}...`);
+          shiftStage.startAutoWalkTo(targetSt, () => {
+            const intMode = getCachedInteractionMode();
+            if (intMode === 'auto_work') {
+              shiftEngine?.doAction(targetSt);
+            } else {
+              selectedStationForCard = targetSt;
+              const hostEl = document.getElementById('shiftUIHost');
+              if (hostEl) {
+                showStationActionCard(hostEl, shiftEngine!.getStationActionDetails(targetSt));
+              }
+            }
+          });
+        }
+      }
+      break;
+    }
+    case 'open_shift_help': {
+      openShiftHelpModal(HOST);
+      break;
+    }
     case 'confirm_action_card': {
       sounds.click();
       const uiHostEl = document.getElementById('shiftUIHost');
@@ -653,7 +693,13 @@ audioToggleBtn.addEventListener('click', () => {
 document.getElementById('compBtn')?.addEventListener('click', () => openCompendiumModal(HOST));
 document.getElementById('rankBtn')?.addEventListener('click', () => openRankingsModal(HOST));
 document.getElementById('donateBtn')?.addEventListener('click', () => openDonateModal(HOST));
-document.getElementById('help')?.addEventListener('click', () => openHelpModal(HOST));
+document.getElementById('help')?.addEventListener('click', () => {
+  if (currentMode === 'shift') {
+    openShiftHelpModal(HOST);
+  } else {
+    openHelpModal(HOST);
+  }
+});
 
 // HUD Interactive Indicators (Reigns style preview)
 function highlightHUD(affects: string[]): void {

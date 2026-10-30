@@ -30,6 +30,7 @@ interface HUDElementCache {
   zoneBadge: HTMLElement | null;
   orderName: HTMLElement | null;
   questText: HTMLElement | null;
+  questStepper: HTMLElement | null;
   playerDot: HTMLElement | null;
   bossDot: HTMLElement | null;
   targetDot: HTMLElement | null;
@@ -52,6 +53,7 @@ let lastOrdersStr = '';
 let lastZone = '';
 let lastOrderName = '';
 let lastQuestText = '';
+let lastTaskStep = '';
 let lastCamMode = '';
 let lastDragMode = '';
 let lastInteractionMode = '';
@@ -87,6 +89,7 @@ export function mountShiftHUD(host: HTMLElement): void {
   lastZone = '';
   lastOrderName = '';
   lastQuestText = '';
+  lastTaskStep = '';
   lastCamMode = '';
   lastDragMode = '';
   lastInteractionMode = '';
@@ -128,18 +131,37 @@ export function mountShiftHUD(host: HTMLElement): void {
         <span class="orderIcon">📦</span>
         <span class="orderCount" id="hudOrders">0/3</span>
       </div>
+
+      <!-- Quick Shift Help Guide Button -->
+      <button class="ribbonHelpBtn" id="hudHelpBtn" data-act="open_shift_help" type="button" title="Mở hướng dẫn quy trình ca trực 3D">
+        ❓
+      </button>
     </header>
 
-    <!-- Quest Banner (Floats left beneath ribbon, ends before radar) -->
-    <div class="shiftQuestBanner">
-      <div class="questPulseIcon">🎯</div>
-      <div class="questContent">
+    <!-- Main Interactive Quest & Supply Chain Stepper Banner (Clickable to Auto-Navigate) -->
+    <div class="shiftQuestBanner" id="hudQuestBanner" data-act="auto_walk_to_quest" title="Bấm để Chibi tự động chạy tới mục tiêu">
+      <div class="questBannerTop">
         <div class="questTagRow">
           <span class="questZoneBadge" id="hudZoneBadge">🏢 VĂN PHÒNG</span>
           <span class="questOrderName" id="hudOrderName">ĐƠN HÀNG</span>
         </div>
-        <div class="questInstruction" id="hudQuestText">Nhiệm vụ đang tải...</div>
+        <span class="questAutoNavBadge">⚡ Tự chạy ➔</span>
       </div>
+
+      <!-- 5-Step Supply Chain Flow Stepper -->
+      <div class="questFlowStepper" id="hudQuestStepper">
+        <div class="flowStepItem" data-step="desk_receive"><span class="stepIcon">💻</span>1. Nhận Đơn</div>
+        <div class="flowArrow">›</div>
+        <div class="flowStepItem" data-step="printer_techpack"><span class="stepIcon">🖨️</span>2. In Techpack</div>
+        <div class="flowArrow">›</div>
+        <div class="flowStepItem" data-step="lab_check"><span class="stepIcon">🔬</span>3. Soi Lab</div>
+        <div class="flowArrow">›</div>
+        <div class="flowStepItem" data-step="fabric_pick"><span class="stepIcon">🧵</span>4. Lấy Vải</div>
+        <div class="flowArrow">›</div>
+        <div class="flowStepItem" data-step="shipping_deliver"><span class="stepIcon">🚢</span>5. Xuất Cảng</div>
+      </div>
+
+      <div class="questInstruction" id="hudQuestText">Nhiệm vụ đang tải...</div>
     </div>
 
     <!-- Circular Mini Radar (Floats right beneath ribbon, NO OVERLAP) -->
@@ -240,6 +262,7 @@ export function mountShiftHUD(host: HTMLElement): void {
     zoneBadge: host.querySelector('#hudZoneBadge'),
     orderName: host.querySelector('#hudOrderName'),
     questText: host.querySelector('#hudQuestText'),
+    questStepper: host.querySelector('#hudQuestStepper'),
     playerDot: host.querySelector('#hudPlayerDot'),
     bossDot: host.querySelector('#hudBossDot'),
     targetDot: host.querySelector('#hudTargetDot'),
@@ -315,6 +338,24 @@ export function updateShiftHUD(host: HTMLElement, state: ShiftState, stage?: Off
   if (state.currentTask.stepDescription !== lastQuestText) {
     lastQuestText = state.currentTask.stepDescription;
     if (hudCache.questText) hudCache.questText.textContent = state.currentTask.stepDescription;
+  }
+
+  if (state.currentTask.step !== lastTaskStep) {
+    lastTaskStep = state.currentTask.step;
+    const steps = ['desk_receive', 'printer_techpack', 'lab_check', 'fabric_pick', 'shipping_deliver'];
+    const curIdx = steps.indexOf(lastTaskStep);
+    if (hudCache.questStepper) {
+      const items = hudCache.questStepper.querySelectorAll('.flowStepItem');
+      items.forEach((item, idx) => {
+        if (idx < curIdx) {
+          item.className = 'flowStepItem stepCompleted';
+        } else if (idx === curIdx) {
+          item.className = 'flowStepItem stepActive';
+        } else {
+          item.className = 'flowStepItem stepUpcoming';
+        }
+      });
+    }
   }
 
   // Camera toggle text

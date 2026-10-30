@@ -79,6 +79,14 @@ export class OfficeStage {
   public autoWalkTarget: { pos: THREE.Vector3; station: Workstation; onReach?: () => void } | null = null;
   private autoWalkMarkerMesh!: THREE.Mesh;
 
+  // 3D Visual Guidance System (Target Beacon & Compass Arrow)
+  private targetBeaconGroup!: THREE.Group;
+  private beaconBeamMesh!: THREE.Mesh;
+  private beaconRing1!: THREE.Mesh;
+  private beaconRing2!: THREE.Mesh;
+  private guideCompassArrow!: THREE.Mesh;
+  public currentTargetStationPos: THREE.Vector3 | null = null;
+
   // Solid Collision Obstacles
   public obstacles: ObstacleAABB[] = [];
 
@@ -239,6 +247,7 @@ export class OfficeStage {
 
     // 9. Auto-Walk Destination Marker & Pointer Raycaster
     this.setupAutoWalkMarker();
+    this.setupVisualGuidanceSystem();
     this.setupPointerRaycaster();
 
     // 10. Resize Handling
@@ -2013,6 +2022,114 @@ export class OfficeStage {
     this.scene.add(this.autoWalkMarkerMesh);
   }
 
+  public updateTargetGuidance(stationType: string): void {
+    const st = this.stations.find(s => s.type === stationType);
+    if (!st) return;
+    this.currentTargetStationPos = st.position.clone();
+    if (this.targetBeaconGroup) {
+      this.targetBeaconGroup.position.set(st.position.x, 0, st.position.z);
+      this.targetBeaconGroup.visible = true;
+    }
+  }
+
+  private setupVisualGuidanceSystem(): void {
+    // 1. Target Beacon Group (Placed at target workstation)
+    this.targetBeaconGroup = new THREE.Group();
+
+    // Vertical translucent light cylinder
+    const beamGeo = new THREE.CylinderGeometry(0.85, 1.35, 7.0, 20, 1, true);
+    const beamMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.35,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+    this.beaconBeamMesh = new THREE.Mesh(beamGeo, beamMat);
+    this.beaconBeamMesh.position.y = 3.5;
+    this.targetBeaconGroup.add(this.beaconBeamMesh);
+
+    // Inner rotating ring
+    const ring1Geo = new THREE.RingGeometry(0.85, 1.15, 32);
+    const ring1Mat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.85,
+      side: THREE.DoubleSide
+    });
+    this.beaconRing1 = new THREE.Mesh(ring1Geo, ring1Mat);
+    this.beaconRing1.rotation.x = -Math.PI / 2;
+    this.beaconRing1.position.y = 0.05;
+    this.targetBeaconGroup.add(this.beaconRing1);
+
+    // Outer rotating ring
+    const ring2Geo = new THREE.RingGeometry(1.25, 1.5, 32);
+    const ring2Mat = new THREE.MeshBasicMaterial({
+      color: 0xfacc15,
+      transparent: true,
+      opacity: 0.75,
+      side: THREE.DoubleSide
+    });
+    this.beaconRing2 = new THREE.Mesh(ring2Geo, ring2Mat);
+    this.beaconRing2.rotation.x = -Math.PI / 2;
+    this.beaconRing2.position.y = 0.05;
+    this.targetBeaconGroup.add(this.beaconRing2);
+
+    // Floating 3D Target Billboard Sprite
+    const canvas = document.createElement('canvas');
+    canvas.width = 640;
+    canvas.height = 160;
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = '#4f46e5';
+    ctx.beginPath();
+    ctx.roundRect(10, 10, 620, 140, 40);
+    ctx.fill();
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = '#facc15';
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 48px Nunito, -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🎯 MỤC TIÊU TIẾP THEO', 320, 80);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.generateMipmaps = true;
+    tex.minFilter = THREE.LinearMipmapLinearFilter;
+    const spriteMat = new THREE.SpriteMaterial({ map: tex, depthTest: false });
+    const beaconSprite = new THREE.Sprite(spriteMat);
+    beaconSprite.scale.set(3.4, 0.85, 1);
+    beaconSprite.position.set(0, 3.8, 0);
+    this.targetBeaconGroup.add(beaconSprite);
+
+    this.targetBeaconGroup.position.set(-10.5, 0, -13.0);
+    this.scene.add(this.targetBeaconGroup);
+
+    // 2. 3D Floor Guidance Compass Arrow (Hovering near Chibi pointing towards target)
+    const shape = new THREE.Shape();
+    shape.moveTo(0, 0.55);
+    shape.lineTo(0.35, -0.28);
+    shape.lineTo(0.12, -0.16);
+    shape.lineTo(0.12, -0.42);
+    shape.lineTo(-0.12, -0.42);
+    shape.lineTo(-0.12, -0.16);
+    shape.lineTo(-0.35, -0.28);
+    shape.closePath();
+
+    const arrowGeo = new THREE.ShapeGeometry(shape);
+    const arrowMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.9,
+      side: THREE.DoubleSide
+    });
+    this.guideCompassArrow = new THREE.Mesh(arrowGeo, arrowMat);
+    this.guideCompassArrow.rotation.x = -Math.PI / 2;
+    this.guideCompassArrow.position.y = 0.05;
+    this.scene.add(this.guideCompassArrow);
+  }
+
   public startAutoWalkTo(station: Workstation, onReach?: () => void): void {
     this.autoWalkTarget = {
       pos: station.position.clone(),
@@ -2193,7 +2310,35 @@ export class OfficeStage {
       (item.mesh.material as THREE.MeshBasicMaterial).color.setHex(isLit ? item.baseColor : 0x050505);
     }
 
-    // 8. Dynamic Colleague Speech Bubble System
+    // 8. Visual Guidance: Pulsing Beacon Rings & Directional Compass Arrow
+    if (this.targetBeaconGroup && this.targetBeaconGroup.visible) {
+      this.beaconRing1.rotation.z += delta * 1.8;
+      this.beaconRing2.rotation.z -= delta * 1.3;
+      const pulse = 1.0 + Math.sin(Date.now() * 0.007) * 0.12;
+      this.beaconRing1.scale.set(pulse, pulse, 1);
+      this.beaconBeamMesh.rotation.y += delta * 0.5;
+    }
+
+    if (this.currentTargetStationPos && this.guideCompassArrow) {
+      const pPos = this.player.getPosition();
+      const dx = this.currentTargetStationPos.x - pPos.x;
+      const dz = this.currentTargetStationPos.z - pPos.z;
+      const dist = Math.hypot(dx, dz);
+
+      if (dist < 1.8) {
+        this.guideCompassArrow.visible = false;
+      } else {
+        this.guideCompassArrow.visible = true;
+        const angle = Math.atan2(dx, dz);
+        const offsetDist = 1.1 + Math.sin(Date.now() * 0.008) * 0.18;
+        this.guideCompassArrow.position.x = pPos.x + Math.sin(angle) * offsetDist;
+        this.guideCompassArrow.position.z = pPos.z + Math.cos(angle) * offsetDist;
+        this.guideCompassArrow.position.y = 0.05;
+        this.guideCompassArrow.rotation.z = -angle;
+      }
+    }
+
+    // 9. Dynamic Colleague Speech Bubble System
     this.speechTimer -= delta;
     if (this.speechTimer <= 0) {
       if (this.activeSpeech) {
