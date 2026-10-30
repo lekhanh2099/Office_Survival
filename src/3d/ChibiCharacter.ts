@@ -13,10 +13,13 @@ export class ChibiCharacter {
   private itemHolder!: THREE.Group;
   private nametagMesh!: THREE.Sprite;
   private groundRingMesh!: THREE.Mesh;
+  private leftEyeMesh!: THREE.Mesh;
+  private rightEyeMesh!: THREE.Mesh;
 
-  // Animation cycle
+  // Animation cycle & Eye blink
   private walkCycle = 0;
   private idleTime = 0;
+  private blinkTimer = 0;
   public isMoving = false;
   public moveSpeed = 5.4; // units per second
   public carriedItem: CarriedItemType = 'none';
@@ -108,13 +111,13 @@ export class ChibiCharacter {
     eyeGeo.scale(0.8, 1.25, 0.5);
     const eyeMat = new THREE.MeshBasicMaterial({ color: isNpc ? 0x0f172a : 0x1e1b4b });
 
-    const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
-    leftEye.position.set(-0.14, -0.02, 0.34);
-    this.headMesh.add(leftEye);
+    this.leftEyeMesh = new THREE.Mesh(eyeGeo, eyeMat);
+    this.leftEyeMesh.position.set(-0.14, -0.02, 0.34);
+    this.headMesh.add(this.leftEyeMesh);
 
-    const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
-    rightEye.position.set(0.14, -0.02, 0.34);
-    this.headMesh.add(rightEye);
+    this.rightEyeMesh = new THREE.Mesh(eyeGeo.clone(), eyeMat);
+    this.rightEyeMesh.position.set(0.14, -0.02, 0.34);
+    this.headMesh.add(this.rightEyeMesh);
 
     // Eye Sparkle Reflections
     const sparkleGeo = new THREE.SphereGeometry(0.018, 8, 8);
@@ -156,7 +159,7 @@ export class ChibiCharacter {
     this.rightHand.position.set(0.34, 0.46, 0.06);
     this.group.add(this.rightHand);
 
-    // 4. Feet / Sneakers
+    // 4. Feet / Sneakers with Rubber Soles
     const footGeo = new THREE.BoxGeometry(0.14, 0.12, 0.24);
     this.leftFoot = new THREE.Mesh(footGeo, shoeMat);
     this.leftFoot.position.set(-0.15, 0.06, 0);
@@ -167,6 +170,36 @@ export class ChibiCharacter {
     this.rightFoot.position.set(0.15, 0.06, 0);
     this.rightFoot.castShadow = true;
     this.group.add(this.rightFoot);
+
+    const soleMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 });
+    const soleGeo = new THREE.BoxGeometry(0.145, 0.035, 0.245);
+    const leftSole = new THREE.Mesh(soleGeo, soleMat);
+    leftSole.position.set(0, -0.045, 0);
+    this.leftFoot.add(leftSole);
+
+    const rightSole = new THREE.Mesh(soleGeo.clone(), soleMat);
+    rightSole.position.set(0, -0.045, 0);
+    this.rightFoot.add(rightSole);
+
+    // Stylish Tech Headset Resting on Collar (Player Only)
+    if (this.isPlayer) {
+      const headsetMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.3, metalness: 0.8 });
+      const band = new THREE.Mesh(new THREE.TorusGeometry(0.31, 0.035, 8, 24, Math.PI), headsetMat);
+      band.position.set(0, 0.72, 0.02);
+      band.rotation.x = Math.PI * 0.45;
+      this.group.add(band);
+
+      const earCupMat = new THREE.MeshStandardMaterial({ color: 0x6366f1, roughness: 0.25 });
+      const earLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.06, 14), earCupMat);
+      earLeft.position.set(-0.31, 0.72, 0.07);
+      earLeft.rotation.z = Math.PI / 2;
+      this.group.add(earLeft);
+
+      const earRight = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.06, 14), earCupMat);
+      earRight.position.set(0.31, 0.72, 0.07);
+      earRight.rotation.z = Math.PI / 2;
+      this.group.add(earRight);
+    }
 
     // 5. Item Holder in front of chest
     this.itemHolder = new THREE.Group();
@@ -293,6 +326,21 @@ export class ChibiCharacter {
 
   updateAnimation(delta: number, dirX: number, dirZ: number, isMoving: boolean): void {
     this.isMoving = isMoving;
+
+    // Animated Eye Blinking (Natural Anime blink cycle every 3.8s)
+    this.blinkTimer += delta;
+    if (this.blinkTimer > 3.8) {
+      this.leftEyeMesh.scale.y = 0.15;
+      this.rightEyeMesh.scale.y = 0.15;
+      if (this.blinkTimer > 3.94) {
+        this.leftEyeMesh.scale.y = 1.25;
+        this.rightEyeMesh.scale.y = 1.25;
+        this.blinkTimer = 0;
+      }
+    } else {
+      this.leftEyeMesh.scale.y = 1.25;
+      this.rightEyeMesh.scale.y = 1.25;
+    }
 
     if (isMoving) {
       // Smooth facing rotation

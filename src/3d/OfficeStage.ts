@@ -164,7 +164,7 @@ export class OfficeStage {
     // 1. Scene with Deep Atmospheric Midnight Ambiance
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color('#0c101c');
-    this.scene.fog = new THREE.FogExp2('#0c101c', 0.013);
+    this.scene.fog = new THREE.FogExp2('#0c101c', 0.012);
 
     const aspect = width / height;
     const initFov = aspect < 0.8 ? 52 : (aspect < 1.1 ? 46 : 42);
@@ -172,20 +172,20 @@ export class OfficeStage {
     this.camera.position.set(0, 14, 13);
     this.camera.lookAt(0, 0.8, 0);
 
-    // 2. WebGL Renderer with Tone Mapping (Cozy Night Diorama Look)
+    // 2. WebGL Renderer with High-Fidelity Tone Mapping & Soft Shadows
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     this.renderer.setSize(width, height);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.25;
+    this.renderer.toneMappingExposure = 1.35;
     this.container.appendChild(this.renderer.domElement);
 
-    // 3. Lighting
+    // 3. Realistic Layered Lighting
     this.setupLighting();
 
-    // 4. Large Multi-Zone World & Real Architectural Rooms
+    // 4. Detailed Architectural World
     this.setupGrandCampus();
 
     // 5. Workstations & Interactive Stations Across the Office
@@ -237,16 +237,16 @@ export class OfficeStage {
   public toggleFloorLamp(): boolean {
     this.isFloorLampOn = !this.isFloorLampOn;
     if (this.floorLampLight) {
-      this.floorLampLight.intensity = this.isFloorLampOn ? 2.4 : 0.0;
+      this.floorLampLight.intensity = this.isFloorLampOn ? 2.5 : 0.0;
     }
     return this.isFloorLampOn;
   }
 
   private setupLighting(): void {
-    const hemi = new THREE.HemisphereLight(0xfff1e6, 0x0f172a, 1.15);
+    const hemi = new THREE.HemisphereLight(0xfff5eb, 0x0f172a, 1.25);
     this.scene.add(hemi);
 
-    const sun = new THREE.DirectionalLight(0xffedd5, 1.5);
+    const sun = new THREE.DirectionalLight(0xffeedb, 1.6);
     sun.position.set(22, 34, 18);
     sun.castShadow = true;
     sun.shadow.mapSize.width = 2048;
@@ -258,53 +258,49 @@ export class OfficeStage {
     sun.shadow.camera.right = sD;
     sun.shadow.camera.top = sD;
     sun.shadow.camera.bottom = -sD;
-    sun.shadow.bias = -0.0008;
+    sun.shadow.bias = -0.0006;
+    sun.shadow.radius = 2.0;
     this.scene.add(sun);
 
-    // Warm Pools of Light across rooms
-    // 1. Office Center Warm Chandelier
+    // Warm Ambient Department Pools of Light
     const lOffice = new THREE.PointLight(0xfbbf24, 2.2, 24);
     lOffice.position.set(-14, 5.5, -12);
     this.scene.add(lOffice);
 
-    // 2. Lounge Warm Overhead Chandelier
-    const lLounge = new THREE.PointLight(0xfef08a, 1.9, 20);
+    const lLounge = new THREE.PointLight(0xfef08a, 2.0, 20);
     lLounge.position.set(0, 5.0, 2);
     this.scene.add(lLounge);
 
-    // 3. Lab D65 Color Grading Light
-    const lLab = new THREE.PointLight(0x38bdf8, 2.0, 22);
+    const lLab = new THREE.PointLight(0x38bdf8, 2.2, 22);
     lLab.position.set(14, 5.5, -10);
     this.scene.add(lLab);
 
-    // 4. Warehouse Amber Industrial Lamp
-    const lWarehouse = new THREE.PointLight(0xf59e0b, 1.9, 24);
+    const lWarehouse = new THREE.PointLight(0xf59e0b, 2.0, 24);
     lWarehouse.position.set(-14, 5.5, 12);
     this.scene.add(lWarehouse);
 
-    // 5. Port Logistics Floodlight
     const lPort = new THREE.PointLight(0x60a5fa, 2.2, 26);
     lPort.position.set(14, 5.5, 14);
     this.scene.add(lPort);
   }
 
   private setupGrandCampus(): void {
-    // 1. Base Campus Floor (Outdoor concrete base)
+    // 1. Dark Exterior Base Foundation
     const baseGeo = new THREE.PlaneGeometry(64, 52);
-    const baseMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.95 });
+    const baseMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.95 });
     const base = new THREE.Mesh(baseGeo, baseMat);
     base.rotation.x = -Math.PI / 2;
     base.receiveShadow = true;
     this.scene.add(base);
 
-    // 2. Oak Parquet Wood Floor for Main Office & Central Corridor (Warm cozy diorama!)
+    // 2. High-Resolution Warm Scandinavian Oak Parquet Flooring
     this.createWoodParquetFloor(0, 0, 56, 44);
 
-    // 3. Ceramic Hex Tile Floor for Pantry & Kitchen
+    // 3. Luxurious White Hexagon Tile Floor for Pantry & Kitchen
     this.createTileFloor(0, 2, 14, 12, '#f8fafc', '#cbd5e1');
 
-    // 4. Dark Patterned Carpet for Boardroom & Boss Office
-    this.createCarpetFloor(-17, -14, 16, 16, '#1e1b4b', '#312e81');
+    // 4. Dark Patterned Acoustic Carpet for Boardroom & Boss Office
+    this.createCarpetFloor(-17, -14, 16, 16, '#1e1b4b', '#2e1065');
 
     // 5. Polished Industrial Concrete Floor for Warehouse & Shipping
     this.createIndustrialFloor(14, 11, 22, 20);
@@ -319,17 +315,17 @@ export class OfficeStage {
     for (let i = 0; i < 3; i++) {
       const dx = -18 + i * 5;
       this.createColleagueDesk(dx, -14);
-      this.addObstacle(`desk_r1_${i}`, dx, -14, 2.5, 1.3);
+      this.addObstacle(`desk_r1_${i}`, dx, -14, 2.6, 1.4);
 
       this.createColleagueDesk(dx, -9);
-      this.addObstacle(`desk_r2_${i}`, dx, -9, 2.5, 1.3);
+      this.addObstacle(`desk_r2_${i}`, dx, -9, 2.6, 1.4);
     }
 
-    // Water Cooler Station
+    // Modern Slim Water Dispenser
     this.createWaterCooler(-2.8, -1.8);
     this.addObstacle('water_cooler', -2.8, -1.8, 0.8, 0.8);
 
-    // Potted Plants
+    // Refined Potted Indoor Plants
     this.createPlant(-24, -20);
     this.addObstacle('plant_1', -24, -20, 0.8, 0.8);
     this.createPlant(-4, -20);
@@ -337,13 +333,13 @@ export class OfficeStage {
     this.createPlant(4, -20);
     this.addObstacle('plant_3', 4, -20, 0.8, 0.8);
 
-    // Boardroom (Phòng Họp Kính VIP with Whiteboard & Glass Partitions)
+    // Boardroom (Phòng Họp Kính VIP with Racetrack Oval Table)
     this.createBoardroom(-18, -16, 8, 6);
 
-    // Boss Office (Phòng Sếp Hùng)
+    // Executive Suite (Phòng Tổng Giám Đốc Hùng)
     this.createBossOffice(-18, -21);
 
-    // IT Server Room
+    // IT Datacenter Room
     this.createServerRacks(-22, 10);
     this.addObstacle('server_racks', -21.25, 10, 3.2, 1.1);
 
@@ -365,7 +361,7 @@ export class OfficeStage {
     this.createCuttingTable(16, -7);
     this.addObstacle('cut_table_4', 16, -7, 4.3, 1.9);
 
-    // Dress Form Mannequins
+    // Mannequin Dress Forms
     this.createMannequin(3.5, -12, '#3b82f6');
     this.createMannequin(3.5, -7, '#ef4444');
 
@@ -396,7 +392,7 @@ export class OfficeStage {
     this.createShippingContainer(14, 18, '#16a34a', 'ONE OCEAN NETWORK');
     this.addObstacle('container_3', 14, 18, 5.4, 2.6);
 
-    // ==================== ZONE 5: REAL PANTRY KITCHEN & LOUNGE ====================
+    // ==================== ZONE 5: REAL DESIGNER PANTRY & LOUNGE ====================
     this.createZoneSign(0, 3.2, -4.5, '🧋 PANTRY CÀ PHÊ & LOUNGE NGHỈ NGƠI', '#9333ea');
     this.createDetailedPantryAndLounge(0, 1.5);
 
@@ -413,31 +409,67 @@ export class OfficeStage {
   private createWoodParquetFloor(cx: number, cz: number, w: number, h: number): void {
     const geo = new THREE.PlaneGeometry(w, h);
     const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 512;
+    canvas.width = 1024;
+    canvas.height = 1024;
     const ctx = canvas.getContext('2d')!;
 
-    // Warm amber wood parquet
-    ctx.fillStyle = '#b45309';
-    ctx.fillRect(0, 0, 512, 512);
+    // Warm Scandinavian natural oak base gradient
+    const grad = ctx.createLinearGradient(0, 0, 1024, 1024);
+    grad.addColorStop(0, '#c28340');
+    grad.addColorStop(0.5, '#b97735');
+    grad.addColorStop(1, '#ad6c2c');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 1024, 1024);
 
-    const plankH = 32;
+    // Parquet herringbone planks with subtle wood grain fibers
     const plankW = 128;
-    for (let y = 0; y < 512; y += plankH) {
-      const offset = (y / plankH) % 2 === 0 ? 0 : 64;
-      for (let x = -64; x < 512; x += plankW) {
-        const shade = Math.sin(x * 12 + y * 7) > 0 ? '#92400e' : '#d97706';
-        ctx.fillStyle = shade;
-        ctx.fillRect(x + offset + 2, y + 2, plankW - 4, plankH - 4);
+    const plankH = 32;
+
+    for (let y = 0; y < 1024; y += plankH) {
+      const rowIdx = y / plankH;
+      const offset = rowIdx % 2 === 0 ? 0 : plankW / 2;
+      for (let x = -plankW; x < 1024 + plankW; x += plankW) {
+        const px = x + offset;
+        const grainTint = Math.sin(px * 0.05 + y * 0.1) * 0.5 + 0.5;
+        const r = Math.round(185 + grainTint * 20);
+        const g = Math.round(115 + grainTint * 18);
+        const b = Math.round(50 + grainTint * 12);
+        ctx.fillStyle = `rgb(${r},${g},${b})`;
+        ctx.fillRect(px + 1, y + 1, plankW - 2, plankH - 2);
+
+        // Delicate wood grain lines
+        ctx.strokeStyle = `rgba(130, 75, 25, 0.22)`;
+        ctx.beginPath();
+        ctx.moveTo(px + 10, y + 10);
+        ctx.lineTo(px + plankW - 10, y + 10);
+        ctx.moveTo(px + 20, y + 20);
+        ctx.lineTo(px + plankW - 5, y + 20);
+        ctx.stroke();
+
+        // Soft bevel seam shadow
+        ctx.strokeStyle = 'rgba(70, 35, 10, 0.40)';
+        ctx.strokeRect(px + 0.5, y + 0.5, plankW - 1, plankH - 1);
+
+        // Subtle top highlight
+        ctx.strokeStyle = 'rgba(255, 220, 170, 0.22)';
+        ctx.beginPath();
+        ctx.moveTo(px + 1, y + 1.5);
+        ctx.lineTo(px + plankW - 2, y + 1.5);
+        ctx.stroke();
       }
     }
 
     const tex = new THREE.CanvasTexture(canvas);
     tex.wrapS = THREE.RepeatWrapping;
     tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(w / 4, h / 4);
+    tex.repeat.set(w / 5, h / 5);
+    tex.anisotropy = 8;
 
-    const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.45 });
+    const mat = new THREE.MeshStandardMaterial({
+      map: tex,
+      roughness: 0.35,
+      metalness: 0.05
+    });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.rotation.x = -Math.PI / 2;
     mesh.position.set(cx, 0.01, cz);
@@ -448,26 +480,27 @@ export class OfficeStage {
   private createTileFloor(cx: number, cz: number, w: number, h: number, c1: string, c2: string): void {
     const geo = new THREE.PlaneGeometry(w, h);
     const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 256;
+    canvas.width = 512;
+    canvas.height = 512;
     const ctx = canvas.getContext('2d')!;
     ctx.fillStyle = c1;
-    ctx.fillRect(0, 0, 256, 256);
+    ctx.fillRect(0, 0, 512, 512);
+
     ctx.strokeStyle = c2;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2.5;
     const step = 64;
-    for (let x = 0; x <= 256; x += step) {
-      ctx.moveTo(x, 0); ctx.lineTo(x, 256);
-      ctx.moveTo(0, x); ctx.lineTo(256, x);
+    for (let x = 0; x <= 512; x += step) {
+      ctx.moveTo(x, 0); ctx.lineTo(x, 512);
+      ctx.moveTo(0, x); ctx.lineTo(512, x);
     }
     ctx.stroke();
 
     const tex = new THREE.CanvasTexture(canvas);
     tex.wrapS = THREE.RepeatWrapping;
     tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(w / 2, h / 2);
+    tex.repeat.set(w / 2.5, h / 2.5);
 
-    const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.35 });
+    const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.25 });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.rotation.x = -Math.PI / 2;
     mesh.position.set(cx, 0.015, cz);
@@ -478,23 +511,23 @@ export class OfficeStage {
   private createCarpetFloor(cx: number, cz: number, w: number, h: number, c1: string, c2: string): void {
     const geo = new THREE.PlaneGeometry(w, h);
     const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 256;
+    canvas.width = 512;
+    canvas.height = 512;
     const ctx = canvas.getContext('2d')!;
     ctx.fillStyle = c1;
-    ctx.fillRect(0, 0, 256, 256);
+    ctx.fillRect(0, 0, 512, 512);
     ctx.fillStyle = c2;
-    for (let y = 0; y < 256; y += 32) {
-      for (let x = 0; x < 256; x += 32) {
+    for (let y = 0; y < 512; y += 32) {
+      for (let x = 0; x < 512; x += 32) {
         if ((x + y) % 64 === 0) ctx.fillRect(x + 4, y + 4, 24, 24);
       }
     }
     const tex = new THREE.CanvasTexture(canvas);
     tex.wrapS = THREE.RepeatWrapping;
     tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(w / 3, h / 3);
+    tex.repeat.set(w / 3.5, h / 3.5);
 
-    const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.8 });
+    const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85 });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.rotation.x = -Math.PI / 2;
     mesh.position.set(cx, 0.018, cz);
@@ -543,66 +576,137 @@ export class OfficeStage {
     const g = new THREE.Group();
     g.position.set(x, 0, z);
 
-    // Warm wood table top
-    const top = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.1, 1.2), new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.4 }));
+    // Warm wood table top with beveled finish
+    const top = new THREE.Mesh(
+      new THREE.BoxGeometry(2.4, 0.09, 1.2),
+      new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.35, metalness: 0.05 })
+    );
     top.position.y = 0.75;
     top.castShadow = true;
     g.add(top);
 
-    // Metal table legs
-    const legMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.6 });
-    for (const lx of [-1.0, 1.0]) {
-      for (const lz of [-0.45, 0.45]) {
-        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.7, 8), legMat);
-        leg.position.set(lx, 0.35, lz);
-        g.add(leg);
-      }
+    // Sleek angled matte-black trestle loop legs
+    const legMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, metalness: 0.7, roughness: 0.3 });
+    for (const lx of [-1.05, 1.05]) {
+      const loop = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.72, 1.08), legMat);
+      loop.position.set(lx, 0.36, 0);
+      g.add(loop);
     }
 
-    // Partition Screen
-    const part = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.5, 0.05), new THREE.MeshStandardMaterial({ color: 0x4f46e5 }));
-    part.position.set(0, 1.05, -0.58);
+    // Fabric Acoustic Privacy Divider Panel with pinned post-its
+    const partMat = new THREE.MeshStandardMaterial({ color: 0x4338ca, roughness: 0.8 });
+    const part = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.52, 0.04), partMat);
+    part.position.set(0, 1.04, -0.58);
     g.add(part);
 
-    // Dual Monitors on Arm
-    const mon1 = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.42, 0.04), new THREE.MeshBasicMaterial({ color: 0x38bdf8 }));
-    mon1.position.set(-0.35, 1.05, -0.2);
+    // Sticky notes pinned to divider
+    const noteMat1 = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+    const note1 = new THREE.Mesh(new THREE.PlaneGeometry(0.14, 0.14), noteMat1);
+    note1.position.set(-0.6, 1.05, -0.55);
+    g.add(note1);
+
+    const noteMat2 = new THREE.MeshBasicMaterial({ color: 0xf472b6 });
+    const note2 = new THREE.Mesh(new THREE.PlaneGeometry(0.14, 0.14), noteMat2);
+    note2.position.set(0.6, 1.12, -0.55);
+    g.add(note2);
+
+    // Dual Ultra-wide Monitors on Articulated Arm
+    const mon1 = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.42, 0.03), new THREE.MeshBasicMaterial({ color: 0x0284c7 }));
+    mon1.position.set(-0.36, 1.06, -0.22);
+    mon1.rotation.y = 0.1;
     g.add(mon1);
 
-    const mon2 = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.42, 0.04), new THREE.MeshBasicMaterial({ color: 0x22c55e }));
-    mon2.position.set(0.35, 1.05, -0.2);
+    const mon2 = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.42, 0.03), new THREE.MeshBasicMaterial({ color: 0x10b981 }));
+    mon2.position.set(0.36, 1.06, -0.22);
+    mon2.rotation.y = -0.1;
     g.add(mon2);
 
-    // Keyboard & Mouse
-    const kb = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.02, 0.16), new THREE.MeshStandardMaterial({ color: 0x1e1b4b }));
-    kb.position.set(-0.1, 0.81, 0.1);
+    // Keyboard & Mouse on Leather Desk Blotter
+    const blotter = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.01, 0.55), new THREE.MeshStandardMaterial({ color: 0x1e1b4b, roughness: 0.6 }));
+    blotter.position.set(0, 0.80, 0.12);
+    g.add(blotter);
+
+    const kb = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.02, 0.16), new THREE.MeshStandardMaterial({ color: 0x312e81 }));
+    kb.position.set(-0.1, 0.815, 0.12);
     g.add(kb);
 
-    const mouse = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.03, 0.12), new THREE.MeshStandardMaterial({ color: 0x6366f1 }));
-    mouse.position.set(0.35, 0.81, 0.1);
+    const mouse = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.03, 0.12), new THREE.MeshStandardMaterial({ color: 0x818cf8 }));
+    mouse.position.set(0.32, 0.815, 0.12);
     g.add(mouse);
 
-    // Arched metal desk lamp
-    const lampArm = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.4, 8), legMat);
-    lampArm.position.set(0.8, 1.0, -0.2);
-    lampArm.rotation.z = -0.3;
+    // Arched Brass Desk Lamp with warm glow
+    const lampArm = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.45, 8), new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.8 }));
+    lampArm.position.set(0.85, 1.0, -0.2);
+    lampArm.rotation.z = -0.25;
     g.add(lampArm);
 
-    const lampShade = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.14, 8), new THREE.MeshStandardMaterial({ color: 0xfacc15 }));
-    lampShade.position.set(0.7, 1.15, -0.2);
+    const lampShade = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.14, 12), new THREE.MeshStandardMaterial({ color: 0xfef08a }));
+    lampShade.position.set(0.76, 1.18, -0.2);
     g.add(lampShade);
 
     // Coffee mug
     const mug = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.12, 10), new THREE.MeshStandardMaterial({ color: 0xffffff }));
-    mug.position.set(-0.8, 0.86, 0.1);
+    mug.position.set(-0.85, 0.86, 0.12);
     g.add(mug);
 
-    // Mesh Swivel Chair
-    const chair = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshStandardMaterial({ color: 0x1e293b }));
-    chair.position.set(0, 0.35, 0.6);
-    g.add(chair);
+    // Under-desk Mini PC Tower with glowing fan
+    const pcTower = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.48, 0.48), new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.4 }));
+    pcTower.position.set(0.85, 0.24, -0.15);
+    g.add(pcTower);
+
+    // Ergonomic Swivel Chair with 5-Star Base
+    this.createErgonomicChair(g, 0, 0.65, 0);
 
     this.scene.add(g);
+  }
+
+  private createErgonomicChair(parent: THREE.Group, x: number, z: number, rotY: number): void {
+    const cg = new THREE.Group();
+    cg.position.set(x, 0, z);
+    cg.rotation.y = rotY;
+
+    const chromeMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.9, roughness: 0.15 });
+    const seatMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.5 });
+
+    // 5-Star Spoke Base
+    for (let s = 0; s < 5; s++) {
+      const angle = (s * Math.PI * 2) / 5;
+      const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.32), chromeMat);
+      spoke.rotation.y = angle;
+      spoke.position.set(Math.sin(angle) * 0.16, 0.06, Math.cos(angle) * 0.16);
+      cg.add(spoke);
+
+      // Caster wheel
+      const wheel = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 8), seatMat);
+      wheel.position.set(Math.sin(angle) * 0.30, 0.035, Math.cos(angle) * 0.30);
+      cg.add(wheel);
+    }
+
+    // Gas-lift cylinder
+    const cylinder = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.35, 10), chromeMat);
+    cylinder.position.y = 0.22;
+    cg.add(cylinder);
+
+    // Contoured Seat Cushion
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.08, 0.52), seatMat);
+    seat.position.y = 0.42;
+    seat.castShadow = true;
+    cg.add(seat);
+
+    // Curved Mesh Backrest
+    const back = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.54, 0.06), seatMat);
+    back.position.set(0, 0.70, -0.24);
+    back.rotation.x = -0.1;
+    cg.add(back);
+
+    // Armrests
+    for (const side of [-0.28, 0.28]) {
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.04, 0.28), seatMat);
+      arm.position.set(side, 0.58, 0);
+      cg.add(arm);
+    }
+
+    parent.add(cg);
   }
 
   private createBoardroom(x: number, z: number, w: number, h: number): void {
@@ -617,7 +721,7 @@ export class OfficeStage {
     });
     const frameMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.5, metalness: 0.8 });
 
-    // North Glass Wall
+    // North Glass Wall with Mullions
     const wallN = new THREE.Mesh(new THREE.BoxGeometry(w, 2.6, 0.08), glassMat);
     wallN.position.set(0, 1.3, -h / 2);
     g.add(wallN);
@@ -631,34 +735,44 @@ export class OfficeStage {
     wallW.position.set(-w / 2, 1.3, 0);
     g.add(wallW);
 
-    // Mahogany Conference Table
-    const table = new THREE.Mesh(new THREE.BoxGeometry(w * 0.72, 0.14, h * 0.48), new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.4 }));
-    table.position.y = 0.82;
-    table.castShadow = true;
-    g.add(table);
+    // Racetrack-Oval Walnut Conference Table
+    const tableTop = new THREE.Mesh(
+      new THREE.CylinderGeometry(w * 0.35, w * 0.35, 0.12, 32),
+      new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.35 })
+    );
+    tableTop.scale.set(1.4, 1, 0.8);
+    tableTop.position.y = 0.82;
+    tableTop.castShadow = true;
+    g.add(tableTop);
 
-    // Swivel chairs
-    const chairMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 });
+    // Brushed metal power hub in center of table
+    const hub = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.02, 0.3), new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.8 }));
+    hub.position.set(0, 0.89, 0);
+    g.add(hub);
+
+    // 6 Leather Swivel Conference Chairs
     const chairOffsets = [
-      [-w * 0.24, -h * 0.32],
-      [0, -h * 0.32],
-      [w * 0.24, -h * 0.32],
-      [-w * 0.24, h * 0.32],
-      [0, h * 0.32],
-      [w * 0.24, h * 0.32]
+      [-w * 0.25, -h * 0.28, Math.PI],
+      [0, -h * 0.30, Math.PI],
+      [w * 0.25, -h * 0.28, Math.PI],
+      [-w * 0.25, h * 0.28, 0],
+      [0, h * 0.30, 0],
+      [w * 0.25, h * 0.28, 0]
     ];
-    for (const [cx, cz] of chairOffsets) {
-      const chair = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.6, 0.5), chairMat);
-      chair.position.set(cx, 0.4, cz);
-      g.add(chair);
+    for (const [cx, cz, rot] of chairOffsets) {
+      this.createErgonomicChair(g, cx, cz, rot);
     }
 
-    // Whiteboard
+    // High-Resolution Frameless Whiteboard
     this.createWhiteboard(g, 0, 1.6, -h / 2 + 0.1);
 
-    // Warm overhead pendant light
-    const pLight = new THREE.PointLight(0xffedd5, 1.8, 12);
-    pLight.position.set(0, 2.4, 0);
+    // Minimalist Linear LED Pendant Light
+    const penBar = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.06, 0.12), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
+    penBar.position.set(0, 2.4, 0);
+    g.add(penBar);
+
+    const pLight = new THREE.PointLight(0xffedd5, 1.9, 14);
+    pLight.position.set(0, 2.3, 0);
     g.add(pLight);
 
     this.scene.add(g);
@@ -670,23 +784,29 @@ export class OfficeStage {
 
   private createWhiteboard(parent: THREE.Group, x: number, y: number, z: number): void {
     const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 256;
+    canvas.width = 1024;
+    canvas.height = 512;
     const ctx = canvas.getContext('2d')!;
 
+    // Clean glossy glass whiteboard
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, 512, 256);
+    ctx.fillRect(0, 0, 1024, 512);
 
-    ctx.fillStyle = '#1e1b4b';
-    ctx.font = 'bold 22px Nunito, sans-serif';
-    ctx.fillText('📊 KẾ HOẠCH XUẤT KHẨU Q4 · THỊ TRƯỜNG US & EU', 20, 36);
+    // Subtle header gradient
+    const grad = ctx.createLinearGradient(0, 0, 1024, 0);
+    grad.addColorStop(0, '#1e1b4b');
+    grad.addColorStop(1, '#3b82f6');
+    ctx.fillStyle = grad;
+    ctx.font = 'bold 36px Nunito, sans-serif';
+    ctx.fillText('📊 KẾ HOẠCH XUẤT KHẨU Q4 · THỊ TRƯỜNG US & EU', 40, 65);
 
     ctx.strokeStyle = '#cbd5e1';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(20, 48); ctx.lineTo(492, 48);
+    ctx.moveTo(40, 88); ctx.lineTo(984, 88);
     ctx.stroke();
 
+    // Draw Bar Chart
     const categories = [
       { label: 'Polo US', value: 85, color: '#22c55e' },
       { label: 'Khaki EU', value: 65, color: '#3b82f6' },
@@ -694,33 +814,34 @@ export class OfficeStage {
       { label: 'Spandex Tokyo', value: 78, color: '#a855f7' }
     ];
 
-    const chartX = 40;
-    const chartY = 210;
+    const chartX = 80;
+    const chartY = 420;
     ctx.strokeStyle = '#64748b';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(chartX, 70); ctx.lineTo(chartX, chartY); ctx.lineTo(470, chartY);
+    ctx.moveTo(chartX, 130); ctx.lineTo(chartX, chartY); ctx.lineTo(940, chartY);
     ctx.stroke();
 
     categories.forEach((cat, idx) => {
-      const bx = chartX + 30 + idx * 100;
-      const barH = (cat.value / 100) * 120;
+      const bx = chartX + 60 + idx * 210;
+      const barH = (cat.value / 100) * 240;
       ctx.fillStyle = cat.color;
-      ctx.fillRect(bx, chartY - barH, 44, barH);
+      ctx.fillRect(bx, chartY - barH, 90, barH);
 
       ctx.fillStyle = '#1e293b';
-      ctx.font = 'bold 13px Nunito, sans-serif';
+      ctx.font = 'bold 24px Nunito, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(`${cat.value}%`, bx + 22, chartY - barH - 6);
-      ctx.fillText(cat.label, bx + 22, chartY + 18);
+      ctx.fillText(`${cat.value}%`, bx + 45, chartY - barH - 12);
+      ctx.fillText(cat.label, bx + 45, chartY + 32);
     });
 
+    // Stamp
     ctx.fillStyle = '#15803d';
-    ctx.font = 'bold 15px Nunito, sans-serif';
-    ctx.fillText('✅ CHUẨN AQL 2.5: ĐẠT 100%', 320, 80);
+    ctx.font = 'bold 28px Nunito, sans-serif';
+    ctx.fillText('✅ CHUẨN AQL 2.5: PASS 100%', 650, 150);
 
     const tex = new THREE.CanvasTexture(canvas);
-    const boardGeo = new THREE.BoxGeometry(3.2, 1.6, 0.05);
+    const boardGeo = new THREE.BoxGeometry(3.6, 1.8, 0.04);
     const boardMat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.2 });
     const board = new THREE.Mesh(boardGeo, boardMat);
     board.position.set(x, y, z);
@@ -731,112 +852,158 @@ export class OfficeStage {
     const g = new THREE.Group();
     g.position.set(x, 0, z);
 
-    // Executive Desk
-    const desk = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.15, 1.4), new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.3 }));
+    // Heavy Executive Mahogany L-Desk
+    const desk = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.15, 1.4), new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.3 }));
     desk.position.y = 0.8;
+    desk.castShadow = true;
     g.add(desk);
 
-    // Gold Nameplate
-    const np = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.08, 0.08), new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.8 }));
-    np.position.set(0, 0.92, -0.4);
+    // Leather blotter with gold stitching
+    const blotter = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.02, 0.6), new THREE.MeshStandardMaterial({ color: 0x1c1917, roughness: 0.6 }));
+    blotter.position.set(0, 0.88, 0.1);
+    g.add(blotter);
+
+    // Open MacBook Pro
+    const macBase = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.02, 0.26), new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.9 }));
+    macBase.position.set(0, 0.895, 0.1);
+    g.add(macBase);
+
+    const macScreen = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.26, 0.02), new THREE.MeshBasicMaterial({ color: 0x38bdf8 }));
+    macScreen.position.set(0, 1.02, -0.03);
+    macScreen.rotation.x = -0.2;
+    g.add(macScreen);
+
+    // Gold Nameplate "GĐ. TRẦN VĂN HÙNG"
+    const np = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.08, 0.08), new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9 }));
+    np.position.set(0.8, 0.92, -0.35);
     g.add(np);
 
-    // Laptop & Executive Chair
-    const lap = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.04, 0.35), new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.8 }));
-    lap.position.set(0, 0.9, 0);
-    g.add(lap);
+    // High-back Executive Armchair with headrest
+    this.createErgonomicChair(g, 0, -0.75, Math.PI);
 
-    const bossChair = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.9, 0.7), new THREE.MeshStandardMaterial({ color: 0x0f172a }));
-    bossChair.position.set(0, 0.45, -0.8);
-    g.add(bossChair);
-
-    // Bookshelf with trophies
-    const shelf = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.6, 0.5), new THREE.MeshStandardMaterial({ color: 0x78350f }));
+    // Bookshelf filled with leather binders and golden trophy
+    const shelf = new THREE.Mesh(new THREE.BoxGeometry(2.6, 2.6, 0.45), new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.4 }));
     shelf.position.set(0, 1.3, -1.8);
     g.add(shelf);
 
-    // Golden Trophy
-    const trophy = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.08, 0.4, 12), new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9 }));
-    trophy.position.set(0.6, 1.6, -1.6);
+    // Golden Trophy with marble pedestal
+    const trophy = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.08, 0.42, 12), new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.95, roughness: 0.1 }));
+    trophy.position.set(0.65, 1.62, -1.6);
     g.add(trophy);
 
+    // Safe Deposit Box
+    const safe = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.7), new THREE.MeshStandardMaterial({ color: 0x1f2937, metalness: 0.8 }));
+    safe.position.set(-1.8, 0.45, -1.6);
+    g.add(safe);
+
     this.scene.add(g);
-    this.addObstacle('boss_desk', x, z, 3.0, 1.8);
+    this.addObstacle('boss_desk', x, z, 3.2, 1.8);
   }
 
   private createDetailedPantryAndLounge(x: number, z: number): void {
     const g = new THREE.Group();
     g.position.set(x, 0, z);
 
-    // 1. Kitchen Bar Counter (L-shaped luxury counter)
-    const counterMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.4 });
-    const topMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2 });
+    // 1. Kitchen Waterfall Quartz Island Counter
+    const counterMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.4 });
+    const topMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.15, metalness: 0.05 });
 
-    const c1 = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.95, 1.1), counterMat);
+    const c1 = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.95, 1.1), counterMat);
     c1.position.set(0, 0.475, 0);
     g.add(c1);
 
-    const c1Top = new THREE.Mesh(new THREE.BoxGeometry(4.3, 0.08, 1.2), topMat);
+    const c1Top = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.08, 1.2), topMat);
     c1Top.position.set(0, 0.98, 0);
     g.add(c1Top);
 
-    // Professional Espresso Coffee Machine
-    const coffeeMach = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.6, 0.6), new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.8 }));
+    // Under-counter warm LED glow
+    const underLed = new THREE.PointLight(0xfef08a, 1.4, 6);
+    underLed.position.set(0, 0.88, 0.6);
+    g.add(underLed);
+
+    // Commercial Espresso Coffee Machine
+    const coffeeMach = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.6, 0.6), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.1 }));
     coffeeMach.position.set(-1.2, 1.32, 0);
     g.add(coffeeMach);
 
-    const portafilter = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.3, 8), new THREE.MeshStandardMaterial({ color: 0x1f2937 }));
+    const portafilter = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.32, 8), new THREE.MeshStandardMaterial({ color: 0x0f172a }));
     portafilter.rotation.z = Math.PI / 2;
-    portafilter.position.set(-1.2, 1.2, 0.35);
+    portafilter.position.set(-1.2, 1.2, 0.36);
     g.add(portafilter);
 
-    // Microwave Oven
-    const micro = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.45, 0.5), new THREE.MeshStandardMaterial({ color: 0x1e293b }));
-    micro.position.set(1.1, 1.25, 0);
-    g.add(micro);
+    // Retro Curved Mint Refrigerator (Smeg style)
+    const fridgeMat = new THREE.MeshStandardMaterial({ color: 0xa7f3d0, roughness: 0.25 });
+    const fridge = new THREE.Mesh(new THREE.BoxGeometry(1.0, 2.1, 1.0), fridgeMat);
+    fridge.position.set(-2.8, 1.05, 0);
+    g.add(fridge);
 
-    // Bar Stools
-    const stoolMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.5 });
-    for (const sx of [-1.2, 0, 1.2]) {
-      const stool = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.22, 0.65, 12), stoolMat);
-      stool.position.set(sx, 0.325, 1.1);
+    const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.45, 8), new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.9 }));
+    handle.position.set(-2.25, 1.15, 0.52);
+    g.add(handle);
+
+    // Bar Stools along counter
+    const stoolMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.4 });
+    for (const sx of [-0.9, 0.3, 1.5]) {
+      const stool = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.22, 0.65, 16), stoolMat);
+      stool.position.set(sx, 0.325, 1.05);
       g.add(stool);
     }
 
-    // 2. Comfortable Leather Sofa (Khu Lounge Nghỉ Ngơi)
-    const sofaMat = new THREE.MeshStandardMaterial({ color: 0x7c2d12, roughness: 0.6 });
-    const sofaBase = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.45, 1.1), sofaMat);
-    sofaBase.position.set(0, 0.225, 3.2);
+    // 2. Scandinavian Modern Camel Fabric Sofa with Throw Pillows
+    const sofaMat = new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.7 });
+    const sofaBase = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.46, 1.1), sofaMat);
+    sofaBase.position.set(0, 0.23, 3.4);
+    sofaBase.castShadow = true;
     g.add(sofaBase);
 
-    const sofaBack = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.65, 0.35), sofaMat);
-    sofaBack.position.set(0, 0.65, 3.6);
+    const sofaBack = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.65, 0.36), sofaMat);
+    sofaBack.position.set(0, 0.68, 3.8);
     g.add(sofaBack);
 
-    // Coffee Glass Table
-    const tableMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.3 });
-    const cTable = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.35, 0.8), tableMat);
-    cTable.position.set(0, 0.175, 2.0);
-    g.add(cTable);
+    // Throw pillows
+    const pillowMat1 = new THREE.MeshStandardMaterial({ color: 0x0284c7 });
+    const pillow1 = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.38, 0.14), pillowMat1);
+    pillow1.position.set(-0.9, 0.65, 3.5);
+    pillow1.rotation.z = 0.2;
+    g.add(pillow1);
 
-    // Boba Cup on table
-    const bobaCup = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.09, 0.3, 12), new THREE.MeshStandardMaterial({ color: 0xfef08a }));
-    bobaCup.position.set(0.3, 0.5, 2.0);
-    g.add(bobaCup);
+    const pillowMat2 = new THREE.MeshStandardMaterial({ color: 0xfef08a });
+    const pillow2 = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.38, 0.14), pillowMat2);
+    pillow2.position.set(0.9, 0.65, 3.5);
+    pillow2.rotation.z = -0.2;
+    g.add(pillow2);
+
+    // Round Nordic Coffee Table with succulent and magazine
+    const tableTop = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 0.08, 24), new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2 }));
+    tableTop.position.set(0, 0.42, 2.1);
+    g.add(tableTop);
+
+    // Succulent Pot
+    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.09, 0.14, 12), new THREE.MeshStandardMaterial({ color: 0xd97706 }));
+    pot.position.set(0, 0.53, 2.1);
+    g.add(pot);
+
+    const plantLeaves = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 10), new THREE.MeshStandardMaterial({ color: 0x10b981 }));
+    plantLeaves.position.set(0, 0.64, 2.1);
+    g.add(plantLeaves);
 
     // 3. Arched Brass Floor Lamp (Interactive on/off!)
     const lampG = new THREE.Group();
-    lampG.position.set(2.4, 0, 2.8);
+    lampG.position.set(2.4, 0, 3.2);
 
-    const lampPole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.4, 8), new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.8 }));
+    const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.06, 16), new THREE.MeshStandardMaterial({ color: 0x1f2937 }));
+    lampBase.position.y = 0.03;
+    lampG.add(lampBase);
+
+    const lampPole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 2.4, 10), new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.85, roughness: 0.2 }));
     lampPole.position.y = 1.2;
     lampG.add(lampPole);
 
-    const lampShade = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.4, 12), new THREE.MeshStandardMaterial({ color: 0xfef08a }));
+    const lampShade = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.38, 16), new THREE.MeshStandardMaterial({ color: 0xfef08a, roughness: 0.2 }));
     lampShade.position.set(0, 2.3, 0);
     lampG.add(lampShade);
 
-    this.floorLampLight = new THREE.PointLight(0xfef08a, 2.4, 14);
+    this.floorLampLight = new THREE.PointLight(0xfef08a, 2.5, 14);
     this.floorLampLight.position.set(0, 2.1, 0);
     lampG.add(this.floorLampLight);
 
@@ -844,23 +1011,22 @@ export class OfficeStage {
 
     this.scene.add(g);
 
-    // Register colliders
-    this.addObstacle('pantry_counter', x, z, 4.4, 1.4);
-    this.addObstacle('lounge_sofa', x, z + 3.2, 2.8, 1.3);
-    this.addObstacle('lounge_table', x, z + 2.0, 1.8, 0.9);
+    this.addObstacle('pantry_counter', x, z, 4.6, 1.4);
+    this.addObstacle('pantry_fridge', x - 2.8, z, 1.2, 1.2);
+    this.addObstacle('lounge_sofa', x, z + 3.4, 3.0, 1.3);
+    this.addObstacle('lounge_table', x, z + 2.1, 1.6, 1.6);
   }
 
   private createRestroom(x: number, z: number): void {
     const g = new THREE.Group();
     g.position.set(x, 0, z);
 
-    // Partition cubicle walls
     const cubMat = new THREE.MeshStandardMaterial({ color: 0x475569 });
     const wall1 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 2.2, 2.4), cubMat);
     wall1.position.set(0, 1.1, 0);
     g.add(wall1);
 
-    // Washbasin
+    // Washbasin vanity
     const basin = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 0.6), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 }));
     basin.position.set(1.0, 0.4, 1.0);
     g.add(basin);
@@ -931,7 +1097,7 @@ export class OfficeStage {
       }
     }
 
-    const srvLight = new THREE.PointLight(0x06b6d4, 1.6, 9);
+    const srvLight = new THREE.PointLight(0x06b6d4, 1.8, 9);
     srvLight.position.set(0.75, 1.8, 0.6);
     g.add(srvLight);
 
@@ -942,75 +1108,82 @@ export class OfficeStage {
     const g = new THREE.Group();
     g.position.set(x, 0, z);
 
-    const redMat = new THREE.MeshStandardMaterial({ color: 0x991b1b, roughness: 0.4 });
-    const goldMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.7, roughness: 0.3 });
-    const darkRedMat = new THREE.MeshStandardMaterial({ color: 0x7f1d1d, roughness: 0.5 });
+    const redMat = new THREE.MeshStandardMaterial({ color: 0x991b1b, roughness: 0.35 });
+    const goldMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.85, roughness: 0.2 });
+    const darkRedMat = new THREE.MeshStandardMaterial({ color: 0x7f1d1d, roughness: 0.45 });
 
-    const base = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.22, 1.1), darkRedMat);
+    // Multi-tiered pedestal
+    const base = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.22, 1.2), darkRedMat);
     base.position.y = 0.11;
     base.castShadow = true;
     g.add(base);
 
-    const back = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.4, 0.08), redMat);
-    back.position.set(0, 0.8, -0.45);
+    const back = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.5, 0.08), redMat);
+    back.position.set(0, 0.85, -0.5);
     g.add(back);
 
-    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.4, 0.9), redMat);
-    leftWall.position.set(-0.62, 0.8, 0);
+    const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.5, 1.0), redMat);
+    leftWall.position.set(-0.68, 0.85, 0);
     g.add(leftWall);
 
-    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.4, 0.9), redMat);
-    rightWall.position.set(0.62, 0.8, 0);
+    const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.5, 1.0), redMat);
+    rightWall.position.set(0.68, 0.85, 0);
     g.add(rightWall);
 
-    const roof = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.18, 1.2), redMat);
-    roof.position.set(0, 1.5, 0);
+    // Traditional pagoda curved eaves with golden crest
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.18, 1.3), redMat);
+    roof.position.set(0, 1.6, 0);
     g.add(roof);
 
-    const goldTrim = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.06, 1.26), goldMat);
-    goldTrim.position.set(0, 1.58, 0);
+    const goldTrim = new THREE.Mesh(new THREE.BoxGeometry(1.72, 0.08, 1.36), goldMat);
+    goldTrim.position.set(0, 1.68, 0);
     g.add(goldTrim);
 
-    const thanTai = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 0.42, 12), goldMat);
-    thanTai.position.set(-0.3, 0.42, -0.2);
+    // Ornate Golden Statues (Thần Tài with gold sycee & Thổ Địa with palm fan)
+    const thanTai = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 0.44, 14), goldMat);
+    thanTai.position.set(-0.35, 0.44, -0.2);
     g.add(thanTai);
 
-    const thoDia = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 0.38, 12), goldMat);
-    thoDia.position.set(0.3, 0.40, -0.2);
+    const thoDia = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.20, 0.40, 14), goldMat);
+    thoDia.position.set(0.35, 0.42, -0.2);
     g.add(thoDia);
 
-    const incenseBowl = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.10, 0.12, 12), goldMat);
-    incenseBowl.position.set(0, 0.28, 0.05);
+    // Brass Incense Burner (Bát Hương) with 3 glowing incense sticks
+    const incenseBowl = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.11, 0.14, 14), goldMat);
+    incenseBowl.position.set(0, 0.29, 0.08);
     g.add(incenseBowl);
 
     const stickMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
     for (let i = -1; i <= 1; i++) {
-      const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.32, 6), stickMat);
-      stick.position.set(i * 0.04, 0.45, 0.05);
+      const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.35, 6), stickMat);
+      stick.position.set(i * 0.04, 0.48, 0.08);
       stick.rotation.z = i * 0.08;
       g.add(stick);
     }
 
-    const toad = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 10), goldMat);
-    toad.scale.set(1.2, 0.7, 1);
-    toad.position.set(-0.52, 0.28, 0.35);
+    // Golden Thiềm Thừ (Three-legged money toad with ancient coin)
+    const toad = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 12), goldMat);
+    toad.scale.set(1.25, 0.75, 1);
+    toad.position.set(-0.55, 0.28, 0.36);
     g.add(toad);
 
-    const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.12, 0.04, 12), new THREE.MeshStandardMaterial({ color: 0xffffff }));
-    plate.position.set(0.42, 0.24, 0.3);
+    // Offering Tray with 5 Oranges
+    const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.14, 0.04, 14), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+    plate.position.set(0.44, 0.24, 0.32);
     g.add(plate);
 
-    const fruitMat = new THREE.MeshStandardMaterial({ color: 0xf97316 });
-    const fruit1 = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), fruitMat);
-    fruit1.position.set(0.42, 0.30, 0.3);
+    const fruitMat = new THREE.MeshStandardMaterial({ color: 0xf97316, roughness: 0.3 });
+    const fruit1 = new THREE.Mesh(new THREE.SphereGeometry(0.065, 10, 10), fruitMat);
+    fruit1.position.set(0.44, 0.30, 0.32);
     g.add(fruit1);
 
-    const altarLight = new THREE.PointLight(0xef4444, 2.2, 8);
-    altarLight.position.set(0, 0.8, 0.2);
+    // Spiritual warm red PointLight
+    const altarLight = new THREE.PointLight(0xef4444, 2.4, 8);
+    altarLight.position.set(0, 0.9, 0.2);
     g.add(altarLight);
 
     this.scene.add(g);
-    this.addObstacle('altar', x, z, 1.6, 1.3);
+    this.addObstacle('altar', x, z, 1.7, 1.4);
     return g;
   }
 
@@ -1079,7 +1252,7 @@ export class OfficeStage {
     arm.position.set(0.6, 4.9, 0);
     g.add(arm);
 
-    const head = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.4, 8), poleMat);
+    const head = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.4, 10), poleMat);
     head.position.set(1.2, 4.7, 0);
     g.add(head);
 
@@ -1285,25 +1458,62 @@ export class OfficeStage {
   private createPlant(x: number, z: number): void {
     const g = new THREE.Group();
     g.position.set(x, 0, z);
-    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.28, 0.6, 16), new THREE.MeshStandardMaterial({ color: 0xd97706 }));
-    pot.position.y = 0.3;
+
+    // Fluted ceramic cylindrical planter
+    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.32, 0.68, 16), new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 }));
+    pot.position.y = 0.34;
     g.add(pot);
-    const leaves = new THREE.Mesh(new THREE.SphereGeometry(0.55, 12, 12), new THREE.MeshStandardMaterial({ color: 0x16a34a }));
-    leaves.scale.set(1, 1.5, 1);
-    leaves.position.y = 1.0;
-    g.add(leaves);
+
+    // Soil
+    const soil = new THREE.Mesh(new THREE.CylinderGeometry(0.40, 0.40, 0.05, 14), new THREE.MeshStandardMaterial({ color: 0x3f2e1e, roughness: 0.9 }));
+    soil.position.y = 0.68;
+    g.add(soil);
+
+    // Natural curved Monstera stems and broad leaves
+    const leafMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.4, side: THREE.DoubleSide });
+    for (let l = 0; l < 5; l++) {
+      const angle = (l * Math.PI * 2) / 5;
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.65, 8), leafMat);
+      stem.position.set(Math.sin(angle) * 0.14, 0.9, Math.cos(angle) * 0.14);
+      stem.rotation.z = Math.sin(angle) * 0.35;
+      stem.rotation.x = Math.cos(angle) * 0.35;
+      g.add(stem);
+
+      const leaf = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.58), leafMat);
+      leaf.position.set(Math.sin(angle) * 0.32, 1.25, Math.cos(angle) * 0.32);
+      leaf.rotation.x = Math.PI / 3;
+      leaf.rotation.y = angle;
+      g.add(leaf);
+    }
+
     this.scene.add(g);
   }
 
   private createWaterCooler(x: number, z: number): void {
     const g = new THREE.Group();
     g.position.set(x, 0, z);
-    const base = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.1, 0.6), new THREE.MeshStandardMaterial({ color: 0xffffff }));
-    base.position.y = 0.55;
+
+    const base = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1.05, 0.55), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 }));
+    base.position.y = 0.525;
     g.add(base);
-    const bottle = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.6, 12), new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.65 }));
-    bottle.position.y = 1.35;
+
+    // Faucets
+    const hotF = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.08, 0.08), new THREE.MeshStandardMaterial({ color: 0xef4444 }));
+    hotF.position.set(-0.1, 0.72, 0.29);
+    g.add(hotF);
+
+    const coldF = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.08, 0.08), new THREE.MeshStandardMaterial({ color: 0x38bdf8 }));
+    coldF.position.set(0.1, 0.72, 0.29);
+    g.add(coldF);
+
+    // Polycarbonate 20L Water Bottle
+    const bottle = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.24, 0.24, 0.65, 16),
+      new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.65, roughness: 0.1 })
+    );
+    bottle.position.y = 1.38;
     g.add(bottle);
+
     this.scene.add(g);
   }
 
@@ -1454,7 +1664,7 @@ export class OfficeStage {
       g.position.set(p.x, 0.5, p.z);
 
       if (p.type === 'boba' || p.type === 'coffee') {
-        const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.14, 0.45, 12), new THREE.MeshStandardMaterial({ color: p.type === 'boba' ? 0xf472b6 : 0xfbbf24 }));
+        const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.14, 0.45, 14), new THREE.MeshStandardMaterial({ color: p.type === 'boba' ? 0xf472b6 : 0xfbbf24 }));
         g.add(cup);
       } else {
         const cash = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.15, 0.25), new THREE.MeshStandardMaterial({ color: 0x22c55e }));

@@ -106,12 +106,16 @@ function renderShiftMode(): void {
     shiftStage.renderScene();
 
     const s = shiftEngine.getState();
+    const isModalOpen = Boolean(HOST && HOST.innerHTML.trim() !== '');
+
     if (s.isFinished) {
       shiftJoystick?.setVisible(false);
       if (!uiHost.classList.contains('shiftFinishedOverlay')) {
         uiHost.classList.add('shiftFinishedOverlay');
         uiHost.innerHTML = renderShiftFinishModal(s);
       }
+    } else if (isModalOpen) {
+      shiftJoystick?.setVisible(false);
     } else if (uiHost && shiftStage) {
       if (uiHost.classList.contains('shiftFinishedOverlay')) {
         uiHost.classList.remove('shiftFinishedOverlay');

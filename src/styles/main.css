@@ -1378,6 +1378,17 @@ p {
   touch-action: none;
 }
 
+@media (min-width: 900px) {
+  .app:has(.shiftContainer) {
+    max-width: 1040px;
+    padding-top: 10px;
+  }
+
+  .shiftContainer {
+    height: 680px;
+  }
+}
+
 @media (max-width: 540px) {
   .app {
     padding: 8px 8px calc(env(safe-area-inset-bottom) + 8px);
@@ -1789,15 +1800,23 @@ p {
 
 #shiftUIHost.shiftFinishedOverlay {
   pointer-events: auto;
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(6px);
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
   padding: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  z-index: 30; /* sits above virtual controls */
+  z-index: 1000 !important; /* Always sits far above virtual controls and 3D canvas */
+}
+
+#shiftContainer:has(.shiftFinishedOverlay) .virtualControlsOverlay,
+#shiftContainer.modalActive .virtualControlsOverlay,
+body:has(#dialogHost:not(:empty)) .virtualControlsOverlay {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 #shiftUIHost .buttons button {

@@ -191,6 +191,8 @@ export class VirtualJoystick {
   setVisible(visible: boolean): void {
     if (this.joyContainer) {
       this.joyContainer.style.display = visible ? 'block' : 'none';
+      this.joyContainer.style.visibility = visible ? 'visible' : 'hidden';
+      this.joyContainer.style.pointerEvents = visible ? 'auto' : 'none';
       if (!visible) {
         this.isDragging = false;
         this.activePointerId = null;
