@@ -27,6 +27,7 @@ interface HUDElementCache {
   stressVal: HTMLElement | null;
   stressFill: HTMLElement | null;
   orders: HTMLElement | null;
+  weather: HTMLElement | null;
   zoneBadge: HTMLElement | null;
   orderName: HTMLElement | null;
   questText: HTMLElement | null;
@@ -35,6 +36,7 @@ interface HUDElementCache {
   bossDot: HTMLElement | null;
   targetDot: HTMLElement | null;
   camBtn: HTMLElement | null;
+  joyBtn: HTMLElement | null;
   dragModeBtn: HTMLElement | null;
   modeBtn: HTMLElement | null;
   speechBubble: HTMLElement | null;
@@ -134,6 +136,11 @@ export function mountShiftHUD(host: HTMLElement): void {
         <span class="orderCount" id="hudOrders">0/5</span>
       </div>
 
+      <!-- Daily Weather & Office Modifier Badge -->
+      <div class="ribbonWeather" id="hudWeather" data-act="open_weather_info" title="Thời tiết & Biến số ca trực hôm nay">
+        ☀️ Sếp Vui Tính
+      </div>
+
       <!-- Quick Shift Help Guide Button -->
       <button class="ribbonHelpBtn" id="hudHelpBtn" data-act="open_shift_help" type="button" title="Mở hướng dẫn quy trình ca trực 3D">
         ❓
@@ -216,6 +223,11 @@ export function mountShiftHUD(host: HTMLElement): void {
           ⚡
         </button>
 
+        <!-- Toggle Virtual Joystick Visibility: Hiện / Ẩn cần điều khiển ảo -->
+        <button class="shiftRailBtn active" id="hudJoyToggleBtn" data-act="toggle_joystick_visibility" type="button" title="Bật / Ẩn Cần Điều Khiển Joystick ảo (Chạm sàn để di chuyển)">
+          🕹️
+        </button>
+
         <!-- Zoom In & Zoom Out -->
         <button class="shiftRailBtn" id="hudZoomInBtn" data-act="zoom_in" type="button" title="Phóng to">
           ➕
@@ -272,6 +284,7 @@ export function mountShiftHUD(host: HTMLElement): void {
     stressVal: host.querySelector('#hudStressVal'),
     stressFill: host.querySelector('#hudStressFill'),
     orders: host.querySelector('#hudOrders'),
+    weather: host.querySelector('#hudWeather'),
     zoneBadge: host.querySelector('#hudZoneBadge'),
     orderName: host.querySelector('#hudOrderName'),
     questText: host.querySelector('#hudQuestText'),
@@ -280,6 +293,7 @@ export function mountShiftHUD(host: HTMLElement): void {
     bossDot: host.querySelector('#hudBossDot'),
     targetDot: host.querySelector('#hudTargetDot'),
     camBtn: host.querySelector('#hudCamBtn'),
+    joyBtn: host.querySelector('#hudJoyToggleBtn'),
     dragModeBtn: host.querySelector('#hudDragModeBtn'),
     modeBtn: host.querySelector('#hudModeToggleBtn'),
     speechBubble: host.querySelector('#hudSpeechBubble'),
@@ -336,6 +350,11 @@ export function updateShiftHUD(host: HTMLElement, state: ShiftState, stage?: Off
   if (ordersStr !== lastOrdersStr) {
     lastOrdersStr = ordersStr;
     if (hudCache.orders) hudCache.orders.textContent = ordersStr;
+  }
+
+  if (hudCache.weather && state.weather) {
+    hudCache.weather.textContent = state.weather.badgeText;
+    hudCache.weather.setAttribute('title', `${state.weather.name}: ${state.weather.desc}`);
   }
 
   if (state.currentZone !== lastZone) {
@@ -517,16 +536,26 @@ export function renderShiftFinishModal(state: ShiftState): string {
     badgeColor = '#f97316';
   }
 
+  let playerTitle = '📦 Merchandiser Tiêu Biểu';
+  if (state.score >= 1800) {
+    playerTitle = '👑 Chiến Thần Đàm Phán & Xuất Khẩu';
+  } else if (state.dilemmasResolved >= 4) {
+    playerTitle = '⚡ Chuyên Gia Xử Lý Sự Cố Thần Tốc';
+  } else if (state.stress <= 15) {
+    playerTitle = '🧘 Bậc Thầy Giữ Bình Tĩnh Đỉnh Cao';
+  }
+
   return `
   <section class="panel shiftClearPanel">
     <div class="clearEmoji">🌆🏢🚢✨</div>
     <div class="eyebrow" style="color:#16a34a">ĐỒNG HỒ ĐIỂM 17:00 · HOÀN THÀNH CA TRỰC TOÀN KHU!</div>
     <h1 class="clearTitle">KẾT QUẢ NGÀY ${state.day}</h1>
 
-    <!-- Grade Stamp -->
+    <!-- Grade Stamp & Title -->
     <div class="shiftGradeBadge" style="border-color:${badgeColor};color:${badgeColor}">
       <span>XẾP LOẠI KPI TOÀN CA</span>
       <strong>${state.grade || 'A'}</strong>
+      <div style="font-size:11px;font-weight:900;color:#facc15;margin-top:2px">${playerTitle}</div>
     </div>
 
     <p class="shiftQuoteBox">"${quote}"</p>
@@ -535,9 +564,20 @@ export function renderShiftFinishModal(state: ShiftState): string {
     <div class="summaryGrid shiftSummaryGrid">
       <div class="summaryBox">Đơn hàng xuất xưởng<strong>${state.ordersCompleted} / ${state.targetOrders} cont</strong></div>
       <div class="summaryBox">Tiền thưởng KPI<strong>+${state.score} đ</strong></div>
+      <div class="summaryBox">Biến số đã giải quyết<strong>${state.dilemmasResolved || 0} tình huống</strong></div>
+      <div class="summaryBox">Thời tiết văn phòng<strong>${state.weather?.name || 'Bình thường'}</strong></div>
       <div class="summaryBox">Năng lượng còn lại<strong>${Math.round(state.energy)}%</strong></div>
       <div class="summaryBox">Áp lực stress<strong>${Math.round(state.stress)}%</strong></div>
     </div>
+
+    ${state.choicesLog && state.choicesLog.length > 0 ? `
+      <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:8px 10px;margin-top:10px;text-align:left;font-size:11px">
+        <div style="font-weight:900;color:#fde047;margin-bottom:4px">📝 LỊCH SỬ QUYẾT ĐỊNH CỦA BẠN:</div>
+        <div style="display:flex;flex-direction:column;gap:3px;color:#cbd5e1">
+          ${state.choicesLog.map(c => `<div>• ${c}</div>`).join('')}
+        </div>
+      </div>
+    ` : ''}
 
     <div class="buttons" style="margin-top:14px;gap:8px">
       <button class="primary btnNextShift" data-act="shift_next_day">

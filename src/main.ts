@@ -30,6 +30,7 @@ import {
   openDonateModal,
   openHelpModal,
   openShiftHelpModal,
+  openDilemmaModal,
   openHistoryModal,
   openRankingsModal,
   openRoleSelectionModal
@@ -96,6 +97,19 @@ function renderShiftMode(): void {
     }
   });
 
+  // Dynamic Situational Dilemmas Modal Trigger
+  shiftEngine.onTriggerDilemma = (dilemma, onResolve) => {
+    openDilemmaModal(HOST, dilemma, (choice) => {
+      onResolve(choice);
+    });
+  };
+
+  // Direct Floor Tap-to-Walk feedback
+  shiftStage.onFloorTapCallback = () => {
+    sounds.click();
+    showToast('🏃 Chibi đang chạy tới vị trí bạn vừa chạm...');
+  };
+
   // Direct 3D Click / Tap Raycaster Handling (Both Auto-Work and Card confirmation modes!)
   shiftStage.onStationClickCallback = (st) => {
     sounds.click();
@@ -129,10 +143,17 @@ function renderShiftMode(): void {
   shiftJoystick = new VirtualJoystick(container, () => {
     shiftEngine?.doAction();
   });
-  shiftJoystick.setVisible(true);
+  const showJoyPref = localStorage.getItem('os_show_joystick') !== 'false';
+  shiftJoystick.setVisible(showJoyPref);
 
   // Mount HUD DOM once
   mountShiftHUD(uiHost);
+
+  const joyToggleBtn = document.getElementById('hudJoyToggleBtn');
+  if (joyToggleBtn) {
+    joyToggleBtn.textContent = showJoyPref ? '🕹️' : '👆';
+    joyToggleBtn.classList.toggle('active', showJoyPref);
+  }
 
   // Set initial visual guidance target (Beacon pillar & floor arrow)
   shiftStage.updateTargetGuidance(shiftEngine.getState().currentTask.targetStation);
@@ -522,6 +543,30 @@ document.addEventListener('click', (ev) => {
           arrow.textContent = isCollapsed ? '▼' : '▲';
         }
         showToast(isCollapsed ? 'Thu gọn bảng nhiệm vụ (rộng màn hình 3D)' : 'Mở rộng bảng nhiệm vụ');
+      }
+      break;
+    }
+    case 'toggle_joystick_visibility': {
+      sounds.click();
+      const current = localStorage.getItem('os_show_joystick') !== 'false';
+      const next = !current;
+      localStorage.setItem('os_show_joystick', String(next));
+      shiftJoystick?.setVisible(next);
+      showToast(next ? '🕹️ Đã hiện Cần Điều Khiển Joystick!' : '👆 Đã ẩn cần điều khiển! Hãy chạm trực tiếp lên sàn để di chuyển.');
+      const joyBtn = document.getElementById('hudJoyToggleBtn');
+      if (joyBtn) {
+        joyBtn.textContent = next ? '🕹️' : '👆';
+        joyBtn.classList.toggle('active', next);
+      }
+      break;
+    }
+    case 'open_weather_info': {
+      if (shiftEngine) {
+        sounds.click();
+        const w = shiftEngine.getState().weather;
+        if (w) {
+          showToast(`${w.badgeText} — ${w.desc}`);
+        }
       }
       break;
     }

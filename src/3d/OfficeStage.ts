@@ -76,7 +76,8 @@ export class OfficeStage {
   // Raycasting & Tap to Interact
   public interactiveHitObjects: THREE.Mesh[] = [];
   public onStationClickCallback: ((station: Workstation, screenPos: { x: number; y: number }) => void) | null = null;
-  public autoWalkTarget: { pos: THREE.Vector3; station: Workstation; onReach?: () => void } | null = null;
+  public onFloorTapCallback: ((pos: THREE.Vector3) => void) | null = null;
+  public autoWalkTarget: { pos: THREE.Vector3; station?: Workstation | null; onReach?: () => void; stopDist?: number } | null = null;
   private autoWalkMarkerMesh!: THREE.Mesh;
 
   // 3D Visual Guidance System (Target Beacon & Compass Arrow)
@@ -2014,11 +2015,33 @@ export class OfficeStage {
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(mouse, this.camera);
 
+    // 1. Direct interactive workstations tap check
     const hits = raycaster.intersectObjects(this.interactiveHitObjects, false);
     if (hits.length > 0) {
       const st = hits[0].object.userData.station as Workstation;
       if (st && this.onStationClickCallback) {
         this.onStationClickCallback(st, { x: clientX - rect.left, y: clientY - rect.top });
+        return;
+      }
+    }
+
+    // 2. Direct Tap-To-Walk anywhere on the floor!
+    const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    const groundHit = new THREE.Vector3();
+    if (raycaster.ray.intersectPlane(groundPlane, groundHit)) {
+      const clampedX = Math.max(-28, Math.min(28, groundHit.x));
+      const clampedZ = Math.max(-22, Math.min(22, groundHit.z));
+      const targetPos = new THREE.Vector3(clampedX, 0, clampedZ);
+
+      // Check if tap was near any workstation
+      const nearbyStation = this.stations.find(s => targetPos.distanceTo(s.position) <= s.radius * 1.15);
+      if (nearbyStation && this.onStationClickCallback) {
+        this.onStationClickCallback(nearbyStation, { x: clientX - rect.left, y: clientY - rect.top });
+      } else {
+        this.startWalkToPoint(targetPos);
+        if (this.onFloorTapCallback) {
+          this.onFloorTapCallback(targetPos);
+        }
       }
     }
   }
@@ -2146,14 +2169,30 @@ export class OfficeStage {
     this.scene.add(this.guideCompassArrow);
   }
 
+  public startWalkToPoint(pos: THREE.Vector3, onReach?: () => void): void {
+    this.autoWalkTarget = {
+      pos: pos.clone(),
+      station: null,
+      onReach,
+      stopDist: 0.35
+    };
+    if (this.autoWalkMarkerMesh) {
+      this.autoWalkMarkerMesh.position.set(pos.x, 0.04, pos.z);
+      this.autoWalkMarkerMesh.scale.set(0.65, 0.65, 0.65);
+      this.autoWalkMarkerMesh.visible = true;
+    }
+  }
+
   public startAutoWalkTo(station: Workstation, onReach?: () => void): void {
     this.autoWalkTarget = {
       pos: station.position.clone(),
       station,
-      onReach
+      onReach,
+      stopDist: Math.max(1.2, station.radius * 0.75)
     };
     if (this.autoWalkMarkerMesh) {
       this.autoWalkMarkerMesh.position.set(station.position.x, 0.04, station.position.z);
+      this.autoWalkMarkerMesh.scale.set(1.0, 1.0, 1.0);
       this.autoWalkMarkerMesh.visible = true;
     }
   }
@@ -2204,7 +2243,7 @@ export class OfficeStage {
       const dx = this.autoWalkTarget.pos.x - curPos.x;
       const dz = this.autoWalkTarget.pos.z - curPos.z;
       const dist = Math.hypot(dx, dz);
-      const stopDist = Math.max(1.2, this.autoWalkTarget.station.radius * 0.75);
+      const stopDist = this.autoWalkTarget.stopDist ?? (this.autoWalkTarget.station ? Math.max(1.2, this.autoWalkTarget.station.radius * 0.75) : 0.4);
 
       if (dist <= stopDist) {
         const target = this.autoWalkTarget;

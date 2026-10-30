@@ -1,6 +1,12 @@
 import { OfficeStage, Workstation } from './OfficeStage';
 import { sounds } from '../audio/SoundManager';
 import { showToast } from '../ui/Toast';
+import {
+  OfficeWeather,
+  OFFICE_WEATHERS,
+  StationDilemma,
+  STATION_DILEMMAS
+} from '../data/officeDilemmas';
 
 export interface ShiftTask {
   id: string;
@@ -27,12 +33,19 @@ export interface ShiftState {
   activePrompt: string | null;
   currentZone: string;
   grade?: 'S' | 'A' | 'B' | 'C' | 'D' | 'F';
+  weather: OfficeWeather;
+  dilemmasResolved: number;
+  choicesLog: string[];
 }
 
 export class ShiftGameEngine {
   private stage: OfficeStage;
   private state: ShiftState;
   private onStateChange: (state: ShiftState) => void;
+
+  public onTriggerDilemma?: (dilemma: StationDilemma, onResolve: (choice: 'A' | 'B') => void) => void;
+  private pendingDilemmaStation: string | null = null;
+  private triggeredDilemmaIds = new Set<string>();
 
   private clockTimer = 0;
   private bossCooldown = 0;
@@ -51,6 +64,8 @@ export class ShiftGameEngine {
     this.stage = stage;
     this.onStateChange = onStateChange;
 
+    const weather = OFFICE_WEATHERS[Math.floor(Math.random() * OFFICE_WEATHERS.length)];
+
     this.state = {
       day,
       timeHour: 9,
@@ -63,12 +78,19 @@ export class ShiftGameEngine {
       score: 0,
       currentTask: this.createNewTask(0),
       activePrompt: null,
-      currentZone: stage.currentZoneName
+      currentZone: stage.currentZoneName,
+      weather,
+      dilemmasResolved: 0,
+      choicesLog: []
     };
   }
 
   private createNewTask(orderIndex: number): ShiftTask {
     const o = this.sampleOrders[orderIndex % this.sampleOrders.length];
+    // Randomize which station will trigger an unexpected dilemma for this order
+    const candidateStations = ['desk', 'printer', 'lab', 'fabric', 'shipping'];
+    this.pendingDilemmaStation = candidateStations[Math.floor(Math.random() * candidateStations.length)];
+
     return {
       id: `task_${Date.now()}`,
       orderName: o.orderName,
@@ -414,6 +436,34 @@ export class ShiftGameEngine {
       return;
     }
 
+    // Check if this station triggers an unexpected office dilemma!
+    if (this.pendingDilemmaStation === activeSt.type && this.onTriggerDilemma) {
+      const candidates = STATION_DILEMMAS.filter(d => d.stationType === activeSt.type && !this.triggeredDilemmaIds.has(d.id));
+      const dilemma = candidates.length > 0 ? candidates[Math.floor(Math.random() * candidates.length)] : STATION_DILEMMAS.find(d => d.stationType === activeSt.type);
+
+      if (dilemma) {
+        this.pendingDilemmaStation = null;
+        this.triggeredDilemmaIds.add(dilemma.id);
+        this.onTriggerDilemma(dilemma, (choice) => {
+          const opt = choice === 'A' ? dilemma.optionA : dilemma.optionB;
+          const kpiGain = Math.round(opt.kpi * this.state.weather.kpiMultiplier);
+          this.state.score += kpiGain;
+          this.state.stress = Math.max(0, Math.min(100, this.state.stress + Math.round(opt.stress * this.state.weather.stressDrainMultiplier)));
+          this.state.energy = Math.max(0, Math.min(100, this.state.energy + Math.round(opt.energy * this.state.weather.energyDrainMultiplier)));
+          this.state.dilemmasResolved += 1;
+          this.state.choicesLog.push(`${dilemma.title}: ${opt.text}`);
+
+          showToast(`${opt.resultMsg} (+${kpiGain} KPI)`);
+          this.executeStepProgression(task);
+        });
+        return;
+      }
+    }
+
+    this.executeStepProgression(task);
+  }
+
+  private executeStepProgression(task: ShiftTask): void {
     // Step 1: Desk -> Printer
     if (task.step === 'desk_receive') {
       sounds.click();
@@ -457,10 +507,11 @@ export class ShiftGameEngine {
       sounds.success();
       this.stage.player.setCarriedItem('none');
       this.state.ordersCompleted += 1;
-      this.state.score += 200;
+      const orderBonus = Math.round(200 * this.state.weather.kpiMultiplier);
+      this.state.score += orderBonus;
       this.state.stress = Math.max(0, this.state.stress - 20);
 
-      showToast(`🎉 XUẤT XƯỞNG THÀNH CÔNG ĐƠN HÀNG #${this.state.ordersCompleted}/${this.state.targetOrders}! (+200 điểm)`);
+      showToast(`🎉 XUẤT XƯỞNG THÀNH CÔNG ĐƠN HÀNG #${this.state.ordersCompleted}/${this.state.targetOrders}! (+${orderBonus} điểm)`);
 
       if (this.state.ordersCompleted >= this.state.targetOrders) {
         this.finishShift();

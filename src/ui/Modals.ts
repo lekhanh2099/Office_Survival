@@ -11,6 +11,7 @@ import {
 } from './CertificateGenerator';
 import { ALL_ROLES } from '../data/roles';
 import { ALL_TRAITS } from '../data/traits';
+import { StationDilemma } from '../data/officeDilemmas';
 
 function esc(t?: string | number | null): string {
   return String(t ?? '').replace(/[&<>"']/g, x => ({
@@ -504,5 +505,67 @@ export function openRoleSelectionModal(
     const name = nameInput?.value.trim() || 'Nhân Viên Gương Mẫu';
     host.innerHTML = '';
     onSelect(selectedRole, name, selectedTrait);
+  });
+}
+
+export function openDilemmaModal(
+  host: HTMLElement,
+  dilemma: StationDilemma,
+  onChoose: (choice: 'A' | 'B') => void
+): void {
+  sounds.perk();
+  host.innerHTML = `
+    <div class="dialogShade" role="presentation">
+      <section class="dialog shiftDilemmaDialog" role="dialog" aria-modal="true" style="max-width:440px;border-radius:18px;border:2.5px solid #f59e0b;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,0.4)">
+        <div class="dilemmaHeader" style="background:linear-gradient(135deg, #1e1b4b, #312e81);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px;border-bottom:2px solid #f59e0b">
+          <div style="font-size:36px;background:rgba(255,255,255,0.15);width:52px;height:52px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;box-shadow:0 0 10px rgba(245,158,11,0.5)">
+            ${dilemma.npcAvatar}
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:11px;font-weight:900;color:#facc15;text-transform:uppercase;letter-spacing:0.5px">⚡ BIẾN SỐ TÌNH HUỐNG VĂN PHÒNG</div>
+            <div style="font-size:16px;font-weight:900;color:#ffffff;line-height:1.2;margin:2px 0 1px">${esc(dilemma.title)}</div>
+            <div style="font-size:11px;color:#94a3b8;font-weight:700">Đối thoại cùng: <b style="color:#e2e8f0">${esc(dilemma.npcName)}</b></div>
+          </div>
+        </div>
+
+        <div class="dilemmaBody" style="padding:16px 14px;background:#0f172a;color:#e2e8f0">
+          <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.45;color:#f1f5f9;margin-bottom:14px;font-weight:700">
+            ${esc(dilemma.situation)}
+          </div>
+
+          <div style="font-size:11px;font-weight:900;color:#94a3b8;text-transform:uppercase;margin-bottom:8px;letter-spacing:0.4px">
+            👉 BẠN CHỌN HƯỚNG GIẢI QUYẾT NÀO?
+          </div>
+
+          <div class="dilemmaChoices" style="display:flex;flex-direction:column;gap:10px">
+            <button class="dilemmaChoiceBtn choiceA" id="btnDilemmaA" type="button" style="text-align:left;background:linear-gradient(135deg, #1e293b, #334155);border:2px solid #38bdf8;border-radius:12px;padding:10px 12px;cursor:pointer;transition:all 0.15s ease">
+              <div style="font-weight:900;font-size:13px;color:#38bdf8;margin-bottom:3px">🅰️ ${esc(dilemma.optionA.text)}</div>
+              <div style="font-size:11px;font-weight:800;color:#cbd5e1;background:rgba(56,189,248,0.15);display:inline-block;padding:2px 8px;border-radius:5px">
+                ✨ ${esc(dilemma.optionA.preview)}
+              </div>
+            </button>
+
+            <button class="dilemmaChoiceBtn choiceB" id="btnDilemmaB" type="button" style="text-align:left;background:linear-gradient(135deg, #1e293b, #334155);border:2px solid #f59e0b;border-radius:12px;padding:10px 12px;cursor:pointer;transition:all 0.15s ease">
+              <div style="font-weight:900;font-size:13px;color:#facc15;margin-bottom:3px">🅱️ ${esc(dilemma.optionB.text)}</div>
+              <div style="font-size:11px;font-weight:800;color:#cbd5e1;background:rgba(245,158,11,0.15);display:inline-block;padding:2px 8px;border-radius:5px">
+                🔥 ${esc(dilemma.optionB.preview)}
+              </div>
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  `;
+
+  document.getElementById('btnDilemmaA')?.addEventListener('click', () => {
+    sounds.success();
+    host.innerHTML = '';
+    onChoose('A');
+  });
+
+  document.getElementById('btnDilemmaB')?.addEventListener('click', () => {
+    sounds.success();
+    host.innerHTML = '';
+    onChoose('B');
   });
 }
