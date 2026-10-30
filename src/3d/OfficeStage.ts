@@ -67,7 +67,8 @@ export class OfficeStage {
     this.scene.fog = new THREE.FogExp2('#cbd5e1', 0.018);
 
     const aspect = width / height;
-    this.camera = new THREE.PerspectiveCamera(42, aspect, 0.1, 150);
+    const initFov = aspect < 0.8 ? 52 : (aspect < 1.1 ? 46 : 42);
+    this.camera = new THREE.PerspectiveCamera(initFov, aspect, 0.1, 150);
     this.camera.position.set(0, 14, 13);
     this.camera.lookAt(0, 0.8, 0);
 
@@ -601,17 +602,17 @@ export class OfficeStage {
   }
 
   private setupColleagues(): void {
-    // 1. Sếp Hùng (Patrols Corporate Office)
+    // 1. Sếp Hùng (Patrols Executive Boardroom Corridor, away from player desk)
     this.bossNpc = new ChibiCharacter('#ffedd5', '#475569', true, 'SẾP HÙNG (ĐI TUẦN)');
-    this.bossNpc.group.position.set(-14, 0, -12);
-    this.bossNpc.moveSpeed = 2.4;
+    this.bossNpc.group.position.set(-20, 0, -16);
+    this.bossNpc.moveSpeed = 1.9;
     this.scene.add(this.bossNpc.group);
 
     this.bossWaypoints = [
-      new THREE.Vector3(-18, 0, -16),
-      new THREE.Vector3(-8, 0, -16),
-      new THREE.Vector3(-8, 0, -8),
-      new THREE.Vector3(-18, 0, -8)
+      new THREE.Vector3(-22, 0, -18),
+      new THREE.Vector3(-16, 0, -18),
+      new THREE.Vector3(-16, 0, -14),
+      new THREE.Vector3(-22, 0, -14)
     ];
 
     const visionGeo = new THREE.RingGeometry(0.4, 2.6, 24);
@@ -637,7 +638,10 @@ export class OfficeStage {
     const width = Math.max(300, this.container.clientWidth || window.innerWidth);
     const height = Math.max(240, this.container.clientHeight || window.innerHeight);
 
-    this.camera.aspect = width / height;
+    const aspect = width / height;
+    this.camera.aspect = aspect;
+    // On vertical portrait screens (aspect < 1.0), slightly widen FOV for a broader view
+    this.camera.fov = aspect < 0.8 ? 52 : (aspect < 1.1 ? 46 : 42);
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);
   };

@@ -188,6 +188,18 @@ export class VirtualJoystick {
     return { x: 0, y: 0, active: false };
   }
 
+  setVisible(visible: boolean): void {
+    if (this.joyContainer) {
+      this.joyContainer.style.display = visible ? 'block' : 'none';
+      if (!visible) {
+        this.isDragging = false;
+        this.activePointerId = null;
+        this.currentVector = { x: 0, y: 0, active: false };
+        this.joyThumb.style.transform = 'translate(-50%, -50%)';
+      }
+    }
+  }
+
   destroy(): void {
     this.joyContainer?.remove();
   }

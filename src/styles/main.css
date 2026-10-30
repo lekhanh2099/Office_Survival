@@ -1368,7 +1368,7 @@ p {
   position: relative;
   width: 100%;
   height: 600px;
-  min-height: 520px;
+  min-height: 500px;
   border: 2px solid var(--ink);
   border-radius: 20px;
   overflow: hidden;
@@ -1376,6 +1376,25 @@ p {
   background: #cbd5e1;
   user-select: none;
   touch-action: none;
+}
+
+@media (max-width: 540px) {
+  .app {
+    padding: 8px 8px calc(env(safe-area-inset-bottom) + 8px);
+  }
+
+  .top {
+    margin-bottom: 6px;
+  }
+
+  /* Full vertical responsive fit for mobile portrait screens */
+  .shiftContainer {
+    height: calc(100dvh - 86px);
+    min-height: 480px;
+    max-height: 780px;
+    border-radius: 16px;
+    margin: 0 auto;
+  }
 }
 
 #shiftCanvasHost {
@@ -1392,47 +1411,62 @@ p {
   display: block;
 }
 
-/* 3D Shift Top HUD */
+/* 3D Shift Top HUD (2 Compact Responsive Rows) */
 .shiftTopHUD {
   position: absolute;
-  top: 10px;
-  left: 10px;
-  right: 10px;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.shiftHudRow1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  z-index: 10;
-  pointer-events: none;
+  gap: 5px;
+  width: 100%;
+}
+
+.shiftHudRow2 {
+  display: flex;
+  align-items: center;
+  width: 100%;
 }
 
 .shiftClockBadge {
   background: #ffffff;
   border: 2px solid var(--ink);
-  border-radius: 12px;
-  padding: 6px 10px;
+  border-radius: 10px;
+  padding: 4px 7px;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   box-shadow: 2px 2px 0 var(--ink);
   font-weight: 900;
+  font-size: 12px;
   pointer-events: auto;
+  flex-shrink: 0;
 }
 
 .shiftClockBadge .clockIcon {
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .shiftClockBadge .clockTime {
-  font-size: 14px;
+  font-size: 12px;
   color: var(--ink);
 }
 
 .shiftDayBadge {
   background: #4f46e5;
   color: #fff;
-  font-size: 10px;
-  padding: 1px 6px;
+  font-size: 9px;
+  padding: 1px 5px;
   border-radius: 4px;
   margin-left: 2px;
 }
@@ -1440,9 +1474,9 @@ p {
 .shiftZoneTag {
   background: #ffffff;
   border: 2px solid var(--ink);
-  border-radius: 12px;
-  padding: 5px 9px;
-  font-size: 11px;
+  border-radius: 10px;
+  padding: 4px 8px;
+  font-size: 10.5px;
   font-weight: 900;
   color: #312e81;
   box-shadow: 2px 2px 0 var(--ink);
@@ -1450,13 +1484,22 @@ p {
   align-items: center;
   gap: 4px;
   pointer-events: auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 48%;
+}
+
+.shiftZoneTag .zoneName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .shiftBars {
   display: flex;
-  gap: 8px;
-  flex: 1;
-  max-width: 220px;
+  gap: 6px;
+  width: 100%;
   pointer-events: auto;
 }
 
@@ -1465,21 +1508,21 @@ p {
   background: rgba(255, 255, 255, 0.95);
   border: 1.5px solid var(--ink);
   border-radius: 8px;
-  padding: 4px 6px;
+  padding: 3px 6px;
   box-shadow: 1.5px 1.5px 0 var(--ink);
 }
 
 .shiftStatItem .statHeader {
   display: flex;
   justify-content: space-between;
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 900;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
   color: var(--ink);
 }
 
 .shiftMiniBar {
-  height: 8px;
+  height: 6px;
   background: #e2e8f0;
   border-radius: 4px;
   overflow: hidden;
@@ -1494,55 +1537,55 @@ p {
 .shiftKpiBadge {
   background: #fef08a;
   border: 2px solid var(--ink);
-  border-radius: 12px;
-  padding: 5px 8px;
+  border-radius: 10px;
+  padding: 3px 6px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   box-shadow: 2px 2px 0 var(--ink);
   pointer-events: auto;
+  flex-shrink: 0;
 }
 
 .shiftKpiBadge .kpiIcon {
-  font-size: 18px;
+  font-size: 15px;
 }
 
 .shiftKpiBadge .kpiVal {
-  font-size: 13px;
+  font-size: 11.5px;
   font-weight: 900;
   line-height: 1;
   color: #854d0e;
 }
 
 .shiftKpiBadge .kpiLabel {
-  font-size: 8px;
+  font-size: 7.5px;
   font-weight: 900;
   color: #a16207;
   letter-spacing: 0.5px;
 }
 
-/* Mission Banner */
+/* Mission Banner (Floating Left) */
 .shiftMissionBanner {
   position: absolute;
-  top: 66px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 72px;
+  left: 8px;
+  right: 84px;
   background: rgba(255, 255, 255, 0.96);
   border: 2px solid var(--ink);
   border-radius: 12px;
-  padding: 7px 14px;
-  box-shadow: 3px 3px 0 var(--ink);
+  padding: 5px 9px;
+  box-shadow: 2.5px 2.5px 0 var(--ink);
   z-index: 10;
-  text-align: center;
-  max-width: 90%;
+  text-align: left;
   pointer-events: none;
 }
 
 .missionTargetTag {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 10px;
+  gap: 4px;
+  font-size: 9.5px;
   font-weight: 900;
   color: #4f46e5;
   text-transform: uppercase;
@@ -1550,39 +1593,39 @@ p {
 
 .missionZoneHint {
   color: #7c3aed;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
-  margin-left: 4px;
+  margin-left: 3px;
 }
 
-/* Minimap Radar */
+/* Minimap Radar (Floating Right) */
 .shiftRadarWidget {
   position: absolute;
-  top: 66px;
-  right: 12px;
-  width: 90px;
+  top: 72px;
+  right: 8px;
+  width: 70px;
   background: rgba(255, 255, 255, 0.94);
   border: 2px solid var(--ink);
   border-radius: 10px;
-  padding: 4px;
+  padding: 3px;
   box-shadow: 2.5px 2.5px 0 var(--ink);
   z-index: 10;
   pointer-events: none;
 }
 
 .radarLabel {
-  font-size: 7.5px;
+  font-size: 7px;
   font-weight: 900;
   text-align: center;
   color: #4f46e5;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
   letter-spacing: 0.5px;
 }
 
 .radarGrid {
   position: relative;
-  width: 80px;
-  height: 64px;
+  width: 62px;
+  height: 48px;
   background: #f1f5f9;
   border: 1.5px solid var(--ink);
   border-radius: 6px;
@@ -1611,14 +1654,14 @@ p {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 9px;
+  font-size: 8px;
   pointer-events: none;
 }
 
 .radarPlayerDot {
   position: absolute;
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   background: #3b82f6;
   border: 1.5px solid #ffffff;
   border-radius: 50%;
@@ -1634,8 +1677,8 @@ p {
 
 .radarBossDot {
   position: absolute;
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   background: #ef4444;
   border: 1px solid #ffffff;
   border-radius: 50%;
@@ -1643,8 +1686,8 @@ p {
 }
 
 .pulseDot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   background: #22c55e;
   border-radius: 50%;
   display: inline-block;
@@ -1658,29 +1701,31 @@ p {
 }
 
 .missionStepText {
-  font-size: 12.5px;
+  font-size: 11px;
   font-weight: 900;
   color: var(--ink);
   margin-top: 2px;
+  line-height: 1.25;
 }
 
 /* Interaction Prompt Pill */
 .shiftActionPill {
   position: absolute;
-  bottom: 84px;
+  bottom: 104px;
   left: 50%;
   transform: translateX(-50%);
   background: #facc15;
   color: #1e1b4b;
   border: 2px solid var(--ink);
   border-radius: 999px;
-  padding: 7px 18px;
-  font-size: 12px;
+  padding: 6px 16px;
+  font-size: 11.5px;
   font-weight: 900;
   box-shadow: 3px 3px 0 var(--ink);
   z-index: 10;
   animation: bouncePill 0.6s infinite alternate;
   pointer-events: none;
+  white-space: nowrap;
 }
 
 @keyframes bouncePill {
@@ -1696,6 +1741,20 @@ p {
   height: 100%;
   pointer-events: none;
   z-index: 10;
+  box-sizing: border-box;
+}
+
+#shiftUIHost.shiftFinishedOverlay {
+  pointer-events: auto;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  z-index: 30; /* sits above virtual controls */
 }
 
 #shiftUIHost .buttons button {
@@ -1713,13 +1772,13 @@ p {
   z-index: 20;
 }
 
-/* Virtual JoyPad (Always visible, responsive to mouse and touch) */
+/* Virtual JoyPad (Responsive to mouse and touch) */
 .virtualJoyPad {
   position: absolute;
-  bottom: 18px;
-  left: 18px;
-  width: 110px;
-  height: 110px;
+  bottom: 14px;
+  left: 14px;
+  width: 100px;
+  height: 100px;
   pointer-events: auto;
   touch-action: none;
   user-select: none;
@@ -1734,7 +1793,7 @@ p {
   position: relative;
   width: 100%;
   height: 100%;
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.75);
   border: 3px solid var(--ink);
   border-radius: 50%;
   box-shadow: 3px 3px 0 var(--ink);
@@ -1743,23 +1802,23 @@ p {
 
 .virtualJoyArrow {
   position: absolute;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 900;
   color: #6366f1;
   pointer-events: none;
 }
 
-.virtualJoyArrow.up { top: 6px; left: 50%; transform: translateX(-50%); }
-.virtualJoyArrow.down { bottom: 6px; left: 50%; transform: translateX(-50%); }
-.virtualJoyArrow.left { left: 8px; top: 50%; transform: translateY(-50%); }
-.virtualJoyArrow.right { right: 8px; top: 50%; transform: translateY(-50%); }
+.virtualJoyArrow.up { top: 5px; left: 50%; transform: translateX(-50%); }
+.virtualJoyArrow.down { bottom: 5px; left: 50%; transform: translateX(-50%); }
+.virtualJoyArrow.left { left: 6px; top: 50%; transform: translateY(-50%); }
+.virtualJoyArrow.right { right: 6px; top: 50%; transform: translateY(-50%); }
 
 .virtualJoyThumb {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   background: linear-gradient(135deg, #6366f1, #4f46e5);
   border: 2.5px solid #ffffff;
   border-radius: 50%;
@@ -1774,8 +1833,8 @@ p {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
   background: #ffffff;
   border-radius: 50%;
   transform: translate(-50%, -50%);
@@ -1784,16 +1843,16 @@ p {
 
 .joyHelperText {
   position: absolute;
-  top: -20px;
+  top: -18px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 900;
   color: #4338ca;
   background: #e0e7ff;
   border: 1px solid #6366f1;
   border-radius: 4px;
-  padding: 1px 6px;
+  padding: 1px 5px;
   white-space: nowrap;
   pointer-events: none;
 }
@@ -1801,14 +1860,14 @@ p {
 /* Action Button */
 .virtualActionBtn {
   position: absolute;
-  bottom: 20px;
-  right: 20px;
-  width: 82px;
-  height: 82px;
+  bottom: 16px;
+  right: 16px;
+  width: 76px;
+  height: 76px;
   border-radius: 50%;
   background: linear-gradient(135deg, #22c55e, #15803d);
   border: 3px solid var(--ink);
-  box-shadow: 4px 4px 0 var(--ink);
+  box-shadow: 3.5px 3.5px 0 var(--ink);
   color: #fff;
   display: flex;
   flex-direction: column;
@@ -1827,12 +1886,12 @@ p {
 }
 
 .actionBtnIcon {
-  font-size: 28px;
+  font-size: 26px;
   line-height: 1;
 }
 
 .actionBtnText {
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 900;
   letter-spacing: 0.5px;
   margin-top: 2px;
@@ -1854,15 +1913,41 @@ p {
   white-space: nowrap;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
   .desktopKeyHint {
-    display: none;
+    display: none !important;
   }
 }
 
-/* Shift Finished Screen */
+/* Shift Finished Screen (Responsive Modal with Inner Scroll) */
 .shiftClearPanel {
   background: #f0fdf4;
+  pointer-events: auto;
+  width: 100%;
+  max-width: 420px;
+  max-height: 96%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+  padding: 16px 14px;
+  margin: auto;
+  border: 3px solid var(--ink);
+  border-radius: 18px;
+  box-shadow: 4px 4px 0 var(--ink);
+  text-align: center;
+}
+
+.clearEmoji {
+  font-size: 36px;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.clearTitle {
+  font-size: 22px;
+  margin: 2px 0 6px;
+  color: var(--ink);
+  font-weight: 900;
 }
 
 .shiftGradeBadge {
@@ -1870,28 +1955,76 @@ p {
   flex-direction: column;
   align-items: center;
   border: 3px dashed #16a34a;
-  border-radius: 16px;
-  padding: 8px 24px;
-  margin: 10px 0 14px;
+  border-radius: 14px;
+  padding: 4px 18px;
+  margin: 4px 0 8px;
   background: #ffffff;
 }
 
 .shiftGradeBadge span {
-  font-size: 11px;
+  font-size: 9.5px;
   font-weight: 900;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
+}
+
+.shiftGradeBadge strong {
+  font-size: 42px;
+  line-height: 1;
 }
 
 .shiftQuoteBox {
   background: #ffffff;
   border: 1.5px solid var(--ink);
-  border-radius: 12px;
-  padding: 10px 14px;
-  font-size: 12.5px;
+  border-radius: 10px;
+  padding: 7px 11px;
+  font-size: 11px;
   font-style: italic;
   color: #3730a3;
-  line-height: 1.45;
-  margin: 10px 0;
+  line-height: 1.35;
+  margin: 6px 0 8px;
   box-shadow: 2px 2px 0 var(--ink);
 }
+
+.shiftSummaryGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 6px 0;
+}
+
+.shiftSummaryGrid .summaryBox {
+  background: #ffffff;
+  border: 1.5px solid var(--ink);
+  border-radius: 10px;
+  padding: 6px 4px;
+  font-size: 10.5px;
+  box-shadow: 1.5px 1.5px 0 var(--ink);
+}
+
+.shiftSummaryGrid .summaryBox strong {
+  font-size: 13.5px;
+  display: block;
+  margin-top: 2px;
+  color: var(--ink);
+}
+
+.btnNextShift {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 14.5px;
+  font-weight: 900;
+  background: linear-gradient(135deg, #16a34a, #059669);
+  color: #ffffff;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  box-shadow: 3px 3px 0 var(--ink);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.btnNextShift:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
 

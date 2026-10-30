@@ -79,6 +79,8 @@ function renderShiftMode(): void {
   shiftStage = new OfficeStage(canvasHost);
   shiftEngine = new ShiftGameEngine(shiftStage, shiftDay, (s) => {
     if (s.isFinished && uiHost) {
+      shiftJoystick?.setVisible(false);
+      uiHost.classList.add('shiftFinishedOverlay');
       uiHost.innerHTML = renderShiftFinishModal(s);
     }
   });
@@ -86,6 +88,7 @@ function renderShiftMode(): void {
   shiftJoystick = new VirtualJoystick(container, () => {
     shiftEngine?.doAction();
   });
+  shiftJoystick.setVisible(true);
 
   lastFrameTime = performance.now();
 
@@ -100,7 +103,17 @@ function renderShiftMode(): void {
     shiftStage.renderScene();
 
     const s = shiftEngine.getState();
-    if (!s.isFinished && uiHost && shiftStage) {
+    if (s.isFinished) {
+      shiftJoystick?.setVisible(false);
+      if (!uiHost.classList.contains('shiftFinishedOverlay')) {
+        uiHost.classList.add('shiftFinishedOverlay');
+        uiHost.innerHTML = renderShiftFinishModal(s);
+      }
+    } else if (uiHost && shiftStage) {
+      if (uiHost.classList.contains('shiftFinishedOverlay')) {
+        uiHost.classList.remove('shiftFinishedOverlay');
+      }
+      shiftJoystick?.setVisible(true);
       uiHost.innerHTML = renderShiftHUD(s, shiftStage);
     }
 

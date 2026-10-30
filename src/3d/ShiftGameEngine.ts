@@ -35,6 +35,7 @@ export class ShiftGameEngine {
 
   private clockTimer = 0;
   private bossCooldown = 0;
+  private graceTimer = 15.0; // 15s starting grace period for player to orient
   private speedBoostTimer = 0;
 
   private sampleOrders = [
@@ -86,9 +87,9 @@ export class ShiftGameEngine {
 
     this.state.currentZone = this.stage.currentZoneName;
 
-    // 1. Clock Progression (9:00 -> 17:00 in ~180s)
+    // 1. Clock Progression (9:00 -> 17:00 in ~240s)
     this.clockTimer += delta;
-    if (this.clockTimer >= 0.35) {
+    if (this.clockTimer >= 0.50) {
       this.clockTimer = 0;
       this.state.timeMinute += 1;
       if (this.state.timeMinute >= 60) {
@@ -96,7 +97,7 @@ export class ShiftGameEngine {
         this.state.timeHour += 1;
       }
 
-      this.state.energy = Math.max(0, this.state.energy - 0.06);
+      this.state.energy = Math.max(0, this.state.energy - 0.04);
 
       if (this.state.timeHour >= 17) {
         this.finishShift();
@@ -130,15 +131,17 @@ export class ShiftGameEngine {
       this.sync();
     });
 
-    // 4. Sếp Patrol Warning
-    if (this.bossCooldown > 0) {
+    // 4. Sếp Patrol Warning (Only active after initial grace period)
+    if (this.graceTimer > 0) {
+      this.graceTimer -= delta;
+    } else if (this.bossCooldown > 0) {
       this.bossCooldown -= delta;
     } else if (this.stage.isPlayerCaughtByBoss()) {
       if (this.stage.player.carriedItem === 'none') {
-        this.bossCooldown = 4.0;
-        this.state.stress = Math.min(100, this.state.stress + 15);
+        this.bossCooldown = 5.0;
+        this.state.stress = Math.min(100, this.state.stress + 10);
         sounds.damage();
-        showToast('⚠️ SẾP HÙNG: "Chưa in xong Techpack mà đi dạo à?!" (+15% Stress)');
+        showToast('⚠️ SẾP HÙNG: "Chưa in xong Techpack mà đi dạo à?!" (+10% Stress)');
         this.sync();
       }
     }

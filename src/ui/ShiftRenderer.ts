@@ -36,56 +36,60 @@ export function renderShiftHUD(state: ShiftState, stage?: OfficeStage): string {
   }
 
   return `
-  <!-- Top 3D Shift Status Bar -->
+  <!-- Top 3D Shift Status Bar (2 Compact Responsive Rows) -->
   <div class="shiftTopHUD">
-    <div class="shiftClockBadge">
-      <span class="clockIcon">⏰</span>
-      <span class="clockTime">${timeStr}</span>
-      <span class="shiftDayBadge">NGÀY ${state.day}</span>
-    </div>
-
-    <!-- Live Zone Indicator -->
-    <div class="shiftZoneTag">
-      <span class="zonePin">📍</span>
-      <span>${esc(state.currentZone)}</span>
-    </div>
-
-    <div class="shiftBars">
-      <!-- Energy Bar -->
-      <div class="shiftStatItem" title="Năng Lượng Chibi">
-        <div class="statHeader">
-          <span>⚡ Năng Lượng</span>
-          <span>${Math.round(state.energy)}%</span>
-        </div>
-        <div class="shiftMiniBar">
-          <div class="shiftMiniBarFill" style="width:${energyPct}%;background:${energyColor}"></div>
-        </div>
+    <div class="shiftHudRow1">
+      <div class="shiftClockBadge">
+        <span class="clockIcon">⏰</span>
+        <span class="clockTime">${timeStr}</span>
+        <span class="shiftDayBadge">NGÀY ${state.day}</span>
       </div>
 
-      <!-- Stress Bar -->
-      <div class="shiftStatItem" title="Mức độ Stress / Sếp soi">
-        <div class="statHeader">
-          <span>😰 Stress</span>
-          <span>${Math.round(state.stress)}%</span>
-        </div>
-        <div class="shiftMiniBar">
-          <div class="shiftMiniBarFill" style="width:${stressPct}%;background:${state.stress > 60 ? '#ef4444' : '#fb923c'}"></div>
+      <!-- Live Zone Indicator -->
+      <div class="shiftZoneTag">
+        <span class="zonePin">📍</span>
+        <span class="zoneName">${esc(state.currentZone)}</span>
+      </div>
+
+      <!-- Orders Completed Target -->
+      <div class="shiftKpiBadge">
+        <span class="kpiIcon">📦</span>
+        <div>
+          <div class="kpiVal">${state.ordersCompleted}/${state.targetOrders}</div>
+          <div class="kpiLabel">XUẤT XƯỞNG</div>
         </div>
       </div>
     </div>
 
-    <!-- Orders Completed Target -->
-    <div class="shiftKpiBadge">
-      <span class="kpiIcon">📦</span>
-      <div>
-        <div class="kpiVal">${state.ordersCompleted}/${state.targetOrders}</div>
-        <div class="kpiLabel">XUẤT XƯỞNG</div>
+    <div class="shiftHudRow2">
+      <div class="shiftBars">
+        <!-- Energy Bar -->
+        <div class="shiftStatItem" title="Năng Lượng Chibi">
+          <div class="statHeader">
+            <span>⚡ NĂNG LƯỢNG</span>
+            <span>${Math.round(state.energy)}%</span>
+          </div>
+          <div class="shiftMiniBar">
+            <div class="shiftMiniBarFill" style="width:${energyPct}%;background:${energyColor}"></div>
+          </div>
+        </div>
+
+        <!-- Stress Bar -->
+        <div class="shiftStatItem" title="Mức độ Stress / Sếp soi">
+          <div class="statHeader">
+            <span>🔥 STRESS</span>
+            <span>${Math.round(state.stress)}%</span>
+          </div>
+          <div class="shiftMiniBar">
+            <div class="shiftMiniBarFill" style="width:${stressPct}%;background:${state.stress > 60 ? '#ef4444' : '#fb923c'}"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- Minimap Radar Widget at Top Right -->
-  <div class="shiftRadarWidget" title="Bản đồ khuôn viên nhà máy 60x50">
+  <div class="shiftRadarWidget" title="Bản đồ khuôn viên dệt may 60x46">
     <div class="radarLabel">BẢN ĐỒ TỔ HỢP</div>
     <div class="radarGrid">
       <div class="radarQuadrant q1">VP</div>
@@ -101,7 +105,7 @@ export function renderShiftHUD(state: ShiftState, stage?: OfficeStage): string {
     </div>
   </div>
 
-  <!-- Mission Objective Card Floating at Top Center -->
+  <!-- Mission Objective Card Floating at Top Left -->
   <div class="shiftMissionBanner">
     <div class="missionTargetTag">
       <span class="pulseDot"></span>
@@ -133,33 +137,33 @@ export function renderShiftFinishModal(state: ShiftState): string {
   }
 
   return `
-  <section class="panel shiftClearPanel" style="text-align:center;padding:24px 20px">
-    <div style="font-size:52px;margin-bottom:6px">🌆🏢🚢✨</div>
+  <section class="panel shiftClearPanel">
+    <div class="clearEmoji">🌆🏢🚢✨</div>
     <div class="eyebrow" style="color:#16a34a">ĐỒNG HỒ ĐIỂM 17:00 · HOÀN THÀNH CA TRỰC TOÀN KHU!</div>
-    <h1 style="font-size:30px;margin:2px 0 8px">KẾT QUẢ NGÀY ${state.day}</h1>
+    <h1 class="clearTitle">KẾT QUẢ NGÀY ${state.day}</h1>
 
     <!-- Grade Stamp -->
     <div class="shiftGradeBadge" style="border-color:${badgeColor};color:${badgeColor}">
       <span>XẾP LOẠI KPI TOÀN CA</span>
-      <strong style="font-size:56px;line-height:1">${state.grade || 'A'}</strong>
+      <strong>${state.grade || 'A'}</strong>
     </div>
 
     <p class="shiftQuoteBox">"${quote}"</p>
 
     <!-- Stats Grid -->
-    <div class="summaryGrid" style="margin:16px 0">
+    <div class="summaryGrid shiftSummaryGrid">
       <div class="summaryBox">Đơn hàng xuất xưởng<strong>${state.ordersCompleted} / ${state.targetOrders} cont</strong></div>
-      <div class="summaryBox">Tiền thưởng KPI kiếm được<strong>+${state.score} đ</strong></div>
+      <div class="summaryBox">Tiền thưởng KPI<strong>+${state.score} đ</strong></div>
       <div class="summaryBox">Năng lượng còn lại<strong>${Math.round(state.energy)}%</strong></div>
       <div class="summaryBox">Áp lực stress<strong>${Math.round(state.stress)}%</strong></div>
     </div>
 
-    <div class="buttons" style="margin-top:18px">
-      <button class="primary" data-act="shift_next_day" style="width:100%;padding:14px;font-size:16px;background:linear-gradient(135deg, #16a34a, #059669)">
+    <div class="buttons" style="margin-top:14px;gap:8px">
+      <button class="primary btnNextShift" data-act="shift_next_day">
         ☀️ BƯỚC VÀO CA TRỰC NGÀY TIẾP THEO →
       </button>
-      <button class="secondary" data-act="shift_to_menu" style="width:100%;padding:11px">
-        ↩ Về sảnh chính &amp; Cốt truyện
+      <button class="secondary" data-act="shift_to_menu" style="width:100%;padding:10px;font-size:12px;margin-top:4px">
+        ↩ Về Sảnh Chính & Cốt Truyện
       </button>
     </div>
   </section>
