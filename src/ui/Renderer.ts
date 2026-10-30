@@ -84,23 +84,24 @@ export function renderWelcome(): string {
     <div class="emojiLarge" aria-hidden="true">🧵 🚢 📦</div>
     <div class="eyebrow">Sinh Tồn Ngành Dệt May &amp; Xuất Nhập Khẩu</div>
     <h1>ĐI LÀM<br>HAY ĐI<br>SINH TỒN?</h1>
-    <div class="visualBadge3D">✨ ĐỒ HOẠ THẺ BÀI 3D THREE.JS SỐNG ĐỘNG ✨</div>
-    <p class="introBlurb">Mục tiêu: Còn thở khi Buyer New York nhắn tin! Vượt kiếp nạn lệch màu Lab-dip, cont kẹt cảng Cát Lái, lệch kho vải và bóng ma đền hàng Air.</p>
+    <div class="visualBadge3D">✨ 3D CHIBI ACTION &amp; THẺ BÀI SỐNG ĐỘNG ✨</div>
+    <p class="introBlurb">Mục tiêu: Còn thở khi Buyer New York nhắn tin! Trực tiếp điều khiển nhân vật Chibi 3D chạy việc trong văn phòng, in Techpack, bốc vải và nộp cont cảng Cát Lái trước 17:00.</p>
     
     <div class="introGuide">
-      <div class="guideStep"><span>🎴</span> Nghiêng thẻ 3D</div>
-      <div class="guideStep"><span>⚡</span> Quyết định nhanh</div>
-      <div class="guideStep"><span>🏆</span> Sống sót 5 ngày</div>
+      <div class="guideStep"><span>🏃</span> Chibi 3D chạy việc</div>
+      <div class="guideStep"><span>🖨️</span> In Techpack &amp; bốc vải</div>
+      <div class="guideStep"><span>🚢</span> Xuất cont trước 17:00</div>
     </div>
 
     <div class="introFeatures">
       <div class="feature"><span>❤️</span>3 mạng</div>
       <div class="feature"><span>🎭</span>4 Class nghề</div>
-      <div class="feature"><span>🃏</span>65 thẻ sự kiện</div>
+      <div class="feature"><span>🏢</span>Ca trực 3D</div>
     </div>
     ${topScore ? `<p class="note" style="margin-bottom:12px">🏆 Kỷ lục cá nhân: <b>${topScore.score.toLocaleString('vi-VN')} điểm</b> (Ngày ${topScore.day} · ${esc(topScore.title)})</p>` : ''}
     <div class="buttons">
-      <button class="primary" data-act="start">🚀 CHỌN HỆ TƯ TƯỞNG &amp; NHẬN VIỆC (3D) <span>→</span></button>
+      <button class="primary" data-act="start_shift" style="background:linear-gradient(135deg, #4f46e5, #7c3aed);font-size:15px;padding:14px;box-shadow:3px 3px 0 var(--ink)">🏢 BƯỚC VÀO CA TRỰC 3D CHIBI (MỚI) <span>→</span></button>
+      <button class="secondary" data-act="start">🚀 Chọn Hệ Tư Tưởng &amp; Cốt Truyện</button>
       ${loadGameState() ? '<button class="secondary" data-act="continue">↩ Tiếp tục run đã lưu</button>' : ''}
     </div>
     <p class="note" style="margin:16px 0 0">Chơi hoàn toàn không cần mạng. Đã khám phá: <b>${totalDisc}/65</b> sự kiện.</p>

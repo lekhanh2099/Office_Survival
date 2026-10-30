@@ -4,6 +4,10 @@ import { BattlerEngine } from './core/BattlerEngine';
 import { loadGameState } from './core/GameState';
 import { renderDay, renderGameOver, renderPlay, renderResult, renderWelcome } from './ui/Renderer';
 import { Card3DCanvas } from './ui/Card3DCanvas';
+import { OfficeStage } from './3d/OfficeStage';
+import { VirtualJoystick } from './3d/VirtualJoystick';
+import { ShiftGameEngine } from './3d/ShiftGameEngine';
+import { renderShiftHUD, renderShiftFinishModal } from './ui/ShiftRenderer';
 import {
   renderBattlerHUD,
   renderCrisisArena,
@@ -32,26 +36,108 @@ const APPROOT = document.getElementById('appRoot') as HTMLElement;
 const audioToggleBtn = document.getElementById('audioToggle') as HTMLButtonElement;
 const modeSwitchBtn = document.getElementById('modeSwitchBtn') as HTMLButtonElement | null;
 
-let currentMode: 'battler' | 'story' = 'story';
+let currentMode: 'shift' | 'story' | 'battler' = 'shift';
+let shiftDay = 1;
 let engine: GameEngine;
 let battlerEngine: BattlerEngine;
 let active3DCard: Card3DCanvas | null = null;
 
+// 3D Shift Mode Lifecycle
+let shiftStage: OfficeStage | null = null;
+let shiftJoystick: VirtualJoystick | null = null;
+let shiftEngine: ShiftGameEngine | null = null;
+let shiftAnimFrameId: number | null = null;
+let lastFrameTime = performance.now();
+
+function cleanupShift(): void {
+  if (shiftAnimFrameId) {
+    cancelAnimationFrame(shiftAnimFrameId);
+    shiftAnimFrameId = null;
+  }
+  shiftJoystick?.destroy();
+  shiftJoystick = null;
+  shiftStage?.destroy();
+  shiftStage = null;
+  shiftEngine = null;
+}
+
+function renderShiftMode(): void {
+  cleanupShift();
+
+  ROOT.innerHTML = `
+    <div class="shiftContainer" id="shiftContainer">
+      <div id="shiftCanvasHost"></div>
+      <div id="shiftUIHost"></div>
+    </div>
+  `;
+
+  const canvasHost = document.getElementById('shiftCanvasHost');
+  const uiHost = document.getElementById('shiftUIHost');
+  const container = document.getElementById('shiftContainer');
+  if (!canvasHost || !uiHost || !container) return;
+
+  shiftStage = new OfficeStage(canvasHost);
+  shiftEngine = new ShiftGameEngine(shiftStage, shiftDay, (s) => {
+    if (s.isFinished && uiHost) {
+      uiHost.innerHTML = renderShiftFinishModal(s);
+    }
+  });
+
+  shiftJoystick = new VirtualJoystick(container, () => {
+    shiftEngine?.doAction();
+  });
+
+  lastFrameTime = performance.now();
+
+  const loop = (now: number) => {
+    if (!shiftStage || !shiftEngine) return;
+    const delta = Math.min((now - lastFrameTime) / 1000, 0.1);
+    lastFrameTime = now;
+
+    const vec = shiftJoystick ? shiftJoystick.getVector() : { x: 0, y: 0, active: false };
+    shiftStage.update(delta, vec.x, vec.y);
+    shiftEngine.update(delta);
+    shiftStage.renderScene();
+
+    const s = shiftEngine.getState();
+    if (!s.isFinished && uiHost) {
+      uiHost.innerHTML = renderShiftHUD(s);
+    }
+
+    shiftAnimFrameId = requestAnimationFrame(loop);
+  };
+
+  shiftAnimFrameId = requestAnimationFrame(loop);
+}
+
 function render(): void {
   try {
-    // Cleanup any active 3D canvas to avoid WebGL leaks
+    // Cleanup any active 3D card
     if (active3DCard) {
       active3DCard.destroy();
       active3DCard = null;
+    }
+    // Cleanup shift if we're not in shift mode
+    if (currentMode !== 'shift') {
+      cleanupShift();
     }
 
     if (audioToggleBtn) {
       audioToggleBtn.textContent = sounds.isMuted() ? '🔇' : '🔊';
     }
     if (modeSwitchBtn) {
-      modeSwitchBtn.innerHTML = currentMode === 'battler'
-        ? '<span class="btnIcon">🎴</span><span class="btnText">Thẻ 3D</span>'
-        : '<span class="btnIcon">🃏</span><span class="btnText">Đấu Bài</span>';
+      if (currentMode === 'shift') {
+        modeSwitchBtn.innerHTML = '<span class="btnIcon">🏢</span><span class="btnText">Ca Trực 3D</span>';
+      } else if (currentMode === 'story') {
+        modeSwitchBtn.innerHTML = '<span class="btnIcon">🎴</span><span class="btnText">Thẻ 3D</span>';
+      } else {
+        modeSwitchBtn.innerHTML = '<span class="btnIcon">🃏</span><span class="btnText">Đấu Bài</span>';
+      }
+    }
+
+    if (currentMode === 'shift') {
+      renderShiftMode();
+      return;
     }
 
     if (currentMode === 'battler') {
@@ -291,6 +377,23 @@ document.addEventListener('click', (ev) => {
   }
 
   switch (btn.dataset.act) {
+    case 'start_shift':
+      sounds.click();
+      currentMode = 'shift';
+      shiftDay = 1;
+      render();
+      break;
+    case 'shift_next_day':
+      sounds.click();
+      shiftDay += 1;
+      render();
+      break;
+    case 'shift_to_menu':
+      sounds.click();
+      currentMode = 'story';
+      engine.getState().stage = 'welcome';
+      render();
+      break;
     case 'start':
       if (loadGameState() && !confirm('Bắt đầu run mới? Tiến trình cũ sẽ bị thay thế.')) return;
       sounds.click();
@@ -386,8 +489,16 @@ document.addEventListener('click', (ev) => {
 // Header Buttons
 modeSwitchBtn?.addEventListener('click', () => {
   sounds.click();
-  currentMode = currentMode === 'battler' ? 'story' : 'battler';
-  showToast(currentMode === 'battler' ? '🃏 Đã bật chế độ Đấu Thẻ Bài Meme!' : '📖 Đã bật chế độ Cốt Truyện A/B/C!');
+  if (currentMode === 'shift') {
+    currentMode = 'story';
+    showToast('🎴 Đã bật chế độ Cốt Truyện Thẻ Bài 3D!');
+  } else if (currentMode === 'story') {
+    currentMode = 'battler';
+    showToast('🃏 Đã bật chế độ Đấu Thẻ Bài Meme!');
+  } else {
+    currentMode = 'shift';
+    showToast('🏢 Đã bật chế độ Ca Trực 3D Chibi!');
+  }
   render();
 });
 
