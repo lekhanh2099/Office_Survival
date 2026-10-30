@@ -31,6 +31,7 @@ import {
   openHelpModal,
   openShiftHelpModal,
   openCampusMapModal,
+  openColleagueModal,
   openDilemmaModal,
   openHistoryModal,
   openRankingsModal,
@@ -109,6 +110,16 @@ function renderShiftMode(): void {
   shiftStage.onFloorTapCallback = () => {
     sounds.click();
     showToast('🏃 Chibi đang chạy tới vị trí bạn vừa chạm...');
+  };
+
+  // Direct 3D Colleague NPC Tap / Click Handling
+  shiftStage.onColleagueClickCallback = (colleagueId) => {
+    sounds.click();
+    const cid = colleagueId as 'boss' | 'nga' | 'tuan' | 'linh' | 'hoang';
+    const curFavor = shiftEngine?.getState().colleagueFavors[cid] ?? 20;
+    openColleagueModal(HOST, cid, curFavor, (optionId) => {
+      return shiftEngine!.interactWithColleague(cid, optionId);
+    });
   };
 
   // Direct 3D Click / Tap Raycaster Handling (Both Auto-Work and Card confirmation modes!)
@@ -449,6 +460,20 @@ document.addEventListener('click', (ev) => {
     }
     showToast(`Đã chọn ${donateLabel} (${Number(donateAmount).toLocaleString('vi-VN')} đ)!`);
     return;
+  }
+
+  // Colleague Quick Bar chip click
+  const colleagueBtn = target.closest('[data-colleague]') as HTMLElement | null;
+  if (colleagueBtn && currentMode === 'shift' && shiftEngine) {
+    const cid = colleagueBtn.dataset.colleague as 'boss' | 'nga' | 'tuan' | 'linh' | 'hoang';
+    if (cid) {
+      sounds.click();
+      const curFavor = shiftEngine.getState().colleagueFavors[cid] ?? 20;
+      openColleagueModal(HOST, cid, curFavor, (optionId) => {
+        return shiftEngine!.interactWithColleague(cid, optionId);
+      });
+      return;
+    }
   }
 
   const btn = target.closest('[data-act],[data-choice],[data-perk]') as HTMLElement | null;

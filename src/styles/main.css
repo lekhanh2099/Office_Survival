@@ -1558,11 +1558,20 @@ p {
 }
 
 /* ==================== QUEST BANNER & SUPPLY CHAIN STEPPER ==================== */
-.shiftQuestBanner {
+.shiftHeaderStack {
   position: absolute;
-  top: 46px;
+  top: 48px;
   left: 6px;
-  right: 56px; /* stops before right rail (at right: 6px + 44px width = 50px) */
+  right: 56px; /* stops safely before right rail */
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.shiftQuestBanner {
+  position: relative;
   background: rgba(15, 23, 42, 0.95);
   backdrop-filter: blur(10px);
   border: 1.5px solid rgba(255, 255, 255, 0.22);
@@ -1572,13 +1581,78 @@ p {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  z-index: 10;
   pointer-events: auto;
   cursor: pointer;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Colleague Relationships Quick Bar */
+.shiftColleaguesBar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  pointer-events: auto;
+  padding: 1px 0;
+}
+
+.shiftColleaguesBar::-webkit-scrollbar {
+  display: none;
+}
+
+.colleagueChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3.5px;
+  background: rgba(15, 23, 42, 0.90);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  padding: 2px 7px 2px 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.colleagueChip:hover {
+  background: #312e81;
+  border-color: #facc15;
+  transform: translateY(-1px);
+}
+
+.colleagueChip:active {
+  transform: scale(0.95);
+}
+
+.chipEmoji {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.chipName {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.chipFavor {
+  font-size: 9px;
+  font-weight: 800;
+  color: #38bdf8;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 1px 4.5px;
+  border-radius: 6px;
 }
 
 .shiftQuestBanner:hover {

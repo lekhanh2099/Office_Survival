@@ -15,8 +15,16 @@ const stationCoords: Record<string, [number, number]> = {
   sofa: [0.0, 4.7],
   whiteboard: [-18.0, -13.5],
   mirror: [-21.0, 1.0],
-  boss_desk: [-18.0, -19.5]
+  boss_desk: [-18.0, -19.5],
+  showroom: [-3.5, -17.5],
+  balcony: [19.0, 0.0]
 };
+
+function esc(t?: string | number | null): string {
+  return String(t ?? '').replace(/[&<>"']/g, x => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[x] || x));
+}
 
 interface HUDElementCache {
   host: HTMLElement;
@@ -56,6 +64,8 @@ let lastZone = '';
 let lastOrderName = '';
 let lastQuestText = '';
 let lastTaskStep = '';
+let lastOrderArchetypeId = '';
+let lastOrderStepIndex = -1;
 let lastCamMode = '';
 let lastDragMode = '';
 let lastInteractionMode = '';
@@ -93,6 +103,8 @@ export function mountShiftHUD(host: HTMLElement): void {
   lastOrderName = '';
   lastQuestText = '';
   lastTaskStep = '';
+  lastOrderArchetypeId = '';
+  lastOrderStepIndex = -1;
   lastCamMode = '';
   lastDragMode = '';
   lastInteractionMode = '';
@@ -147,39 +159,70 @@ export function mountShiftHUD(host: HTMLElement): void {
       </button>
     </header>
 
-    <!-- Main Interactive Quest & Supply Chain Stepper Banner (Clickable & Collapsible) -->
-    <div class="shiftQuestBanner" id="hudQuestBanner">
-      <div class="questBannerTop">
-        <div class="questTagRow" data-act="auto_walk_to_quest" title="Bấm để Chibi tự chạy đến mục tiêu">
-          <span class="questZoneBadge" id="hudZoneBadge">🏢 VĂN PHÒNG</span>
-          <span class="questOrderName" id="hudOrderName">ĐƠN HÀNG</span>
+    <!-- Main Header Stack: Quest Banner + Colleague Relationships Quick Bar -->
+    <div class="shiftHeaderStack">
+      <div class="shiftQuestBanner" id="hudQuestBanner">
+        <div class="questBannerTop">
+          <div class="questTagRow" data-act="auto_walk_to_quest" title="Bấm để Chibi tự chạy đến mục tiêu">
+            <span class="questZoneBadge" id="hudZoneBadge">🏢 VĂN PHÒNG</span>
+            <span class="questOrderName" id="hudOrderName">ĐƠN HÀNG</span>
+          </div>
+          <div class="questTopRightActions">
+            <button class="questAutoNavBadge" id="hudAutoNavBtn" data-act="auto_walk_to_quest" type="button" title="Chibi tự chạy đến mục tiêu">
+              ⚡ Tự chạy ➔
+            </button>
+            <button class="questCollapseBtn" id="hudQuestCollapseBtn" data-act="toggle_quest_collapse" type="button" title="Thu gọn / Mở rộng bảng nhiệm vụ">
+              <span id="questCollapseArrow">▲</span>
+            </button>
+          </div>
         </div>
-        <div class="questTopRightActions">
-          <button class="questAutoNavBadge" id="hudAutoNavBtn" data-act="auto_walk_to_quest" type="button" title="Chibi tự chạy đến mục tiêu">
-            ⚡ Tự chạy ➔
-          </button>
-          <button class="questCollapseBtn" id="hudQuestCollapseBtn" data-act="toggle_quest_collapse" type="button" title="Thu gọn / Mở rộng bảng nhiệm vụ">
-            <span id="questCollapseArrow">▲</span>
-          </button>
+
+        <!-- Collapsible Body (Step Stepper + Instruction Text) -->
+        <div class="questCollapsibleBody" id="hudQuestCollapsibleBody" data-act="auto_walk_to_quest" title="Bấm để Chibi tự chạy đến mục tiêu">
+          <!-- Supply Chain Flow Stepper -->
+          <div class="questFlowStepper" id="hudQuestStepper">
+            <div class="flowStepItem" data-step="desk_receive"><span class="stepIcon">💻</span>1. Nhận Đơn</div>
+            <div class="flowArrow">›</div>
+            <div class="flowStepItem" data-step="printer_techpack"><span class="stepIcon">🖨️</span>2. In Techpack</div>
+            <div class="flowArrow">›</div>
+            <div class="flowStepItem" data-step="lab_check"><span class="stepIcon">🔬</span>3. Soi Lab</div>
+            <div class="flowArrow">›</div>
+            <div class="flowStepItem" data-step="fabric_pick"><span class="stepIcon">🧵</span>4. Lấy Vải</div>
+            <div class="flowArrow">›</div>
+            <div class="flowStepItem" data-step="shipping_deliver"><span class="stepIcon">🚢</span>5. Xuất Cảng</div>
+          </div>
+
+          <div class="questInstruction" id="hudQuestText">Nhiệm vụ đang tải...</div>
         </div>
       </div>
 
-      <!-- Collapsible Body (5-Step Stepper + Instruction Text) -->
-      <div class="questCollapsibleBody" id="hudQuestCollapsibleBody" data-act="auto_walk_to_quest" title="Bấm để Chibi tự chạy đến mục tiêu">
-        <!-- 5-Step Supply Chain Flow Stepper -->
-        <div class="questFlowStepper" id="hudQuestStepper">
-          <div class="flowStepItem" data-step="desk_receive"><span class="stepIcon">💻</span>1. Nhận Đơn</div>
-          <div class="flowArrow">›</div>
-          <div class="flowStepItem" data-step="printer_techpack"><span class="stepIcon">🖨️</span>2. In Techpack</div>
-          <div class="flowArrow">›</div>
-          <div class="flowStepItem" data-step="lab_check"><span class="stepIcon">🔬</span>3. Soi Lab</div>
-          <div class="flowArrow">›</div>
-          <div class="flowStepItem" data-step="fabric_pick"><span class="stepIcon">🧵</span>4. Lấy Vải</div>
-          <div class="flowArrow">›</div>
-          <div class="flowStepItem" data-step="shipping_deliver"><span class="stepIcon">🚢</span>5. Xuất Cảng</div>
-        </div>
-
-        <div class="questInstruction" id="hudQuestText">Nhiệm vụ đang tải...</div>
+      <!-- Colleague Relationships Quick Bar (Interactive 5 Colleagues) -->
+      <div class="shiftColleaguesBar" id="hudColleaguesBar">
+        <button class="colleagueChip" data-colleague="boss" type="button" title="Sếp Hùng (Tổng Giám Đốc) · Bấm để mở tương tác">
+          <span class="chipEmoji" style="background:#334155">👔</span>
+          <span class="chipName">Sếp Hùng</span>
+          <span class="chipFavor" id="chipFavor_boss">20%</span>
+        </button>
+        <button class="colleagueChip" data-colleague="nga" type="button" title="Chị Nga (Kế Toán Kho) · Bấm để mở tương tác">
+          <span class="chipEmoji" style="background:#b91c1c">🧮</span>
+          <span class="chipName">Chị Nga</span>
+          <span class="chipFavor" id="chipFavor_nga">25%</span>
+        </button>
+        <button class="colleagueChip" data-colleague="tuan" type="button" title="Anh Tuấn (Tài Xế Cont) · Bấm để mở tương tác">
+          <span class="chipEmoji" style="background:#0284c7">🚛</span>
+          <span class="chipName">Anh Tuấn</span>
+          <span class="chipFavor" id="chipFavor_tuan">20%</span>
+        </button>
+        <button class="colleagueChip" data-colleague="linh" type="button" title="Em Linh (Thực Tập Lab) · Bấm để mở tương tác">
+          <span class="chipEmoji" style="background:#06b6d4">🔬</span>
+          <span class="chipName">Em Linh</span>
+          <span class="chipFavor" id="chipFavor_linh">30%</span>
+        </button>
+        <button class="colleagueChip" data-colleague="hoang" type="button" title="Anh Hoàng (IT Support) · Bấm để mở tương tác">
+          <span class="chipEmoji" style="background:#4f46e5">🖥️</span>
+          <span class="chipName">Anh Hoàng</span>
+          <span class="chipFavor" id="chipFavor_hoang">25%</span>
+        </button>
       </div>
     </div>
 
@@ -380,9 +423,14 @@ export function updateShiftHUD(host: HTMLElement, state: ShiftState, stage?: Off
   }
 
   const isCrisis = Boolean(state.currentTask.isCrisis);
-  if (state.currentTask.step !== lastTaskStep || isCrisis !== lastTaskIsCrisis) {
+  const curStepIdx = state.currentOrderStepIndex ?? 0;
+  const archetypeId = state.activeOrderArchetype?.id || '';
+
+  if (state.currentTask.step !== lastTaskStep || isCrisis !== lastTaskIsCrisis || curStepIdx !== lastOrderStepIndex || archetypeId !== lastOrderArchetypeId) {
     lastTaskStep = state.currentTask.step;
     lastTaskIsCrisis = isCrisis;
+    lastOrderStepIndex = curStepIdx;
+    lastOrderArchetypeId = archetypeId;
 
     const bannerEl = host.querySelector('#hudQuestBanner');
     if (bannerEl) {
@@ -398,7 +446,8 @@ export function updateShiftHUD(host: HTMLElement, state: ShiftState, stage?: Off
         hudCache.zoneBadge.textContent = '🚨 KHẨN CẤP';
         hudCache.zoneBadge.style.background = '#ef4444';
       } else {
-        hudCache.zoneBadge.style.background = '#3b82f6';
+        hudCache.zoneBadge.textContent = state.activeOrderArchetype?.badge || '🏢 VĂN PHÒNG';
+        hudCache.zoneBadge.style.background = state.activeOrderArchetype?.badgeColor || '#3b82f6';
       }
     }
 
@@ -408,29 +457,40 @@ export function updateShiftHUD(host: HTMLElement, state: ShiftState, stage?: Off
           <div class="flowStepItem crisisActive"><span class="stepIcon">🚨</span>Khủng Hoảng Khẩn Cấp: Khắc Phục Ngay!</div>
         `;
       } else {
-        hudCache.questStepper.innerHTML = `
-          <div class="flowStepItem" data-step="desk_receive"><span class="stepIcon">💻</span>1. Nhận Đơn</div>
-          <div class="flowArrow">›</div>
-          <div class="flowStepItem" data-step="printer_techpack"><span class="stepIcon">🖨️</span>2. In Techpack</div>
-          <div class="flowArrow">›</div>
-          <div class="flowStepItem" data-step="lab_check"><span class="stepIcon">🔬</span>3. Soi Lab</div>
-          <div class="flowArrow">›</div>
-          <div class="flowStepItem" data-step="fabric_pick"><span class="stepIcon">🧵</span>4. Lấy Vải</div>
-          <div class="flowArrow">›</div>
-          <div class="flowStepItem" data-step="shipping_deliver"><span class="stepIcon">🚢</span>5. Xuất Cảng</div>
-        `;
-        const steps = ['desk_receive', 'printer_techpack', 'lab_check', 'fabric_pick', 'shipping_deliver'];
-        const curIdx = steps.indexOf(lastTaskStep);
-        const items = hudCache.questStepper.querySelectorAll('.flowStepItem');
-        items.forEach((item, idx) => {
-          if (idx < curIdx) {
-            item.className = 'flowStepItem stepCompleted';
-          } else if (idx === curIdx) {
-            item.className = 'flowStepItem stepActive';
-          } else {
-            item.className = 'flowStepItem stepUpcoming';
-          }
-        });
+        const steps = state.activeOrderArchetype?.steps || [];
+        hudCache.questStepper.innerHTML = steps.map((step, idx) => {
+          let stateClass = 'flowStepItem stepUpcoming';
+          if (idx < curStepIdx) stateClass = 'flowStepItem stepCompleted';
+          else if (idx === curStepIdx) stateClass = 'flowStepItem stepActive';
+          const icon = step.carriedItem === 'sample_shirt' ? '👗' :
+                       step.carriedItem === 'fabric_roll' ? '🧵' :
+                       step.carriedItem === 'paper_stack' ? '📄' :
+                       step.carriedItem === 'coffee_cup' ? '☕' :
+                       (step.targetStation === 'showroom' ? '👗' :
+                        step.targetStation === 'balcony' ? '🌿' :
+                        step.targetStation === 'altar' ? '🙏' :
+                        step.targetStation === 'boss_desk' ? '👔' : '💻');
+          return `<div class="${stateClass}" data-step="${step.stepId}"><span class="stepIcon">${icon}</span>${step.stepName}</div>`;
+        }).join('<div class="flowArrow">›</div>');
+      }
+    }
+  }
+
+  // Update Colleague Favors in HUD quick bar
+  if (state.colleagueFavors) {
+    const cidList: Array<'boss' | 'nga' | 'tuan' | 'linh' | 'hoang'> = ['boss', 'nga', 'tuan', 'linh', 'hoang'];
+    for (const cid of cidList) {
+      const el = host.querySelector(`#chipFavor_${cid}`);
+      if (el) {
+        const favor = Math.round(state.colleagueFavors[cid] ?? 20);
+        el.textContent = `${favor}%`;
+        if (favor >= 50) {
+          (el as HTMLElement).style.color = '#4ade80';
+          (el as HTMLElement).style.fontWeight = '900';
+        } else {
+          (el as HTMLElement).style.color = '#cbd5e1';
+          (el as HTMLElement).style.fontWeight = '700';
+        }
       }
     }
   }
@@ -532,62 +592,89 @@ export function updateShiftHUD(host: HTMLElement, state: ShiftState, stage?: Off
 }
 
 export function renderShiftFinishModal(state: ShiftState): string {
-  let quote = 'Mr. David (Buyer New York): "Outstanding! 5 đơn hàng may chuẩn form, lab-dip màu D65 xuất sắc, xử lý sự cố khẩn cấp thần tốc, cont hàng lên tàu đúng hạn!"';
+  const ending = state.ending;
+  const grade = state.grade || ending?.grade || 'B';
+  const badge = ending?.badge || `🎖️ KẾT QUẢ CA TRỰC (${grade}-RANK)`;
+  const quote = ending?.quote || 'Mr. David (Buyer New York): "Đơn hàng may chuẩn form, xuất xưởng đúng hạn!"';
+  const narrative = ending?.narrative || 'Bạn đã hoàn thành ca trực và phối hợp cùng đồng nghiệp đưa hàng ra cảng an toàn.';
+  const outcome = ending?.careerOutcome || 'Tiếp tục giữ vững vị trí Merchandiser được đồng nghiệp tin cậy.';
+  const salary = ending?.salaryBonus || `+${state.score} đ Tiền thưởng KPI ca trực`;
+  const title = ending?.unlockedTitle || 'Danh Hiệu: Merchandiser Tiêu Biểu 📦';
+  const bg = ending?.bgGradient || 'linear-gradient(135deg, #1e1b4b, #312e81)';
+  const icon = ending?.icon || '🏢';
+
   let badgeColor = '#22c55e';
-
-  if (state.grade === 'S') {
-    quote = 'Sếp Hùng: "Chiến thần Merchandiser thực thụ! 5 đơn hàng xuất xưởng hoàn hảo, dập tắt 4 cuộc khủng hoảng mà không phạm một sai lầm nào!"';
-    badgeColor = '#eab308';
-  } else if (state.grade === 'C' || state.grade === 'D' || state.grade === 'F') {
-    quote = 'Chị Nga Kế Toán: "Suýt nữa là trễ Closing time cảng Cát Lái và thất thoát vải thun nhé! Mai phải chạy việc nhanh hơn!"';
-    badgeColor = '#f97316';
-  }
-
-  let playerTitle = '📦 Merchandiser Tiêu Biểu';
-  if (state.score >= 1800) {
-    playerTitle = '👑 Chiến Thần Đàm Phán & Xuất Khẩu';
-  } else if (state.dilemmasResolved >= 4) {
-    playerTitle = '⚡ Chuyên Gia Xử Lý Sự Cố Thần Tốc';
-  } else if (state.stress <= 15) {
-    playerTitle = '🧘 Bậc Thầy Giữ Bình Tĩnh Đỉnh Cao';
-  }
+  if (grade === 'S') badgeColor = '#eab308';
+  else if (grade === 'A') badgeColor = '#a855f7';
+  else if (grade === 'B') badgeColor = '#3b82f6';
+  else if (grade === 'C') badgeColor = '#f97316';
+  else if (grade === 'D' || grade === 'F') badgeColor = '#ef4444';
 
   return `
-  <section class="panel shiftClearPanel">
-    <div class="clearEmoji">🌆🏢🚢✨</div>
-    <div class="eyebrow" style="color:#16a34a">ĐỒNG HỒ ĐIỂM 17:00 · HOÀN THÀNH CA TRỰC TOÀN KHU!</div>
-    <h1 class="clearTitle">KẾT QUẢ NGÀY ${state.day}</h1>
+  <section class="panel shiftClearPanel" style="max-width:540px;max-height:92vh;overflow-y:auto;padding:16px 18px;border-radius:20px;background:#0f172a;border:2.5px solid ${badgeColor};box-shadow:0 18px 50px rgba(0,0,0,0.7)">
+    <div style="font-size:36px;margin:0 0 4px">${icon}🌆✨</div>
+    <div class="eyebrow" style="color:#38bdf8;font-weight:900;letter-spacing:0.5px">ĐỒNG HỒ ĐIỂM 17:00 · KẾT THÚC CA TRỰC</div>
+    <h1 class="clearTitle" style="font-size:20px;font-weight:900;margin:2px 0 8px;color:#ffffff">${ending ? esc(ending.title) : `KẾT QUẢ NGÀY ${state.day}`}</h1>
 
-    <!-- Grade Stamp & Title -->
-    <div class="shiftGradeBadge" style="border-color:${badgeColor};color:${badgeColor}">
-      <span>XẾP LOẠI KPI TOÀN CA</span>
-      <strong>${state.grade || 'A'}</strong>
-      <div style="font-size:11px;font-weight:900;color:#facc15;margin-top:2px">${playerTitle}</div>
+    <!-- Grade Stamp & Narrative Badge -->
+    <div class="shiftGradeBadge" style="border-color:${badgeColor};color:${badgeColor};background:rgba(255,255,255,0.04);margin-bottom:10px">
+      <span style="font-size:10.5px;letter-spacing:1px">${badge}</span>
+      <strong style="font-size:42px;line-height:1;margin:4px 0">${grade}</strong>
+      <div style="font-size:11.5px;font-weight:900;color:#facc15">${title}</div>
     </div>
 
-    <p class="shiftQuoteBox">"${quote}"</p>
+    <!-- Dramatic Narrative Quote & Story -->
+    <div style="background:${bg};border:1.5px solid rgba(255,255,255,0.2);border-radius:12px;padding:12px 14px;margin-bottom:12px;text-align:left">
+      <p class="shiftQuoteBox" style="font-style:italic;color:#fef08a;margin:0 0 8px;font-size:12px;line-height:1.4">
+        ${esc(quote)}
+      </p>
+      <div style="font-size:11.5px;color:#f8fafc;line-height:1.45;border-top:1px solid rgba(255,255,255,0.15);padding-top:8px">
+        ${esc(narrative)}
+      </div>
+    </div>
+
+    <!-- Career Outcome & Salary Bonus Cards -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;text-align:left">
+      <div style="background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:8px 10px">
+        <div style="font-size:10px;font-weight:900;color:#94a3b8">💼 TƯƠNG LAI SỰ NGHIỆP:</div>
+        <div style="font-size:11px;font-weight:800;color:#38bdf8;margin-top:2px;line-height:1.35">${esc(outcome)}</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:8px 10px">
+        <div style="font-size:10px;font-weight:900;color:#94a3b8">💰 THƯỞNG & PHÚC LỢI:</div>
+        <div style="font-size:11px;font-weight:800;color:#4ade80;margin-top:2px;line-height:1.35">${esc(salary)}</div>
+      </div>
+    </div>
 
     <!-- Stats Grid -->
-    <div class="summaryGrid shiftSummaryGrid">
-      <div class="summaryBox">Đơn hàng xuất xưởng<strong>${state.ordersCompleted} / ${state.targetOrders} cont</strong></div>
-      <div class="summaryBox">Tiền thưởng KPI<strong>+${state.score} đ</strong></div>
-      <div class="summaryBox">Biến số đã giải quyết<strong>${state.dilemmasResolved || 0} tình huống</strong></div>
-      <div class="summaryBox">Thời tiết văn phòng<strong>${state.weather?.name || 'Bình thường'}</strong></div>
-      <div class="summaryBox">Năng lượng còn lại<strong>${Math.round(state.energy)}%</strong></div>
-      <div class="summaryBox">Áp lực stress<strong>${Math.round(state.stress)}%</strong></div>
+    <div class="summaryGrid shiftSummaryGrid" style="grid-template-columns:repeat(3, 1fr);gap:6px">
+      <div class="summaryBox" style="padding:6px 8px;font-size:10px">Container Xuất<strong>${state.ordersCompleted}/${state.targetOrders}</strong></div>
+      <div class="summaryBox" style="padding:6px 8px;font-size:10px">Điểm KPI<strong>+${state.score}</strong></div>
+      <div class="summaryBox" style="padding:6px 8px;font-size:10px">Biến Cố Đã Xử Lý<strong>${state.dilemmasResolved || 0}</strong></div>
+      <div class="summaryBox" style="padding:6px 8px;font-size:10px">Năng Lượng<strong>${Math.round(state.energy)}%</strong></div>
+      <div class="summaryBox" style="padding:6px 8px;font-size:10px">Căng Thẳng<strong>${Math.round(state.stress)}%</strong></div>
+      <div class="summaryBox" style="padding:6px 8px;font-size:10px">Thần Tài Độ<strong>${state.altarPrayCount || 0} lần</strong></div>
+    </div>
+
+    <!-- Colleague Favors Summary Row -->
+    <div style="display:flex;justify-content:center;gap:6px;margin-top:10px;flex-wrap:wrap">
+      <span style="font-size:10px;background:rgba(255,255,255,0.08);padding:3px 6px;border-radius:6px">👔 Sếp: ${state.colleagueFavors?.boss || 20}%</span>
+      <span style="font-size:10px;background:rgba(255,255,255,0.08);padding:3px 6px;border-radius:6px">🧮 Nga: ${state.colleagueFavors?.nga || 25}%</span>
+      <span style="font-size:10px;background:rgba(255,255,255,0.08);padding:3px 6px;border-radius:6px">🚛 Tuấn: ${state.colleagueFavors?.tuan || 20}%</span>
+      <span style="font-size:10px;background:rgba(255,255,255,0.08);padding:3px 6px;border-radius:6px">🔬 Linh: ${state.colleagueFavors?.linh || 30}%</span>
+      <span style="font-size:10px;background:rgba(255,255,255,0.08);padding:3px 6px;border-radius:6px">🖥️ Hoàng: ${state.colleagueFavors?.hoang || 25}%</span>
     </div>
 
     ${state.choicesLog && state.choicesLog.length > 0 ? `
       <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:8px 10px;margin-top:10px;text-align:left;font-size:11px">
         <div style="font-weight:900;color:#fde047;margin-bottom:4px">📝 LỊCH SỬ QUYẾT ĐỊNH CỦA BẠN:</div>
         <div style="display:flex;flex-direction:column;gap:3px;color:#cbd5e1">
-          ${state.choicesLog.map(c => `<div>• ${c}</div>`).join('')}
+          ${state.choicesLog.map(c => `<div>• ${esc(c)}</div>`).join('')}
         </div>
       </div>
     ` : ''}
 
     <div class="buttons" style="margin-top:14px;gap:8px">
-      <button class="primary btnNextShift" data-act="shift_next_day">
+      <button class="primary btnNextShift" data-act="shift_next_day" style="padding:11px 16px;font-weight:900;font-size:13px">
         ☀️ BƯỚC VÀO CA TRỰC NGÀY TIẾP THEO →
       </button>
       <button class="secondary" data-act="shift_to_menu" style="width:100%;padding:10px;font-size:12px;margin-top:4px">

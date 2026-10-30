@@ -23,7 +23,9 @@ export interface Workstation {
     | 'sofa'
     | 'whiteboard'
     | 'mirror'
-    | 'boss_desk';
+    | 'boss_desk'
+    | 'showroom'
+    | 'balcony';
   mesh: THREE.Group;
   indicatorMesh: THREE.Mesh;
   billboardSprite?: THREE.Sprite;
@@ -67,6 +69,8 @@ export class OfficeStage {
   public bossNpc!: ChibiCharacter;
   public accountantNpc!: ChibiCharacter;
   public truckerNpc!: ChibiCharacter;
+  public internNpc!: ChibiCharacter;
+  public itNpc!: ChibiCharacter;
 
   // Stations & Pickups
   public stations: Workstation[] = [];
@@ -76,12 +80,13 @@ export class OfficeStage {
   // Raycasting & Tap to Interact
   public interactiveHitObjects: THREE.Mesh[] = [];
   public onStationClickCallback: ((station: Workstation, screenPos: { x: number; y: number }) => void) | null = null;
+  public onColleagueClickCallback: ((colleagueId: string) => void) | null = null;
   public onFloorTapCallback: ((pos: THREE.Vector3) => void) | null = null;
   public autoWalkTarget: { pos: THREE.Vector3; station?: Workstation | null; onReach?: () => void; stopDist?: number } | null = null;
   private autoWalkMarkerMesh!: THREE.Mesh;
 
   // 3D Visual Guidance System (Target Beacon & Compass Arrow)
-  private targetBeaconGroup!: THREE.Group;
+  public targetBeaconGroup!: THREE.Group;
   private beaconBeamMesh!: THREE.Mesh;
   private beaconRing1!: THREE.Mesh;
   private beaconRing2!: THREE.Mesh;
@@ -198,6 +203,20 @@ export class OfficeStage {
       emoji: '🙏',
       avatarBg: '#b91c1c',
       text: 'Vía may tài lộc, đơn hàng hanh thông! Nhớ thắp hương xả stress nhé!'
+    },
+    {
+      speaker: 'Em Linh',
+      role: 'Thực Tập QC Lab',
+      emoji: '🔬',
+      avatarBg: '#06b6d4',
+      text: 'Anh ơi, mẫu áo Polo Navy soi dưới tủ đèn D65 ra màu chuẩn Delta E 0.29 đẹp lắm!'
+    },
+    {
+      speaker: 'Anh Hoàng',
+      role: 'Kỹ Sư IT',
+      emoji: '🖥️',
+      avatarBg: '#4f46e5',
+      text: 'Server ERP đã backup xong toàn bộ dữ liệu, mạng cáp quang thông suốt 1Gbps!'
     }
   ];
 
@@ -1648,6 +1667,159 @@ export class OfficeStage {
     const bossDeskG = new THREE.Group();
     bossDeskG.position.set(-18, 0, -19.5);
     this.addStation('boss_desk', 'Bàn Làm Việc Giám Đốc Hùng', 'Phòng Tổng Giám Đốc', '👔', bossDeskG.position, 2.4, bossDeskG);
+
+    // 15. Showroom Mẫu & Fitting Studio
+    const showroomG = this.createShowroomFitting(-3.5, -17.5);
+    this.addStation('showroom', 'Showroom Mẫu & Fitting', 'Phòng Trưng Bày', '👗', new THREE.Vector3(-3.5, 0, -17.5), 2.5, showroomG);
+
+    // 16. Ban Công Hóng Gió & Lounge
+    const balconyG = this.createBalconyLounge(19.0, 0.0);
+    this.addStation('balcony', 'Ban Công Hóng Gió & Lounge', 'Ban Công Ngoài Trời', '🌿', new THREE.Vector3(19.0, 0, 0.0), 2.6, balconyG);
+  }
+
+  private createShowroomFitting(x: number, z: number): THREE.Group {
+    const g = new THREE.Group();
+    g.position.set(x, 0, z);
+
+    // Parquet Floor Mat
+    const matMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(4.2, 0.05, 3.2),
+      new THREE.MeshStandardMaterial({ color: 0xd7c4b7, roughness: 0.4 })
+    );
+    matMesh.position.y = 0.025;
+    matMesh.receiveShadow = true;
+    g.add(matMesh);
+
+    // Fashion Moodboard Billboard
+    const boardStand1 = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.8, 0.08), new THREE.MeshStandardMaterial({ color: 0x334155 }));
+    boardStand1.position.set(-1.6, 0.9, 1.0);
+    g.add(boardStand1);
+    const boardStand2 = boardStand1.clone();
+    boardStand2.position.set(1.6, 0.9, 1.0);
+    g.add(boardStand2);
+
+    const corkBoard = new THREE.Mesh(
+      new THREE.BoxGeometry(3.3, 1.4, 0.06),
+      new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.9 })
+    );
+    corkBoard.position.set(0, 1.3, 1.0);
+    g.add(corkBoard);
+
+    // Swatches on board
+    const swatchColors = [0xef4444, 0x3b82f6, 0x10b981, 0xfacc15, 0xa855f7];
+    swatchColors.forEach((col, idx) => {
+      const sw = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.45, 0.02), new THREE.MeshStandardMaterial({ color: col }));
+      sw.position.set(-1.2 + idx * 0.6, 1.3, 1.04);
+      g.add(sw);
+    });
+
+    // Mannequin 1 (Navy Polo)
+    const base1 = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.05, 16), new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8 }));
+    base1.position.set(-0.8, 0.025, -0.4);
+    g.add(base1);
+    const pole1 = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.2, 8), new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9 }));
+    pole1.position.set(-0.8, 0.6, -0.4);
+    g.add(pole1);
+    const torso1 = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.18, 0.75, 14), new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.5 }));
+    torso1.position.set(-0.8, 1.25, -0.4);
+    torso1.castShadow = true;
+    g.add(torso1);
+
+    // Mannequin 2 (Coral Dress)
+    const base2 = base1.clone();
+    base2.position.set(0.8, 0.025, -0.4);
+    g.add(base2);
+    const pole2 = pole1.clone();
+    pole2.position.set(0.8, 0.6, -0.4);
+    g.add(pole2);
+    const torso2 = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.16, 0.8, 14), new THREE.MeshStandardMaterial({ color: 0xf43f5e, roughness: 0.5 }));
+    torso2.position.set(0.8, 1.25, -0.4);
+    torso2.castShadow = true;
+    g.add(torso2);
+
+    // Clothes Rack
+    const rackBar = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.4, 8), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85 }));
+    rackBar.rotation.z = Math.PI / 2;
+    rackBar.position.set(0, 1.35, -1.0);
+    g.add(rackBar);
+    const rackLeg1 = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.35, 8), new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.85 }));
+    rackLeg1.position.set(-0.7, 0.675, -1.0);
+    g.add(rackLeg1);
+    const rackLeg2 = rackLeg1.clone();
+    rackLeg2.position.set(0.7, 0.675, -1.0);
+    g.add(rackLeg2);
+
+    this.scene.add(g);
+    return g;
+  }
+
+  private createBalconyLounge(x: number, z: number): THREE.Group {
+    const g = new THREE.Group();
+    g.position.set(x, 0, z);
+
+    // Composite Outdoor Deck
+    const deckMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(4.6, 0.08, 4.0),
+      new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.7 })
+    );
+    deckMesh.position.y = 0.04;
+    deckMesh.receiveShadow = true;
+    g.add(deckMesh);
+
+    // Glass Railing
+    const railPost1 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.1, 0.06), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9 }));
+    railPost1.position.set(2.2, 0.55, -1.8);
+    g.add(railPost1);
+    const railPost2 = railPost1.clone();
+    railPost2.position.set(2.2, 0.55, 1.8);
+    g.add(railPost2);
+
+    const glassRailing = new THREE.Mesh(
+      new THREE.BoxGeometry(0.03, 0.95, 3.6),
+      new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.4, roughness: 0.1 })
+    );
+    glassRailing.position.set(2.2, 0.55, 0);
+    g.add(glassRailing);
+
+    const handRail = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.06, 3.8), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.95 }));
+    handRail.position.set(2.2, 1.05, 0);
+    g.add(handRail);
+
+    // 2 Potted Ficus Plants
+    const potGeo = new THREE.CylinderGeometry(0.28, 0.22, 0.55, 14);
+    const potMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
+    const pot1 = new THREE.Mesh(potGeo, potMat);
+    pot1.position.set(-1.6, 0.275, -1.4);
+    g.add(pot1);
+    const bush1 = new THREE.Mesh(new THREE.DodecahedronGeometry(0.48), new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.8 }));
+    bush1.position.set(-1.6, 0.85, -1.4);
+    g.add(bush1);
+
+    const pot2 = pot1.clone();
+    pot2.position.set(-1.6, 0.275, 1.4);
+    g.add(pot2);
+    const bush2 = bush1.clone();
+    bush2.position.set(-1.6, 0.85, 1.4);
+    g.add(bush2);
+
+    // Coffee Table & Armchairs
+    const tableTop = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.65, 0.05, 20), new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.2 }));
+    tableTop.position.set(0.2, 0.5, 0);
+    g.add(tableTop);
+    const tableLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.5, 12), new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.8 }));
+    tableLeg.position.set(0.2, 0.25, 0);
+    g.add(tableLeg);
+
+    const chairMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.5 });
+    const chair1 = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.45, 0.55), chairMat);
+    chair1.position.set(0.2, 0.35, -1.0);
+    g.add(chair1);
+    const chair2 = chair1.clone();
+    chair2.position.set(0.2, 0.35, 1.0);
+    g.add(chair2);
+
+    this.scene.add(g);
+    return g;
   }
 
   private addStation(
@@ -1787,6 +1959,16 @@ export class OfficeStage {
     this.truckerNpc = new ChibiCharacter('#fde047', '#0284c7', true, 'ANH TUẤN (TÀI XẾ CONT)');
     this.truckerNpc.group.position.set(12, 0, 15);
     this.scene.add(this.truckerNpc.group);
+
+    // 4. Em Linh Thực Tập QC Lab
+    this.internNpc = new ChibiCharacter('#fed7aa', '#06b6d4', true, 'EM LINH (THỰC TẬP LAB)');
+    this.internNpc.group.position.set(14, 0, -9.5);
+    this.scene.add(this.internNpc.group);
+
+    // 5. Anh Hoàng Kỹ Sư IT
+    this.itNpc = new ChibiCharacter('#ffedd5', '#4f46e5', true, 'ANH HOÀNG (IT SUPPORT)');
+    this.itNpc.group.position.set(-19.5, 0, 10);
+    this.scene.add(this.itNpc.group);
   }
 
   public toggleCameraMode(): 'follow' | 'overview' {
@@ -2102,6 +2284,23 @@ export class OfficeStage {
 
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(mouse, this.camera);
+
+    // 0. Colleague NPC Tap check (Sếp Hùng, Chị Nga, Anh Tuấn, Em Linh, Anh Hoàng)
+    if (this.onColleagueClickCallback) {
+      const colleagues = [
+        { id: 'boss', pos: this.bossNpc?.group.position },
+        { id: 'nga', pos: this.accountantNpc?.group.position },
+        { id: 'tuan', pos: this.truckerNpc?.group.position },
+        { id: 'linh', pos: this.internNpc?.group.position },
+        { id: 'hoang', pos: this.itNpc?.group.position }
+      ];
+      for (const col of colleagues) {
+        if (col.pos && raycaster.ray.distanceToPoint(col.pos) < 2.0) {
+          this.onColleagueClickCallback(col.id);
+          return;
+        }
+      }
+    }
 
     // 1. Direct interactive workstations tap check
     const hits = raycaster.intersectObjects(this.interactiveHitObjects, false);
@@ -2496,6 +2695,10 @@ export class OfficeStage {
           worldPos = this.accountantNpc.group.position.clone().add(new THREE.Vector3(0, 1.8, 0));
         } else if (item.speaker === 'Anh Tuấn' && this.truckerNpc) {
           worldPos = this.truckerNpc.group.position.clone().add(new THREE.Vector3(0, 1.8, 0));
+        } else if (item.speaker === 'Em Linh' && this.internNpc) {
+          worldPos = this.internNpc.group.position.clone().add(new THREE.Vector3(0, 1.8, 0));
+        } else if (item.speaker === 'Anh Hoàng' && this.itNpc) {
+          worldPos = this.itNpc.group.position.clone().add(new THREE.Vector3(0, 1.8, 0));
         } else {
           worldPos = new THREE.Vector3(-14, 2.2, -20);
         }
@@ -2503,6 +2706,12 @@ export class OfficeStage {
         this.speechTimer = 5.5;
       }
     }
+
+    // 10. Idle Animation for Stationary Colleagues
+    if (this.accountantNpc) this.accountantNpc.updateAnimation(delta, 0, 0, false);
+    if (this.truckerNpc) this.truckerNpc.updateAnimation(delta, 0, 0, false);
+    if (this.internNpc) this.internNpc.updateAnimation(delta, 0, 0, false);
+    if (this.itNpc) this.itNpc.updateAnimation(delta, 0, 0, false);
   }
 
   private updateBossAI(delta: number): void {

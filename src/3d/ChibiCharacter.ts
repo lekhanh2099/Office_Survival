@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-export type CarriedItemType = 'none' | 'paper_stack' | 'fabric_roll' | 'coffee_cup' | 'box';
+export type CarriedItemType = 'none' | 'paper_stack' | 'fabric_roll' | 'coffee_cup' | 'box' | 'sample_shirt';
 
 export class ChibiCharacter {
   public group: THREE.Group;
@@ -322,6 +322,21 @@ export class ChibiCharacter {
 
       this.leftHand.position.set(-0.18, 0.48, 0.32);
       this.rightHand.position.set(0.18, 0.48, 0.32);
+    } else if (type === 'sample_shirt') {
+      const geo = new THREE.BoxGeometry(0.36, 0.12, 0.42);
+      const mat = new THREE.MeshStandardMaterial({ color: 0x06b6d4, roughness: 0.6 });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.castShadow = true;
+      const collar = new THREE.Mesh(
+        new THREE.BoxGeometry(0.20, 0.05, 0.12),
+        new THREE.MeshStandardMaterial({ color: 0x0891b2, roughness: 0.4 })
+      );
+      collar.position.set(0, 0.08, -0.12);
+      mesh.add(collar);
+      this.itemHolder.add(mesh);
+
+      this.leftHand.position.set(-0.25, 0.52, 0.35);
+      this.rightHand.position.set(0.25, 0.52, 0.35);
     } else {
       this.leftHand.position.set(-0.34, 0.46, 0.06);
       this.rightHand.position.set(0.34, 0.46, 0.06);

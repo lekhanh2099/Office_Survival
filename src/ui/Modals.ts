@@ -12,6 +12,7 @@ import {
 import { ALL_ROLES } from '../data/roles';
 import { ALL_TRAITS } from '../data/traits';
 import { StationDilemma } from '../data/officeDilemmas';
+import { COLLEAGUES_DATA } from '../data/colleagues';
 
 function esc(t?: string | number | null): string {
   return String(t ?? '').replace(/[&<>"']/g, x => ({
@@ -595,22 +596,24 @@ export function openCampusMapModal(
     {
       id: 'z2',
       title: '🔬 XƯỞNG CẮT & PHÒNG LAB',
-      sub: 'Góc Đông-Bắc (Đèn D65, Kiểm tra màu vải)',
+      sub: 'Góc Đông-Bắc (Đèn D65, Showroom Mẫu, Phòng Lab)',
       bg: '#0f2942',
       border: '#38bdf8',
       stations: [
-        { type: 'lab', name: '🔬 Phòng Lab Soi Màu D65', desc: 'Đo độ lệch Delta E' },
+        { type: 'lab', name: '🔬 Phòng Lab Soi Màu D65', desc: 'Đo độ lệch Delta E cùng Em Linh' },
+        { type: 'showroom', name: '👗 Showroom Mẫu & Fitting', desc: 'Lấy áo mẫu & soi form dáng' },
         { type: 'whiteboard', name: '📊 Bảng Chiến Lược Q4', desc: 'Phòng họp VIP Boardroom' }
       ]
     },
     {
       id: 'z0',
-      title: '🧋 CĂN TIN TRUNG TÂM & PANTRY',
-      sub: 'Khu vực giữa (Nghỉ ngơi, Nạp năng lượng)',
+      title: '🧋 CĂN TIN TRUNG TÂM & BAN CÔNG',
+      sub: 'Khu vực giữa (Nghỉ ngơi, Ban công hóng gió, Cà phê)',
       bg: '#2e1065',
       border: '#a855f7',
       stations: [
         { type: 'coffee', name: '☕ Quầy Trà Sữa & Cà Phê', desc: 'Hồi 50% ⚡ & Bứt tốc' },
+        { type: 'balcony', name: '🌿 Ban Công Hóng Gió & Lounge', desc: 'Hóng gió xả -30% stress' },
         { type: 'water', name: '🚰 Cây Nước Mát Lạnh', desc: 'Giải nhiệt -15% Stress' },
         { type: 'sofa', name: '🛋️ Sofa Thư Giãn', desc: 'Nghỉ trưa xả stress' },
         { type: 'mirror', name: '🪞 Gương Soi Tỉnh Táo', desc: 'Rửa mặt lấy lại tỉnh táo' }
@@ -706,3 +709,175 @@ export function openCampusMapModal(
     });
   });
 }
+
+export function openColleagueModal(
+  host: HTMLElement,
+  colleagueId: 'boss' | 'nga' | 'tuan' | 'linh' | 'hoang',
+  currentFavor: number,
+  onOptionSelect: (optionId: string) => { reply: string; favorDelta: number; newFavor: number; perkUnlocked: boolean }
+): void {
+  sounds.click();
+  const profile = COLLEAGUES_DATA[colleagueId];
+  if (!profile) return;
+
+  const isPerkActive = currentFavor >= 50;
+  let tierLabel = '⚪ Mới Quen Biết';
+  let tierColor = '#94a3b8';
+  if (currentFavor >= 80) {
+    tierLabel = '💖 Tri Kỷ Công Sở';
+    tierColor = '#ec4899';
+  } else if (currentFavor >= 50) {
+    tierLabel = '⭐ Cạ Cứng Văn Phòng';
+    tierColor = '#eab308';
+  } else if (currentFavor >= 25) {
+    tierLabel = '🟡 Đồng Nghiệp Thân Thiện';
+    tierColor = '#38bdf8';
+  }
+
+  host.innerHTML = `
+    <div class="dialogShade" role="presentation">
+      <section class="dialog colleagueDialog" role="dialog" aria-modal="true" style="max-width:480px;max-height:90vh;overflow-y:auto;border-radius:18px;border:2.5px solid #6366f1;box-shadow:0 16px 48px rgba(0,0,0,0.65);background:#0f172a;color:#ffffff;padding:0">
+        <!-- Top Profile Banner -->
+        <div style="background:linear-gradient(135deg, #1e1b4b, #312e81);padding:16px;border-bottom:2px solid #6366f1;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:52px;height:52px;border-radius:50%;background:${profile.avatarBg};border:2.5px solid #ffffff;display:grid;place-items:center;font-size:28px;box-shadow:0 4px 12px rgba(0,0,0,0.3)">
+              ${profile.emoji}
+            </div>
+            <div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <h2 style="font-size:18px;font-weight:900;color:#ffffff;margin:0">${esc(profile.name)}</h2>
+                <span style="background:rgba(255,255,255,0.15);color:#38bdf8;font-size:10px;font-weight:800;padding:2px 6px;border-radius:6px">
+                  ${esc(profile.role)}
+                </span>
+              </div>
+              <div style="font-size:11px;color:${tierColor};font-weight:800;margin-top:2px">
+                Độ Thân Thiết: ${Math.round(currentFavor)}% · ${tierLabel}
+              </div>
+            </div>
+          </div>
+          <button class="secondary" id="btnCloseColleague" type="button" style="padding:4px 10px;font-size:12px;font-weight:900">✕ ĐÓNG</button>
+        </div>
+
+        <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+          <!-- Quote Box -->
+          <div style="background:rgba(255,255,255,0.06);border-left:3px solid #facc15;border-radius:0 8px 8px 0;padding:8px 12px;font-style:italic;font-size:11.5px;color:#f1f5f9">
+            "${esc(profile.quote)}"
+          </div>
+
+          <!-- Personality & Likes -->
+          <div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:10px;font-size:11px;line-height:1.45;color:#cbd5e1">
+            <div>🎭 <b>Tính cách:</b> ${esc(profile.personality)}</div>
+            <div style="margin-top:3px">❤️ <b>Sở thích:</b> ${esc(profile.likes)}</div>
+          </div>
+
+          <!-- Favor Meter & Perk Banner -->
+          <div style="background:rgba(99,102,241,0.12);border:1.5px solid ${isPerkActive ? '#22c55e' : '#6366f1'};border-radius:12px;padding:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-size:11px;font-weight:900;color:#ffffff">THANH ĐỘ THÂN THIẾT</span>
+              <span id="colleagueFavorText" style="font-size:12px;font-weight:900;color:${tierColor}">${Math.round(currentFavor)}% / 100%</span>
+            </div>
+            <div style="background:rgba(0,0,0,0.4);border-radius:6px;height:10px;overflow:hidden;position:relative">
+              <div id="colleagueFavorBar" style="background:linear-gradient(90deg, #6366f1, #a855f7, #ec4899);height:100%;width:${Math.min(100, currentFavor)}%;transition:width 0.4s ease"></div>
+            </div>
+
+            <!-- Perk Description -->
+            <div style="margin-top:10px;background:rgba(0,0,0,0.3);border-radius:8px;padding:8px 10px;display:flex;align-items:flex-start;gap:8px">
+              <span style="font-size:18px">${isPerkActive ? '🟢' : '🔒'}</span>
+              <div>
+                <div style="font-weight:900;font-size:11.5px;color:${isPerkActive ? '#4ade80' : '#facc15'}">
+                  ${esc(profile.favorPerkTitle)} ${isPerkActive ? '(ĐANG HOẠT ĐỘNG)' : '(CẦN ≥ 50%)'}
+                </div>
+                <div style="font-size:10.5px;color:#cbd5e1;margin-top:2px">
+                  ${esc(profile.favorPerkDesc)}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Reply Area (Hidden initially) -->
+          <div id="colleagueReplyArea" style="display:none;background:rgba(34,197,94,0.15);border:1.5px solid #22c55e;border-radius:10px;padding:10px;font-size:12px;line-height:1.4">
+            <div style="font-weight:900;color:#4ade80;margin-bottom:2px">💬 ${esc(profile.name)} phản hồi:</div>
+            <div id="colleagueReplyMsg" style="color:#ffffff"></div>
+          </div>
+
+          <!-- Action Options -->
+          <div style="font-size:12px;font-weight:900;color:#fde047;margin-top:2px">
+            🤝 CHỌN HÀNH ĐỘNG TƯƠNG TÁC:
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:8px">
+            ${profile.options.map(opt => `
+              <button class="colleagueOptBtn" data-opt="${opt.id}" type="button" style="text-align:left;background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.18);border-radius:10px;padding:10px 12px;cursor:pointer;transition:all 0.15s ease">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <div style="font-weight:900;font-size:12.5px;color:#ffffff">
+                    ${opt.emoji} ${esc(opt.label)}
+                  </div>
+                  <span style="background:rgba(239,68,68,0.2);color:#fca5a5;font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px">
+                    ${opt.costDesc}
+                  </span>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:4px;font-size:10px;font-weight:700;color:#94a3b8">
+                  <span style="color:#4ade80">+${opt.favorDelta}% Thân thiết</span>
+                  <span style="color:#fde047">+${opt.kpiDelta} KPI</span>
+                  ${opt.stressDelta < 0 ? `<span style="color:#38bdf8">${opt.stressDelta}% Stress</span>` : ''}
+                </div>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      </section>
+    </div>
+  `;
+
+  document.getElementById('btnCloseColleague')?.addEventListener('click', () => {
+    sounds.click();
+    host.innerHTML = '';
+  });
+
+  const shade = host.querySelector('.dialogShade');
+  shade?.addEventListener('click', (e) => {
+    if (e.target === shade) {
+      sounds.click();
+      host.innerHTML = '';
+    }
+  });
+
+  const optBtns = host.querySelectorAll('.colleagueOptBtn');
+  optBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const optId = (btn as HTMLElement).dataset.opt;
+      if (!optId) return;
+
+      const res = onOptionSelect(optId);
+
+      // Show reaction reply
+      const replyArea = document.getElementById('colleagueReplyArea');
+      const replyMsg = document.getElementById('colleagueReplyMsg');
+      if (replyArea && replyMsg) {
+        replyArea.style.display = 'block';
+        replyMsg.textContent = res.reply;
+      }
+
+      // Update favor bar in modal
+      const favorBar = document.getElementById('colleagueFavorBar');
+      const favorText = document.getElementById('colleagueFavorText');
+      if (favorBar && favorText) {
+        favorBar.style.width = `${Math.min(100, res.newFavor)}%`;
+        favorText.textContent = `${Math.round(res.newFavor)}% / 100%`;
+      }
+
+      // Disable buttons to prevent double-clicking
+      optBtns.forEach(b => ((b as HTMLButtonElement).disabled = true));
+
+      // After 2.5s or on next click, auto close or allow user to close
+      setTimeout(() => {
+        const closeBtn = document.getElementById('btnCloseColleague');
+        if (closeBtn) {
+          closeBtn.textContent = '✓ Xong (Đóng)';
+          closeBtn.style.background = '#22c55e';
+        }
+      }, 800);
+    });
+  });
+}
+
