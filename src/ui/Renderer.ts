@@ -84,7 +84,15 @@ export function renderWelcome(): string {
     <div class="emojiLarge" aria-hidden="true">🧵 🚢 📦</div>
     <div class="eyebrow">Sinh Tồn Ngành Dệt May &amp; Xuất Nhập Khẩu</div>
     <h1>ĐI LÀM<br>HAY ĐI<br>SINH TỒN?</h1>
-    <p class="introBlurb">Mục tiêu: Còn thở khi Buyer New York nhắn tin. Sống sót qua kiếp nạn lệch màu Lab-dip, kẹt xe cảng Cát Lái, lệch tồn kho vải và bóng ma đền hàng Air.</p>
+    <div class="visualBadge3D">✨ ĐỒ HOẠ THẺ BÀI 3D THREE.JS SỐNG ĐỘNG ✨</div>
+    <p class="introBlurb">Mục tiêu: Còn thở khi Buyer New York nhắn tin! Vượt kiếp nạn lệch màu Lab-dip, cont kẹt cảng Cát Lái, lệch kho vải và bóng ma đền hàng Air.</p>
+    
+    <div class="introGuide">
+      <div class="guideStep"><span>🎴</span> Nghiêng thẻ 3D</div>
+      <div class="guideStep"><span>⚡</span> Quyết định nhanh</div>
+      <div class="guideStep"><span>🏆</span> Sống sót 5 ngày</div>
+    </div>
+
     <div class="introFeatures">
       <div class="feature"><span>❤️</span>3 mạng</div>
       <div class="feature"><span>🎭</span>4 Class nghề</div>
@@ -92,12 +100,12 @@ export function renderWelcome(): string {
     </div>
     ${topScore ? `<p class="note" style="margin-bottom:12px">🏆 Kỷ lục cá nhân: <b>${topScore.score.toLocaleString('vi-VN')} điểm</b> (Ngày ${topScore.day} · ${esc(topScore.title)})</p>` : ''}
     <div class="buttons">
-      <button class="primary" data-act="start">🚀 CHỌN HỆ TƯ TƯỞNG &amp; NHẬN VIỆC <span>→</span></button>
+      <button class="primary" data-act="start">🚀 CHỌN HỆ TƯ TƯỞNG &amp; NHẬN VIỆC (3D) <span>→</span></button>
       ${loadGameState() ? '<button class="secondary" data-act="continue">↩ Tiếp tục run đã lưu</button>' : ''}
     </div>
     <p class="note" style="margin:16px 0 0">Chơi hoàn toàn không cần mạng. Đã khám phá: <b>${totalDisc}/65</b> sự kiện.</p>
   </section>
-  <p class="footerHelp">Mẹo: Một lựa chọn có lợi trước mắt có thể kéo theo nghiệp quật sau vài lượt.</p>`;
+  <p class="footerHelp">💡 Mẹo: Giữ Năng Lượng ⚡ > 0 và Việc Tồn 📋 &lt; 8 để không bị sa thải!</p>`;
 }
 
 export function renderPlay(state: GameState): string {
@@ -105,52 +113,55 @@ export function renderPlay(state: GameState): string {
   const x = CARDS[state.current];
 
   return `${renderHUD(state)}
-  <section class="card">
-    <div class="cardTop ${x.type === 'finale' ? 'special' : x.type === 'crisis' ? 'crisis' : x.type === 'callback' ? 'callback' : x.type === 'rare' ? 'rare' : ''}">
-      <span>${{ base: '📨 THẺ SỰ KIỆN', callback: '🔁 NGHIỆP QUẬT', crisis: '🚨 KHỦNG HOẢNG', rare: '✨ SỰ KIỆN HIẾM', finale: '🌆 CHỐT SỔ CUỐI NGÀY' }[x.type]}</span>
-      <span>#${String(state.total + 1).padStart(3, '0')}</span>
-    </div>
-    <div class="cardBody">
-      <div class="sender">
-        <div class="avatar">${x.emoji}</div>
-        <div>
-          <div class="senderTitle">${esc(x.who)}</div>
-          <div class="senderType">Vừa gửi một thông điệp định mệnh...</div>
-        </div>
-      </div>
-      <h2 class="cardTitle">${esc(x.title)}</h2>
-      <div class="speech">${esc(x.body)}</div>
-    </div>
-  </section>
+  <div class="card3DWrapper">
+    <div id="card3DHost" class="card3DHost" aria-label="${esc(x.title)}"></div>
+  </div>
+
   <div class="choicesTitle">
-    <span>CHỌN CÁCH SỐNG SÓT</span>
-    <span style="color:#77738e">${x.choices.length} phương án</span>
+    <span>⚡ CHỌN CÁCH SỐNG SÓT</span>
+    <span class="choiceCountTag">${x.choices.length} phương án</span>
   </div>
   <div id="choiceHost">
     ${x.choices.map((c, i) => {
-      const stats: string[] = [];
-      if (c.d?.e || c.roll?.win.d?.e || c.roll?.lose.d?.e) stats.push('e');
-      if (c.d?.b || c.roll?.win.d?.b || c.roll?.lose.d?.b) stats.push('b');
-      if (c.d?.r || c.roll?.win.d?.r || c.roll?.lose.d?.r) stats.push('r');
+      const statBadges: string[] = [];
+      if (c.d?.e !== undefined) {
+        const val = c.d.e;
+        statBadges.push(`<span class="statBadge ${val >= 0 ? 'pos' : 'neg'}">${val > 0 ? '+' : ''}${val}⚡</span>`);
+      }
+      if (c.d?.b !== undefined) {
+        const val = c.d.b;
+        // In backlog: negative is good (reducing backlog), positive is bad
+        statBadges.push(`<span class="statBadge ${val <= 0 ? 'pos' : 'neg'}">${val > 0 ? '+' : ''}${val}📋</span>`);
+      }
+      if (c.d?.r !== undefined) {
+        const val = c.d.r;
+        statBadges.push(`<span class="statBadge ${val >= 0 ? 'pos' : 'neg'}">${val > 0 ? '+' : ''}${val}⭐</span>`);
+      }
+      if (c.roll) {
+        const rate = Math.round(c.roll.chance * 100);
+        statBadges.push(`<span class="statBadge roll">🎲 May rủi ${rate}%</span>`);
+      }
+      if (c.queue?.length) {
+        statBadges.push(`<span class="statBadge queue">⏳ Nghiệp quật</span>`);
+      }
 
-      const pills: string[] = [];
-      if (stats.includes('e')) pills.push('<span class="statPill e">⚡ Năng lượng</span>');
-      if (stats.includes('b')) pills.push('<span class="statPill b">📋 Việc tồn</span>');
-      if (stats.includes('r')) pills.push('<span class="statPill r">⭐ Uy tín</span>');
-      if (c.roll) pills.push('<span class="statPill roll">🎲 May rủi</span>');
-      if (c.queue?.length) pills.push('<span class="statPill queue">⏳ Có hậu quả</span>');
+      // Punchy teaser: 1 short clause
+      const shortHint = c.hint ? c.hint.split('.')[0] : '';
 
-      return `<button type="button" class="choice" data-choice="${i}" data-affects="${stats.join(',')}">
-        <div class="choiceLabel">${String.fromCharCode(65 + i)}. ${esc(c.label)}</div>
-        <div class="choiceHint">
-          <div class="statPills">${pills.join('')}</div>
-          <div class="choiceTeaser">${esc(c.hint)}</div>
+      return `<button type="button" class="choice choiceBtn" data-choice="${i}">
+        <div class="choiceTopRow">
+          <div class="choiceKeyBadge">${String.fromCharCode(65 + i)}</div>
+          <div class="choiceLabel">${esc(c.label)}</div>
+        </div>
+        <div class="choiceBottomRow">
+          <div class="statBadges">${statBadges.join('')}</div>
+          ${shortHint ? `<div class="choiceTeaser">${esc(shortHint)}</div>` : ''}
         </div>
       </button>`;
     }).join('')}
   </div>
   <div class="utility">
-    <span class="note">Di chuột hoặc giữ vào phương án để xem chỉ số liên quan.</span>
+    <span class="note">💡 Nhìn huy hiệu chỉ số bên trên để chọn nhanh, không cần đọc dài dòng!</span>
     <button class="outline" data-act="history">📖 Nhật ký</button>
   </div>
   <p class="footerHelp">Bấm phím 1 / 2 / 3 hoặc A / B / C để chọn nhanh</p>`;

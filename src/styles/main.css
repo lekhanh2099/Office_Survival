@@ -286,6 +286,40 @@ p {
   font-weight: 800;
 }
 
+.visualBadge3D {
+  display: inline-block;
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1.5px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  margin: 6px 0 10px;
+  letter-spacing: 0.5px;
+}
+
+.introGuide {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px 0 16px;
+}
+
+.guideStep {
+  background: #fdf4ff;
+  border: 1.5px solid #c084fc;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #581c87;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .introFeatures {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -451,6 +485,35 @@ p {
   box-shadow: 1.5px 1.5px 0 var(--ink);
 }
 
+.card3DWrapper {
+  position: relative;
+  width: 100%;
+  margin: 10px 0 14px;
+  perspective: 1200px;
+}
+
+.card3DHost {
+  width: 100%;
+  height: 270px;
+  min-height: 250px;
+  position: relative;
+  cursor: grab;
+  touch-action: none;
+  border-radius: 20px;
+  overflow: visible;
+  filter: drop-shadow(0 12px 20px rgba(23, 23, 43, 0.18));
+}
+
+.card3DHost:active {
+  cursor: grabbing;
+}
+
+.card3DHost canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
 .card {
   background: var(--paper);
   border: var(--border);
@@ -553,6 +616,16 @@ p {
   font-size: 12px;
 }
 
+.choiceCountTag {
+  background: #f3f4f6;
+  color: #4b5563;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+}
+
 .choice {
   width: 100%;
   text-align: left;
@@ -569,10 +642,90 @@ p {
 .choice:nth-of-type(3n+2) { background: #f5ffde; }
 .choice:nth-of-type(3n+3) { background: #fff0f6; }
 
+.choiceBtn {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 11px 13px;
+  cursor: pointer;
+}
+
+.choiceTopRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.choiceKeyBadge {
+  background: var(--ink);
+  color: #fff;
+  font-weight: 900;
+  font-size: 12px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
 .choiceLabel {
   font-weight: 900;
-  font-size: 14px;
-  line-height: 1.4;
+  font-size: 14.5px;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.choiceBottomRow {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-left: 33px;
+}
+
+.statBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.statBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 2px 7px;
+  border-radius: 6px;
+  border: 1.5px solid var(--ink);
+  box-shadow: 1.5px 1.5px 0 var(--ink);
+}
+
+.statBadge.pos {
+  background: #dcfce7;
+  color: #15803d;
+  border-color: #16a34a;
+}
+
+.statBadge.neg {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #dc2626;
+}
+
+.statBadge.roll {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #d97706;
+}
+
+.statBadge.queue {
+  background: #ede9fe;
+  color: #6b21a8;
+  border-color: #9333ea;
+  border-style: dashed;
 }
 
 .choiceHint {

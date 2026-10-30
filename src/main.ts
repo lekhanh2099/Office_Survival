@@ -3,6 +3,7 @@ import { GameEngine } from './core/GameEngine';
 import { BattlerEngine } from './core/BattlerEngine';
 import { loadGameState } from './core/GameState';
 import { renderDay, renderGameOver, renderPlay, renderResult, renderWelcome } from './ui/Renderer';
+import { Card3DCanvas } from './ui/Card3DCanvas';
 import {
   renderBattlerHUD,
   renderCrisisArena,
@@ -31,19 +32,26 @@ const APPROOT = document.getElementById('appRoot') as HTMLElement;
 const audioToggleBtn = document.getElementById('audioToggle') as HTMLButtonElement;
 const modeSwitchBtn = document.getElementById('modeSwitchBtn') as HTMLButtonElement | null;
 
-let currentMode: 'battler' | 'story' = 'battler';
+let currentMode: 'battler' | 'story' = 'story';
 let engine: GameEngine;
 let battlerEngine: BattlerEngine;
+let active3DCard: Card3DCanvas | null = null;
 
 function render(): void {
   try {
+    // Cleanup any active 3D canvas to avoid WebGL leaks
+    if (active3DCard) {
+      active3DCard.destroy();
+      active3DCard = null;
+    }
+
     if (audioToggleBtn) {
       audioToggleBtn.textContent = sounds.isMuted() ? '🔇' : '🔊';
     }
     if (modeSwitchBtn) {
       modeSwitchBtn.innerHTML = currentMode === 'battler'
-        ? '<span class="btnIcon">🃏</span><span class="btnText">Đấu Bài</span>'
-        : '<span class="btnIcon">📖</span><span class="btnText">Truyện</span>';
+        ? '<span class="btnIcon">🎴</span><span class="btnText">Thẻ 3D</span>'
+        : '<span class="btnIcon">🃏</span><span class="btnText">Đấu Bài</span>';
     }
 
     if (currentMode === 'battler') {
@@ -51,7 +59,7 @@ function render(): void {
       return;
     }
 
-    // Classic Story Mode
+    // Classic / Enhanced 3D Story Mode
     const state = engine.getState();
     if (!state || state.stage === 'welcome') {
       ROOT.innerHTML = renderWelcome();
@@ -59,9 +67,31 @@ function render(): void {
     }
 
     switch (state.stage) {
-      case 'play':
+      case 'play': {
         ROOT.innerHTML = renderPlay(state);
+        const cardHost = document.getElementById('card3DHost');
+        if (cardHost && state.current && CARDS[state.current]) {
+          const card = CARDS[state.current];
+          let badge = '📨 THẺ SỰ CỐ';
+          if (card.type === 'crisis') badge = '🚨 KHẨN CẤP';
+          else if (card.type === 'callback') badge = '🔁 NGHIỆP QUẬT';
+          else if (card.type === 'rare') badge = '✨ HIẾM GẶP';
+          else if (card.type === 'finale') badge = '🌆 CHỐT NGÀY';
+
+          const shortBody = card.body.split(/[.!?;]/)[0] || card.body;
+
+          active3DCard = new Card3DCanvas({
+            container: cardHost,
+            emoji: card.emoji,
+            sender: card.who,
+            title: card.title,
+            subtitle: shortBody,
+            cardType: card.type,
+            badgeText: badge
+          });
+        }
         break;
+      }
       case 'result':
         ROOT.innerHTML = renderResult(state);
         break;
@@ -248,7 +278,15 @@ document.addEventListener('click', (ev) => {
 
   const choice = btn.getAttribute('data-choice');
   if (choice !== null) {
-    engine.doChoice(+choice);
+    sounds.click();
+    const idx = +choice;
+    if (active3DCard) {
+      active3DCard.triggerFlipAnimation(() => {
+        engine.doChoice(idx);
+      });
+    } else {
+      engine.doChoice(idx);
+    }
     return;
   }
 
@@ -448,10 +486,20 @@ document.addEventListener('keydown', (e) => {
   const state = engine.getState();
 
   if (state.stage === 'play') {
-    if (/^[123]$/.test(key)) engine.doChoice(Number(key) - 1);
-    else if (key === 'a') engine.doChoice(0);
-    else if (key === 'b') engine.doChoice(1);
-    else if (key === 'c') engine.doChoice(2);
+    let choiceIdx = -1;
+    if (/^[123]$/.test(key)) choiceIdx = Number(key) - 1;
+    else if (key === 'a') choiceIdx = 0;
+    else if (key === 'b') choiceIdx = 1;
+    else if (key === 'c') choiceIdx = 2;
+
+    if (choiceIdx >= 0) {
+      sounds.click();
+      if (active3DCard) {
+        active3DCard.triggerFlipAnimation(() => engine.doChoice(choiceIdx));
+      } else {
+        engine.doChoice(choiceIdx);
+      }
+    }
   } else if ((e.key === 'Enter' || e.key === ' ') && state.stage === 'result') {
     e.preventDefault();
     engine.proceed();
