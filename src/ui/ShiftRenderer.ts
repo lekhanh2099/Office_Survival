@@ -87,6 +87,31 @@ export function mountShiftHUD(host: HTMLElement): void {
       🎥 Toàn Cảnh
     </button>
 
+    <!-- Interaction Mode Switcher Button (Auto-Run vs Confirmation Card) -->
+    <button class="shiftModeToggleBtn" id="hudModeToggleBtn" data-act="toggle_interaction_mode" type="button" title="Chuyển chế độ thao tác: Tự Chạy Làm Ngay hoặc Hiện Thẻ Xác Nhận">
+      ⚡ Chạy Làm Ngay
+    </button>
+
+    <!-- Station Action Confirmation Card (Popover) -->
+    <div class="stationActionCard" id="hudActionCard" style="display:none">
+      <button class="actionCardCloseBtn" id="cardCloseBtn" data-act="close_action_card" type="button" aria-label="Đóng thẻ">✕</button>
+      <div class="actionCardHeader">
+        <span class="actionCardEmoji" id="cardEmoji">💻</span>
+        <div class="actionCardTitles">
+          <div class="actionCardTitle" id="cardTitle">Bàn Merchandiser</div>
+          <div class="actionCardSubtitle" id="cardSubtitle">🏢 Văn Phòng Điều Hành</div>
+        </div>
+      </div>
+      <div class="actionCardDesc" id="cardDesc">
+        Nhận đơn hàng mới & Ký hợp đồng xuất khẩu.
+      </div>
+      <div class="actionCardActions">
+        <button class="primary actionCardConfirmBtn" id="cardConfirmBtn" data-act="confirm_action_card" type="button">
+          🚀 LÀM VIỆC NGAY
+        </button>
+      </div>
+    </div>
+
     <!-- Active Colleague Speech Bubble (Comic dialogue in world projection) -->
     <div class="colleagueSpeechBubble" id="hudSpeechBubble" style="display:none">
       <div class="bubbleTail"></div>
@@ -198,6 +223,14 @@ export function updateShiftHUD(host: HTMLElement, state: ShiftState, stage?: Off
     camBtn.textContent = stage?.cameraMode === 'overview' ? '🏃 Bám Sát' : '🎥 Toàn Cảnh';
   }
 
+  // Mode Toggle Button
+  const modeBtn = host.querySelector('#hudModeToggleBtn');
+  if (modeBtn) {
+    const isAuto = localStorage.getItem('os_interaction_mode') !== 'card';
+    modeBtn.textContent = isAuto ? '⚡ Chạy Làm Ngay' : '📋 Hiện Thẻ Xác Nhận';
+    modeBtn.setAttribute('title', isAuto ? 'Chế độ hiện tại: Chạm là Chibi tự chạy đến làm việc ngay (Bấm để đổi)' : 'Chế độ hiện tại: Chạm sẽ hiện Thẻ xác nhận công việc (Bấm để đổi)');
+  }
+
   // Speech Bubble
   const bubble = host.querySelector('#hudSpeechBubble') as HTMLElement;
   if (bubble && stage) {
@@ -271,4 +304,36 @@ export function renderShiftFinishModal(state: ShiftState): string {
     </div>
   </section>
   `;
+}
+
+export function showStationActionCard(
+  host: HTMLElement,
+  data: { emoji: string; title: string; subtitle: string; desc: string; buttonText: string }
+): void {
+  const card = host.querySelector('#hudActionCard') as HTMLElement;
+  if (!card) return;
+
+  const emojiEl = card.querySelector('#cardEmoji');
+  if (emojiEl) emojiEl.textContent = data.emoji;
+
+  const titleEl = card.querySelector('#cardTitle');
+  if (titleEl) titleEl.textContent = data.title;
+
+  const subEl = card.querySelector('#cardSubtitle');
+  if (subEl) subEl.textContent = data.subtitle;
+
+  const descEl = card.querySelector('#cardDesc');
+  if (descEl) descEl.textContent = data.desc;
+
+  const btnEl = card.querySelector('#cardConfirmBtn');
+  if (btnEl) btnEl.textContent = data.buttonText;
+
+  card.style.display = 'block';
+}
+
+export function hideStationActionCard(host: HTMLElement): void {
+  const card = host.querySelector('#hudActionCard') as HTMLElement;
+  if (card) {
+    card.style.display = 'none';
+  }
 }

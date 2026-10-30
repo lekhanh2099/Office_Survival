@@ -4,10 +4,16 @@ import { BattlerEngine } from './core/BattlerEngine';
 import { loadGameState } from './core/GameState';
 import { renderDay, renderGameOver, renderPlay, renderResult, renderWelcome } from './ui/Renderer';
 import { Card3DCanvas } from './ui/Card3DCanvas';
-import { OfficeStage } from './3d/OfficeStage';
+import { OfficeStage, Workstation } from './3d/OfficeStage';
 import { VirtualJoystick } from './3d/VirtualJoystick';
 import { ShiftGameEngine } from './3d/ShiftGameEngine';
-import { mountShiftHUD, updateShiftHUD, renderShiftFinishModal } from './ui/ShiftRenderer';
+import {
+  mountShiftHUD,
+  updateShiftHUD,
+  renderShiftFinishModal,
+  showStationActionCard,
+  hideStationActionCard
+} from './ui/ShiftRenderer';
 import {
   renderBattlerHUD,
   renderCrisisArena,
@@ -47,9 +53,11 @@ let shiftStage: OfficeStage | null = null;
 let shiftJoystick: VirtualJoystick | null = null;
 let shiftEngine: ShiftGameEngine | null = null;
 let shiftAnimFrameId: number | null = null;
+let selectedStationForCard: Workstation | null = null;
 let lastFrameTime = performance.now();
 
 function cleanupShift(): void {
+  selectedStationForCard = null;
   if (shiftAnimFrameId) {
     cancelAnimationFrame(shiftAnimFrameId);
     shiftAnimFrameId = null;
@@ -84,6 +92,36 @@ function renderShiftMode(): void {
       uiHost.innerHTML = renderShiftFinishModal(s);
     }
   });
+
+  // Direct 3D Click / Tap Raycaster Handling (Both Auto-Work and Card confirmation modes!)
+  shiftStage.onStationClickCallback = (st) => {
+    sounds.click();
+    const mode = localStorage.getItem('os_interaction_mode') || 'auto_work';
+    if (mode === 'card') {
+      selectedStationForCard = st;
+      const details = shiftEngine!.getStationActionDetails(st);
+      showStationActionCard(uiHost, {
+        emoji: st.emoji,
+        title: st.name,
+        subtitle: `📍 ${st.zone}`,
+        desc: details.desc,
+        buttonText: details.buttonText
+      });
+    } else {
+      selectedStationForCard = null;
+      hideStationActionCard(uiHost);
+      const curPos = shiftStage!.player.getPosition();
+      const dist = curPos.distanceTo(st.position);
+      if (dist <= st.radius) {
+        shiftEngine!.doAction(st);
+      } else {
+        showToast(`🏃 Đang chạy đến ${st.name}...`);
+        shiftStage!.startAutoWalkTo(st, () => {
+          shiftEngine?.doAction(st);
+        });
+      }
+    }
+  };
 
   shiftJoystick = new VirtualJoystick(container, () => {
     shiftEngine?.doAction();
@@ -423,6 +461,45 @@ document.addEventListener('click', (ev) => {
         showToast(mode === 'overview' ? '🎥 Góc máy Toàn Cảnh (Diorama Overview)!' : '🏃 Góc máy Bám Sát Chibi!');
       }
       break;
+    case 'toggle_interaction_mode': {
+      sounds.click();
+      const current = localStorage.getItem('os_interaction_mode') || 'auto_work';
+      const next = current === 'auto_work' ? 'card' : 'auto_work';
+      localStorage.setItem('os_interaction_mode', next);
+      showToast(next === 'auto_work' ? '⚡ Đã chuyển sang: Chạm là Chibi tự chạy đến làm việc ngay!' : '📋 Đã chuyển sang: Chạm mở Thẻ xác nhận công việc!');
+      const uiHostEl = document.getElementById('shiftUIHost');
+      if (uiHostEl && shiftEngine && shiftStage) {
+        updateShiftHUD(uiHostEl, shiftEngine.getState(), shiftStage);
+      }
+      break;
+    }
+    case 'confirm_action_card': {
+      sounds.click();
+      const uiHostEl = document.getElementById('shiftUIHost');
+      if (uiHostEl) hideStationActionCard(uiHostEl);
+      if (selectedStationForCard && shiftStage && shiftEngine) {
+        const targetSt = selectedStationForCard;
+        selectedStationForCard = null;
+        const curPos = shiftStage.player.getPosition();
+        const dist = curPos.distanceTo(targetSt.position);
+        if (dist <= targetSt.radius) {
+          shiftEngine.doAction(targetSt);
+        } else {
+          showToast(`🏃 Đang chạy đến ${targetSt.name}...`);
+          shiftStage.startAutoWalkTo(targetSt, () => {
+            shiftEngine?.doAction(targetSt);
+          });
+        }
+      }
+      break;
+    }
+    case 'close_action_card': {
+      sounds.click();
+      selectedStationForCard = null;
+      const uiHostEl = document.getElementById('shiftUIHost');
+      if (uiHostEl) hideStationActionCard(uiHostEl);
+      break;
+    }
     case 'start':
       if (loadGameState() && !confirm('Bắt đầu run mới? Tiến trình cũ sẽ bị thay thế.')) return;
       sounds.click();

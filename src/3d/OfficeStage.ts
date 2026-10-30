@@ -73,6 +73,12 @@ export class OfficeStage {
   public activeStation: Workstation | null = null;
   public pickups: MapPickup[] = [];
 
+  // Raycasting & Tap to Interact
+  public interactiveHitObjects: THREE.Mesh[] = [];
+  public onStationClickCallback: ((station: Workstation, screenPos: { x: number; y: number }) => void) | null = null;
+  public autoWalkTarget: { pos: THREE.Vector3; station: Workstation; onReach?: () => void } | null = null;
+  private autoWalkMarkerMesh!: THREE.Mesh;
+
   // Solid Collision Obstacles
   public obstacles: ObstacleAABB[] = [];
 
@@ -202,7 +208,11 @@ export class OfficeStage {
     // 8. NPC Colleagues
     this.setupColleagues();
 
-    // 9. Resize Handling
+    // 9. Auto-Walk Destination Marker & Pointer Raycaster
+    this.setupAutoWalkMarker();
+    this.setupPointerRaycaster();
+
+    // 10. Resize Handling
     window.addEventListener('resize', this.onResize);
   }
 
@@ -1634,7 +1644,14 @@ export class OfficeStage {
     billboardSprite.position.set(pos.x, 2.5, pos.z);
     this.scene.add(billboardSprite);
 
-    this.stations.push({
+    const hitGeo = new THREE.CylinderGeometry(radius * 0.95, radius * 0.95, 3.2, 12);
+    const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+    const hitMesh = new THREE.Mesh(hitGeo, hitMat);
+    hitMesh.position.set(pos.x, 1.6, pos.z);
+    this.scene.add(hitMesh);
+    this.interactiveHitObjects.push(hitMesh);
+
+    const st: Workstation = {
       id: type,
       name,
       zone,
@@ -1645,7 +1662,9 @@ export class OfficeStage {
       mesh,
       indicatorMesh,
       billboardSprite
-    });
+    };
+    hitMesh.userData = { station: st };
+    this.stations.push(st);
   }
 
   private setupPickups(): void {
@@ -1758,35 +1777,146 @@ export class OfficeStage {
     this.renderer.setSize(width, height);
   };
 
+  private tapStartX = 0;
+  private tapStartY = 0;
+  private tapStartTime = 0;
+
+  private onPointerDownHandler = (e: PointerEvent): void => {
+    if ((e.target as HTMLElement).closest('#joyPadArea, #joyActionBtn, .shiftTopRibbon, .shiftQuestBanner, .shiftMiniRadar, .shiftCamToggleBtn, #hudModeToggleBtn, #hudActionCard')) {
+      return;
+    }
+    this.tapStartX = e.clientX;
+    this.tapStartY = e.clientY;
+    this.tapStartTime = performance.now();
+  };
+
+  private onPointerUpHandler = (e: PointerEvent): void => {
+    if ((e.target as HTMLElement).closest('#joyPadArea, #joyActionBtn, .shiftTopRibbon, .shiftQuestBanner, .shiftMiniRadar, .shiftCamToggleBtn, #hudModeToggleBtn, #hudActionCard')) {
+      return;
+    }
+    const dt = performance.now() - this.tapStartTime;
+    const dist = Math.hypot(e.clientX - this.tapStartX, e.clientY - this.tapStartY);
+    if (dt < 450 && dist < 14) {
+      this.handlePointerTap(e.clientX, e.clientY);
+    }
+  };
+
+  private setupPointerRaycaster(): void {
+    this.container.addEventListener('pointerdown', this.onPointerDownHandler);
+    this.container.addEventListener('pointerup', this.onPointerUpHandler);
+  }
+
+  private handlePointerTap(clientX: number, clientY: number): void {
+    if (!this.camera || !this.renderer) return;
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    const mouse = new THREE.Vector2(
+      ((clientX - rect.left) / rect.width) * 2 - 1,
+      -((clientY - rect.top) / rect.height) * 2 + 1
+    );
+
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, this.camera);
+
+    const hits = raycaster.intersectObjects(this.interactiveHitObjects, false);
+    if (hits.length > 0) {
+      const st = hits[0].object.userData.station as Workstation;
+      if (st && this.onStationClickCallback) {
+        this.onStationClickCallback(st, { x: clientX - rect.left, y: clientY - rect.top });
+      }
+    }
+  }
+
+  private setupAutoWalkMarker(): void {
+    const geo = new THREE.RingGeometry(0.7, 0.95, 28);
+    const mat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.85,
+      side: THREE.DoubleSide
+    });
+    this.autoWalkMarkerMesh = new THREE.Mesh(geo, mat);
+    this.autoWalkMarkerMesh.rotation.x = -Math.PI / 2;
+    this.autoWalkMarkerMesh.position.y = 0.04;
+    this.autoWalkMarkerMesh.visible = false;
+    this.scene.add(this.autoWalkMarkerMesh);
+  }
+
+  public startAutoWalkTo(station: Workstation, onReach?: () => void): void {
+    this.autoWalkTarget = {
+      pos: station.position.clone(),
+      station,
+      onReach
+    };
+    if (this.autoWalkMarkerMesh) {
+      this.autoWalkMarkerMesh.position.set(station.position.x, 0.04, station.position.z);
+      this.autoWalkMarkerMesh.visible = true;
+    }
+  }
+
+  public cancelAutoWalk(): void {
+    this.autoWalkTarget = null;
+    if (this.autoWalkMarkerMesh) {
+      this.autoWalkMarkerMesh.visible = false;
+    }
+  }
+
+  private movePlayerWithCollision(delta: number, dirX: number, dirZ: number): void {
+    const currentSpeed = this.player.carriedItem === 'none' ? this.player.moveSpeed : this.player.moveSpeed * 0.9;
+    const moveDist = currentSpeed * delta;
+    const stepX = dirX * moveDist;
+    const stepZ = dirZ * moveDist;
+
+    const curPos = this.player.getPosition();
+    const radius = 0.38;
+
+    let targetX = curPos.x;
+    if (Math.abs(stepX) > 0.0001) {
+      if (!this.isColliding(curPos.x + stepX, curPos.z, radius)) {
+        targetX = curPos.x + stepX;
+      }
+    }
+
+    let targetZ = curPos.z;
+    if (Math.abs(stepZ) > 0.0001) {
+      if (!this.isColliding(targetX, curPos.z + stepZ, radius)) {
+        targetZ = curPos.z + stepZ;
+      }
+    }
+
+    curPos.x = targetX;
+    curPos.z = targetZ;
+  }
+
   update(delta: number, playerDirX: number, playerDirZ: number): void {
-    // 1. Solid Sliding Collision Movement
-    const isMoving = Math.abs(playerDirX) > 0.01 || Math.abs(playerDirZ) > 0.01;
-    if (isMoving) {
-      const currentSpeed = this.player.carriedItem === 'none' ? this.player.moveSpeed : this.player.moveSpeed * 0.9;
-      const moveDist = currentSpeed * delta;
-      const stepX = playerDirX * moveDist;
-      const stepZ = playerDirZ * moveDist;
+    // 1. Solid Sliding Collision Movement (Manual Joystick or Auto-Walk)
+    const hasManualInput = Math.abs(playerDirX) > 0.01 || Math.abs(playerDirZ) > 0.01;
+    if (hasManualInput) {
+      this.cancelAutoWalk();
+    }
 
+    if (this.autoWalkTarget && !hasManualInput) {
       const curPos = this.player.getPosition();
-      const radius = 0.38;
+      const dx = this.autoWalkTarget.pos.x - curPos.x;
+      const dz = this.autoWalkTarget.pos.z - curPos.z;
+      const dist = Math.hypot(dx, dz);
+      const stopDist = Math.max(1.2, this.autoWalkTarget.station.radius * 0.75);
 
-      let targetX = curPos.x;
-      if (Math.abs(stepX) > 0.0001) {
-        if (!this.isColliding(curPos.x + stepX, curPos.z, radius)) {
-          targetX = curPos.x + stepX;
+      if (dist <= stopDist) {
+        const target = this.autoWalkTarget;
+        this.cancelAutoWalk();
+        this.player.updateAnimation(delta, 0, 0, false);
+        target.onReach?.();
+      } else {
+        const dirX = dx / dist;
+        const dirZ = dz / dist;
+        this.movePlayerWithCollision(delta, dirX, dirZ);
+        this.player.updateAnimation(delta, dirX, dirZ, true);
+        if (this.autoWalkMarkerMesh) {
+          this.autoWalkMarkerMesh.rotation.z += delta * 2.5;
         }
       }
-
-      let targetZ = curPos.z;
-      if (Math.abs(stepZ) > 0.0001) {
-        if (!this.isColliding(targetX, curPos.z + stepZ, radius)) {
-          targetZ = curPos.z + stepZ;
-        }
-      }
-
-      curPos.x = targetX;
-      curPos.z = targetZ;
-
+    } else if (hasManualInput) {
+      this.movePlayerWithCollision(delta, playerDirX, playerDirZ);
       this.player.updateAnimation(delta, playerDirX, playerDirZ, true);
     } else {
       this.player.updateAnimation(delta, 0, 0, false);
@@ -1928,6 +2058,8 @@ export class OfficeStage {
     this.isDestroyed = true;
     if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
     window.removeEventListener('resize', this.onResize);
+    this.container.removeEventListener('pointerdown', this.onPointerDownHandler);
+    this.container.removeEventListener('pointerup', this.onPointerUpHandler);
     this.renderer?.dispose();
     this.container.innerHTML = '';
   }

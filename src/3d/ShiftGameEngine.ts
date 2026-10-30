@@ -197,9 +197,54 @@ export class ShiftGameEngine {
     }
   }
 
-  doAction(): void {
+  getStationActionDetails(st: Workstation): { title: string; subtitle: string; desc: string; buttonText: string; isTarget: boolean } {
+    const isTarget = st.type === this.state.currentTask.targetStation;
+    const title = `${st.emoji} ${st.name}`;
+    const subtitle = `📍 ${st.zone}`;
+    let desc = '';
+    let buttonText = '🚀 LÀM VIỆC NGAY';
+
+    if (st.type === 'coffee') {
+      desc = 'Pha 1 ly cà phê phin hoặc trà sữa trân châu full topping: Hồi phục +50% Năng Lượng ⚡, xả -15% Stress 🔥 và bật tốc chạy trong 9 giây!';
+      buttonText = '☕ PHA CÀ PHÊ (+50% ⚡)';
+    } else if (st.type === 'altar') {
+      desc = 'Thắp 3 nén hương lên Bàn Thờ Thần Tài - Thổ Địa: Cầu may mắn tài lộc, giải tỏa -25% Stress 🔥, hồi +25% Năng Lượng ⚡ và cộng +100 điểm KPI!';
+      buttonText = '🙏 THẮP HƯƠNG (+100 đ)';
+    } else if (st.type === 'water') {
+      desc = 'Rót cốc nước khoáng Lavie mát lạnh tinh khiết: Hạ nhiệt căng thẳng, giảm ngay -15% Stress 🔥 và tăng +10% Năng Lượng ⚡.';
+      buttonText = '🚰 UỐNG NƯỚC MÁT (-15% 🔥)';
+    } else if (st.type === 'server') {
+      desc = 'Kiểm tra hệ thống Datacenter Server: CI/CD Pipeline ổn định không có lỗi phát sinh. Tích lũy ngay +50 điểm KPI ca trực!';
+      buttonText = '🖥️ CHECK SERVER (+50 đ)';
+    } else if (st.type === 'lamp') {
+      desc = 'Bật / Tắt trực tiếp chiếc đèn sàn đồng thau kiểu Bắc Âu trong phòng khách, đổi ánh sáng ấm cúng cho văn phòng!';
+      buttonText = '💡 BẬT/TẮT ĐÈN SÀN';
+    } else if (st.type === 'sofa') {
+      desc = 'Ngả lưng thư giãn trên chiếc ghế sofa da êm ái: Nạp lại nhanh +35% Năng Lượng ⚡ và xả -25% áp lực Stress 🔥.';
+      buttonText = '🛋️ NGHỈ TRƯA (+35% ⚡)';
+    } else if (st.type === 'whiteboard') {
+      desc = 'Đọc kế hoạch xuất khẩu Q4 trên bảng họp kính VIP: Nắm vững quy trình tiêu chuẩn may mẫu AQL 2.5 và nhận +50 điểm KPI!';
+      buttonText = '📊 ĐỌC KẾ HOẠCH (+50 đ)';
+    } else if (st.type === 'mirror') {
+      desc = 'Rửa mặt với dòng nước mát trước gương phòng vệ sinh WC: Lấy lại sự tỉnh táo 100%, hồi phục ngay +20% Năng Lượng ⚡.';
+      buttonText = '🪞 RỬA MẶT TỈNH TÁO (+20% ⚡)';
+    } else if (st.type === 'boss_desk') {
+      desc = 'Báo cáo trực tiếp tiến độ đơn hàng với Giám Đốc Hùng: Nhận lời khen ngợi từ Sếp và được thưởng ngay +50 điểm KPI!';
+      buttonText = '👔 BÁO CÁO TIẾN ĐỘ (+50 đ)';
+    } else if (isTarget) {
+      desc = `Nhiệm vụ đơn hàng: ${this.state.currentTask.stepDescription}. Thực hiện để tiến tới xuất xưởng container!`;
+      buttonText = `⚡ ${this.getPromptActionText(st.type)}`;
+    } else {
+      desc = `Trạm làm việc: ${st.name} thuộc khu vực ${st.zone}.`;
+      buttonText = '⚡ ĐẾN TRẠM NÀY';
+    }
+
+    return { title, subtitle, desc, buttonText, isTarget };
+  }
+
+  doAction(stationOverride?: Workstation): void {
     if (this.state.isFinished) return;
-    const activeSt = this.stage.activeStation;
+    const activeSt = stationOverride || this.stage.activeStation;
     if (!activeSt) return;
 
     // Boba lounge

@@ -1703,6 +1703,154 @@ p {
   transform: translateY(1px);
 }
 
+/* Mode Switcher Button (Tap Auto-Work vs Action Card) */
+.shiftModeToggleBtn {
+  position: absolute;
+  top: 134px;
+  right: 8px;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(6px);
+  color: #facc15;
+  border: 1.5px solid rgba(250, 204, 21, 0.4);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 800;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 15;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.shiftModeToggleBtn:hover {
+  background: #312e81;
+  border-color: #facc15;
+  transform: translateY(-1px);
+}
+
+.shiftModeToggleBtn:active {
+  transform: translateY(1px);
+}
+
+/* Interactive Station Action Card (Modal Popover) */
+.stationActionCard {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 330px;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(12px);
+  border: 2px solid #6366f1;
+  border-radius: 16px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.15);
+  padding: 14px 14px 12px;
+  color: #ffffff;
+  z-index: 45;
+  pointer-events: auto;
+  box-sizing: border-box;
+  animation: cardPopIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes cardPopIn {
+  0% { transform: translate(-50%, -46%) scale(0.92); opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+.actionCardCloseBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.actionCardCloseBtn:hover {
+  background: rgba(239, 68, 68, 0.8);
+  color: #fff;
+}
+
+.actionCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding-right: 28px;
+}
+
+.actionCardEmoji {
+  font-size: 28px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.actionCardTitles {
+  flex: 1;
+  min-width: 0;
+}
+
+.actionCardTitle {
+  font-size: 14px;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1.25;
+}
+
+.actionCardSubtitle {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.actionCardDesc {
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+}
+
+.actionCardActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.actionCardConfirmBtn {
+  width: 100%;
+  background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+  color: #ffffff !important;
+  border: 2px solid var(--ink) !important;
+  border-radius: 10px !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  padding: 8px 12px !important;
+  box-shadow: 2.5px 2.5px 0 var(--ink) !important;
+  cursor: pointer;
+}
+
+.actionCardConfirmBtn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--ink) !important;
+}
+
 /* Colleague Dynamic Speech Bubble (Living Vietnamese Office) */
 .colleagueSpeechBubble {
   position: absolute;

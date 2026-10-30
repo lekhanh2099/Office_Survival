@@ -104,13 +104,15 @@ export class VirtualJoystick {
     padArea.addEventListener('pointerup', onPointerUp);
     padArea.addEventListener('pointercancel', onPointerUp);
 
-    // Also support touching anywhere on the left half of container
+    // Also support touching near the bottom-left corner around joypad
     this.joyContainer.addEventListener('pointerdown', (e) => {
       // If clicking action button or joypad area, let them handle it
       if ((e.target as HTMLElement).closest('#joyPadArea, #joyActionBtn')) return;
-      // If on left 55% of container
+      // Only bottom-left quadrant (140px width, bottom 160px)
       const containerRect = this.container.getBoundingClientRect();
-      if (e.clientX - containerRect.left < containerRect.width * 0.55) {
+      const relX = e.clientX - containerRect.left;
+      const relY = e.clientY - containerRect.top;
+      if (relX < 140 && relY > containerRect.height - 160) {
         onPointerDown(e);
       }
     });
