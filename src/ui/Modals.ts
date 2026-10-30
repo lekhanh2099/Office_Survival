@@ -163,52 +163,52 @@ export function openDonateModal(host: HTMLElement): void {
   sounds.click();
   const quote = GENZ_QUOTES[Math.floor(Math.random() * GENZ_QUOTES.length)];
 
-  host.innerHTML = `<div class="dialogShade"><section class="dialog" role="dialog" aria-modal="true" style="text-align:center">
-    <div style="font-size:52px;margin:6px 0">🧋🍱☕</div>
-    <h2 style="margin:4px 0 6px">QUỸ CỨU ĐÓI DEV GAME</h2>
-    <div class="badgeText" style="transform:none;margin-bottom:12px">✨ GÓC KHIỀU TRÀ SỮA GEN Z ✨</div>
+  host.innerHTML = `<div class="dialogShade"><section class="dialog" role="dialog" aria-modal="true" style="text-align:center;padding:14px 16px">
+    <div style="font-size:36px;margin:0 0 2px">🧋🍱☕</div>
+    <h2 style="font-size:18px;margin:2px 0 3px">QUỸ CỨU ĐÓI DEV GAME</h2>
+    <div class="badgeText" style="transform:none;padding:3px 8px;font-size:10px;margin:2px 0 8px">✨ GÓC KHIỀU TRÀ SỮA GEN Z ✨</div>
     
-    <div style="background:#f5f2ff;border:2px dashed var(--purple);border-radius:14px;padding:12px;font-size:13px;font-weight:750;line-height:1.55;color:#3f3282;margin-bottom:14px">
+    <div style="background:#f5f2ff;border:2px dashed var(--purple);border-radius:10px;padding:7px 10px;font-size:11.5px;font-weight:750;line-height:1.45;color:#3f3282;margin-bottom:8px">
       "${quote}"
     </div>
 
-    <div class="eyebrow" style="text-align:left;margin-bottom:8px">🎁 CHỌN MÓN TIẾP TẾ CHO DEV:</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px">
-      <button class="miniButton donateOption" data-donate="10000" data-label="Cốc nước mía" style="padding:10px 6px;text-align:center;display:block">
-        <span style="font-size:20px;display:block">🎋</span>
-        <b>Cốc nước mía</b><br><span style="font-size:10px;color:#6b6782">10.000 đ</span>
+    <div class="eyebrow" style="text-align:left;font-size:10.5px;margin-bottom:5px">🎁 CHỌN MÓN TIẾP TẾ CHO DEV:</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
+      <button class="miniButton donateOption" data-donate="10000" data-label="Cốc nước mía" style="padding:6px 4px;text-align:center;display:block">
+        <span style="font-size:16px;display:block;margin-bottom:1px">🎋</span>
+        <b style="font-size:11px">Cốc nước mía</b><br><span style="font-size:9.5px;color:#6b6782">10.000 đ</span>
       </button>
-      <button class="miniButton donateOption" data-donate="25000" data-label="Cà phê muối" style="padding:10px 6px;text-align:center;display:block">
-        <span style="font-size:20px;display:block">☕</span>
-        <b>Cà phê muối</b><br><span style="font-size:10px;color:#6b6782">25.000 đ</span>
+      <button class="miniButton donateOption" data-donate="25000" data-label="Cà phê muối" style="padding:6px 4px;text-align:center;display:block">
+        <span style="font-size:16px;display:block;margin-bottom:1px">☕</span>
+        <b style="font-size:11px">Cà phê muối</b><br><span style="font-size:9.5px;color:#6b6782">25.000 đ</span>
       </button>
-      <button class="miniButton donateOption active" data-donate="35000" data-label="Trà sữa full top" style="padding:10px 6px;text-align:center;display:block">
-        <span style="font-size:20px;display:block">🧋</span>
-        <b>Trà sữa full top</b><br><span style="font-size:10px;color:#6b6782">35.000 đ</span>
+      <button class="miniButton donateOption active" data-donate="35000" data-label="Trà sữa full top" style="padding:6px 4px;text-align:center;display:block">
+        <span style="font-size:16px;display:block;margin-bottom:1px">🧋</span>
+        <b style="font-size:11px">Trà sữa full top</b><br><span style="font-size:9.5px;color:#6b6782">35.000 đ</span>
       </button>
-      <button class="miniButton donateOption" data-donate="45000" data-label="Cơm sườn ốp la" style="padding:10px 6px;text-align:center;display:block">
-        <span style="font-size:20px;display:block">🍱</span>
-        <b>Cơm sườn ốp la</b><br><span style="font-size:10px;color:#6b6782">45.000 đ</span>
+      <button class="miniButton donateOption" data-donate="45000" data-label="Cơm sườn ốp la" style="padding:6px 4px;text-align:center;display:block">
+        <span style="font-size:16px;display:block;margin-bottom:1px">🍱</span>
+        <b style="font-size:11px">Cơm sườn ốp la</b><br><span style="font-size:9.5px;color:#6b6782">45.000 đ</span>
       </button>
     </div>
 
-    <div style="background:#fff;border:2px solid var(--ink);border-radius:13px;padding:12px;margin-bottom:12px;text-align:left;font-size:12px">
-      <div style="font-weight:900;color:var(--purple);margin-bottom:6px">💳 THÔNG TIN TING TING:</div>
-      <div style="line-height:1.6">
+    <div style="background:#fff;border:2px solid var(--ink);border-radius:10px;padding:8px 10px;margin-bottom:8px;text-align:left;font-size:11px">
+      <div style="font-weight:900;color:var(--purple);margin-bottom:4px;font-size:11px">💳 THÔNG TIN TING TING:</div>
+      <div style="line-height:1.45">
         <div>• <b>Ngân hàng:</b> MB Bank (Quân Đội) hoặc MoMo</div>
-        <div>• <b>Số tài khoản:</b> <code id="bankAccDisplay" style="background:#eee;padding:2px 6px;border-radius:4px;font-weight:800">0901234567</code></div>
+        <div>• <b>Số tài khoản:</b> <code id="bankAccDisplay" style="background:#eee;padding:1px 5px;border-radius:4px;font-weight:800">0901234567</code></div>
         <div>• <b>Chủ tài khoản:</b> <b id="bankNameDisplay">LE KHANH</b></div>
-        <div>• <b>Nội dung:</b> <code id="bankMsgDisplay" style="background:#fef1bd;padding:2px 6px;border-radius:4px;font-weight:800">Office Survival tiep te dev</code></div>
+        <div>• <b>Nội dung:</b> <code id="bankMsgDisplay" style="background:#fef1bd;padding:1px 5px;border-radius:4px;font-weight:800">Office Survival tiep te dev</code></div>
       </div>
-      <button class="secondary" data-act="copyBank" style="margin-top:10px;padding:8px 10px;font-size:11px;width:100%">
+      <button class="secondary" data-act="copyBank" style="margin-top:6px;padding:6px 8px;font-size:11px;width:100%">
         📋 Sao chép STK &amp; Lời nhắn (35.000 đ)
       </button>
     </div>
 
-    <button class="primary" data-act="freeHeart" style="margin-bottom:8px">
+    <button class="primary" data-act="freeHeart" style="padding:9px 12px;font-size:12px;margin-bottom:5px;width:100%">
       ❤️ Tui nghèo nhưng tui có tấm lòng (Bắn tim)
     </button>
-    <button class="secondary" data-act="close">ĐÓNG LẠI ĐỂ CÀY GAME TIẾP</button>
+    <button class="secondary" data-act="close" style="padding:7px 12px;font-size:11.5px;width:100%">ĐÓNG LẠI ĐỂ CÀY GAME TIẾP</button>
   </section></div>`;
 }
 

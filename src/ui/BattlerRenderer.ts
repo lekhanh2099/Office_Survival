@@ -1,4 +1,5 @@
 import { BattlerCard, BattlerState } from '../types/battler';
+import { getMemeStickerSvg } from './MemeStickers';
 
 function esc(t?: string | number | null): string {
   return String(t ?? '').replace(/[&<>"']/g, x => ({
@@ -66,14 +67,14 @@ export function renderCrisisArena(state: BattlerState): string {
     </div>
     <div class="cardBody" style="padding:14px">
       <div style="display:flex;gap:12px;align-items:center">
-        <!-- Animated Cat GIF -->
-        <div class="memeGifBox" style="width:110px;height:110px;flex-shrink:0;border:2.5px solid var(--ink);border-radius:12px;overflow:hidden;background:#000;box-shadow:3px 3px 0 var(--ink)">
-          <img src="${c.gif}" alt="${esc(c.title)}" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.outerHTML='<div style=\\'font-size:48px;display:grid;place-items:center;height:100%\\'>${c.fallbackEmoji}</div>'">
+        <!-- Animated Cat Meme Sticker -->
+        <div class="memeGifBox" style="width:105px;height:95px;flex-shrink:0;border:2.5px solid var(--ink);border-radius:12px;overflow:hidden;box-shadow:3px 3px 0 var(--ink);display:flex">
+          ${getMemeStickerSvg(c.id, '100%', '100%')}
         </div>
         <div>
           <div style="font-size:11px;font-weight:900;color:#e11d48;text-transform:uppercase;letter-spacing:0.5px">${esc(c.sender)}</div>
-          <h2 style="font-size:18px;margin:2px 0 6px;line-height:1.3">${esc(c.title)}</h2>
-          <div style="font-size:12px;color:#47445e;line-height:1.45;font-style:italic">${esc(c.body)}</div>
+          <h2 style="font-size:17px;margin:2px 0 4px;line-height:1.25">${esc(c.title)}</h2>
+          <div style="font-size:11.5px;color:#47445e;line-height:1.4;font-style:italic">${esc(c.body)}</div>
         </div>
       </div>
 
@@ -132,9 +133,9 @@ export function renderCard(card: BattlerCard, index: number, currentEnergy: numb
       <span>${card.cost}</span>⚡
     </div>
 
-    <!-- GIF thumbnail -->
+    <!-- Sticker thumbnail -->
     <div class="cardGifContainer">
-      <img src="${card.gif}" alt="${esc(card.name)}" class="cardGifImg" loading="lazy" onerror="this.outerHTML='<div class=\\'cardFallbackEmoji\\'>${card.fallbackEmoji}</div>'">
+      ${getMemeStickerSvg(card.id, '100%', '100%')}
     </div>
 
     <!-- Title & Desc -->
@@ -146,26 +147,28 @@ export function renderCard(card: BattlerCard, index: number, currentEnergy: numb
 }
 
 export function renderRewardModal(state: BattlerState): string {
-  return `<section class="panel" style="text-align:center">
-    <div style="font-size:52px;margin:8px 0">🎉🏆✨</div>
-    <div class="eyebrow" style="color:#16a34a">CHIẾN THẮNG KIẾP NẠN!</div>
-    <h1 style="font-size:28px;margin:4px 0 10px">XỬ LÝ THÀNH CÔNG!</h1>
-    <p class="note" style="margin-bottom:14px">Bạn nhận được <b>+${state.currentCrisis.rewardScore} điểm</b>. Hãy chọn 1 lá bài mới bổ sung vào bộ bài của bạn:</p>
+  return `<section class="panel" style="text-align:center;padding:16px 14px">
+    <div style="font-size:38px;margin:2px 0">🎉🏆✨</div>
+    <div class="eyebrow" style="color:#16a34a;margin-bottom:2px">CHIẾN THẮNG KIẾP NẠN!</div>
+    <h1 style="font-size:24px;margin:0 0 6px">XỬ LÝ THÀNH CÔNG!</h1>
+    <p class="note" style="margin-bottom:12px;font-size:12px">Bạn nhận được <b>+${state.currentCrisis.rewardScore} điểm</b>. Hãy chọn 1 lá bài mới bổ sung vào bộ bài:</p>
 
-    <div class="draftGrid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px;margin-bottom:16px">
+    <div class="draftGrid" style="display:grid;grid-template-columns:repeat(3, 1fr);gap:8px;margin-bottom:14px">
       ${state.rewardChoices.map((c, i) => `
-        <div class="rewardCardItem" data-reward-index="${i}" style="border:2.5px solid var(--ink);border-radius:12px;background:#fff;padding:8px;box-shadow:3px 3px 0 var(--ink);cursor:pointer;text-align:center">
-          <div style="height:90px;border-radius:8px;overflow:hidden;background:#000;margin-bottom:6px">
-            <img src="${c.gif}" alt="${esc(c.name)}" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML='<div style=\\'font-size:36px;padding-top:16px\\'>${c.fallbackEmoji}</div>'">
+        <div class="rewardCardItem" data-reward-index="${i}" style="border:2px solid var(--ink);border-radius:12px;background:#fff;padding:7px 5px;box-shadow:3px 3px 0 var(--ink);display:flex;flex-direction:column;justify-content:space-between">
+          <div>
+            <div style="height:76px;border-radius:8px;overflow:hidden;border:1.5px solid var(--ink);margin-bottom:5px;background:#faf5ff">
+              ${getMemeStickerSvg(c.id, '100%', '100%')}
+            </div>
+            <div style="font-weight:900;font-size:12px;line-height:1.25;min-height:28px;display:flex;align-items:center;justify-content:center;margin-bottom:3px">${esc(c.name)}</div>
+            <div style="font-size:10px;color:#55526e;line-height:1.3;min-height:36px;margin-bottom:6px">${esc(c.desc)}</div>
           </div>
-          <div style="font-weight:900;font-size:13px;margin-bottom:4px">${esc(c.name)}</div>
-          <div style="font-size:11px;color:#555;line-height:1.35;margin-bottom:8px">${esc(c.desc)}</div>
-          <button class="primary" data-pick-reward="${i}" style="width:100%;padding:6px 8px;font-size:11px">CHỌN THẺ NÀY</button>
+          <button class="primary" data-pick-reward="${i}" style="width:100%;padding:7px 4px;font-size:11px;font-weight:900">CHỌN THẺ</button>
         </div>
       `).join('')}
     </div>
 
-    <button class="secondary" data-act="skip_reward" style="width:100%">BỎ QUA KHÔNG CHỌN</button>
+    <button class="secondary" data-act="skip_reward" style="width:100%;padding:10px;font-size:12px">BỎ QUA KHÔNG CHỌN</button>
   </section>`;
 }
 

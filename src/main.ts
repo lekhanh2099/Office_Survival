@@ -99,10 +99,10 @@ function renderBattlerMode(): void {
       ROOT.innerHTML = renderBattlerHUD(bState) + renderCrisisArena(bState) + renderHand(bState);
       break;
     case 'reward':
-      ROOT.innerHTML = renderBattlerHUD(bState) + renderRewardModal(bState);
+      ROOT.innerHTML = renderRewardModal(bState);
       break;
     case 'day_clear':
-      ROOT.innerHTML = renderBattlerHUD(bState) + renderDayClear(bState);
+      ROOT.innerHTML = renderDayClear(bState);
       break;
     case 'game_over': {
       ROOT.innerHTML = `<section class="panel" style="background:#fff0f1;text-align:center">

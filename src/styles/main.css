@@ -843,12 +843,15 @@ p {
 }
 
 .cardGifContainer {
-  height: 85px;
+  height: 82px;
   border-radius: 9px;
   overflow: hidden;
-  background: #111;
+  background: #faf5ff;
   border: 1.5px solid var(--ink);
   margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cardGifImg {
@@ -932,11 +935,27 @@ p {
   border: var(--border);
   box-shadow: var(--shadow);
   border-radius: 20px;
-  padding: 18px;
+  padding: 16px;
   max-width: 460px;
   width: 100%;
-  max-height: 85dvh;
-  overflow: auto;
+  max-height: 88dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--purple) transparent;
+}
+
+.dialog::-webkit-scrollbar {
+  width: 5px;
+}
+
+.dialog::-webkit-scrollbar-thumb {
+  background: var(--purple);
+  border-radius: 10px;
+}
+
+.dialog::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .dialog p {
