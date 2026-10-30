@@ -1,0 +1,1386 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17172b">
+<meta name="description" content="Office Survival - Sinh tồn chốn công sở, một game thẻ bài hài phi lý có chiến thuật, chơi offline.">
+<title>Office Survival — Đừng để công ty nuốt chửng bạn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#17172b;--muted:#55546c;--purple:#6957ec;--yellow:#f4f5ab;--pink:#ffb9d8;--mint:#b7f7df;--paper:#fffdf8;--bg:#eeeeff;--red:#e94b7d;--border:3px solid var(--ink);--shadow:5px 5px 0 var(--ink);font-family:'Nunito',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+*{box-sizing:border-box}
+body{margin:0;min-height:100dvh;background:radial-gradient(circle at 10% 20%,#d6d0ff,transparent 40%),radial-gradient(circle at 80% 0,#fce5fd,transparent 38%),#eeefff;user-select:none;-webkit-user-select:none}
+button{font:inherit;cursor:pointer;color:inherit}
+button:disabled{opacity:.55;cursor:default}
+button:focus-visible{outline:4px solid var(--purple);outline-offset:3px}
+.app{max-width:550px;margin:0 auto;padding:14px 14px calc(env(safe-area-inset-bottom) + 28px);min-height:100dvh;transition:transform .15s}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:4px 0 16px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:900;letter-spacing:0;font-size:16px}
+.brandMark{width:38px;height:38px;border:var(--border);border-radius:11px;box-shadow:3px 3px 0 var(--ink);background:#e4fc83;display:grid;place-items:center;transform:rotate(-5deg);font-weight:900;font-size:16px}
+.topActions{display:flex;align-items:center;gap:5px}
+.miniButton{display:inline-flex;align-items:center;justify-content:center;gap:4px;border:2px solid var(--ink);background:#fff;border-radius:12px;padding:7px 9px;font-weight:800;font-size:12px;box-shadow:2px 2px 0 var(--ink);transition:transform .1s,box-shadow .1s}
+.miniButton:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink)}
+.hidden{display:none!important}
+.panel{background:var(--paper);border:var(--border);border-radius:22px;box-shadow:var(--shadow);padding:18px;margin-bottom:16px;position:relative}
+.eyebrow{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:var(--purple)}
+h1{font-size:clamp(34px,8.5vw,50px);line-height:1.15;margin:12px 0 14px;letter-spacing:0;font-weight:900}
+h2{font-size:24px;line-height:1.28;letter-spacing:0;margin:6px 0 12px;font-weight:900}
+h3{margin:0;font-size:17px;font-weight:800}
+p{line-height:1.55;margin:0 0 12px}
+.intro{overflow:hidden;background:var(--yellow)}
+.intro .emojiLarge{font-size:78px;text-align:center;filter:drop-shadow(4px 6px 0 rgba(23,23,43,.25));padding:16px 0 10px}
+.introBlurb{font-weight:600;font-size:15px;max-width:390px;line-height:1.55}
+.stamp{display:inline-block;border:2px dashed var(--ink);padding:7px 9px;border-radius:9px;font-weight:800;font-size:12px;transform:rotate(3deg);background:var(--pink)}
+.primary{width:100%;border:var(--border);background:#a6f3ca;box-shadow:var(--shadow);border-radius:15px;padding:15px 16px;font-size:16px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .12s,box-shadow .12s}
+.primary:active,.choice:active,.perkCard:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+.secondary{width:100%;border:2px solid var(--ink);background:white;border-radius:12px;padding:11px 12px;font-size:13px;font-weight:800;box-shadow:2px 2px 0 var(--ink)}
+.secondary:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink)}
+.buttons{display:grid;gap:11px}
+.note{font-size:12px;color:#51506b;line-height:1.5}
+.smallcaps{text-transform:uppercase;letter-spacing:.8px;font-size:10px;font-weight:800}
+.introFeatures{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:18px 0}
+.feature{border:2px solid var(--ink);background:#fff;border-radius:12px;padding:12px 6px;text-align:center;font-weight:800;font-size:12px}
+.feature span{display:block;font-size:24px;margin-bottom:5px}
+.screenHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:12px}
+.dayName{font-weight:900;font-size:24px;letter-spacing:0}
+.clock{font-size:16px;font-weight:900;border:2px solid var(--ink);background:#e4fc83;border-radius:10px;padding:6px 9px;white-space:nowrap}
+.daySub{font-size:11px;font-weight:800;color:var(--muted);margin:2px 0 0}
+.progress{height:11px;border:2px solid var(--ink);border-radius:12px;background:#d9d5eb;overflow:hidden;margin-bottom:14px}
+.progressFill{height:100%;background:var(--purple);transition:width .25s ease-out}
+.hud{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:9px}
+.hudItem{background:#fff;border:2px solid var(--ink);border-radius:12px;padding:9px;min-height:77px;transition:box-shadow .3s,border-color .3s}
+.hudLabel{font-size:11px;font-weight:800;color:#55546c;margin-bottom:5px;white-space:nowrap}
+.hudValue{font-size:18px;font-weight:900;letter-spacing:0}
+.miniBar{height:7px;border-radius:20px;background:#e7e5ef;margin-top:8px;overflow:hidden;border:1px solid #38334d}
+.miniBarInner{height:100%;transition:width .3s ease-out}
+.heartFull{color:#ef456a}
+.heartEmpty{color:#aaa8bd}
+.wideStatus{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;border:2px solid var(--ink);border-radius:10px;padding:8px 10px;font-size:11px;font-weight:800}
+.modifier{margin:10px 0;font-size:11px;font-weight:800;background:#fff3c7;border:2px dashed #ba8537;border-radius:10px;padding:9px 10px;line-height:1.45}
+.perkBar{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.perkBadge{display:inline-flex;align-items:center;gap:4px;background:#eef2ff;border:1.5px solid var(--ink);border-radius:8px;padding:4px 7px;font-size:11px;font-weight:800;box-shadow:1.5px 1.5px 0 var(--ink)}
+.card{background:var(--paper);border:var(--border);border-radius:22px;box-shadow:var(--shadow);overflow:hidden;margin:14px 0 16px;animation:cardPop .22s cubic-bezier(.175,.885,.32,1.275)}
+@keyframes cardPop{0%{opacity:0;transform:translateY(12px) scale(.98)}100%{opacity:1;transform:translateY(0) scale(1)}}
+.cardTop{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#dcd4ff;border-bottom:var(--border);padding:11px 14px;font-size:11px;font-weight:900}
+.cardTop.special{background:var(--pink)}
+.cardTop.crisis{background:#ffc9bb}
+.cardTop.rare{background:#f9dd91}
+.cardTop.callback{background:#b7f7df}
+.cardBody{padding:17px 18px 20px}
+.sender{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.avatar{width:54px;height:54px;flex-shrink:0;border:2px solid var(--ink);border-radius:15px;background:var(--yellow);display:grid;place-items:center;font-size:28px;transform:rotate(-5deg)}
+.senderTitle{font-size:15px;font-weight:900}
+.senderType{color:var(--muted);font-size:11px;font-weight:700;margin-top:3px}
+.cardTitle{font-size:21px;line-height:1.25;letter-spacing:0;font-weight:900;margin:0 0 12px}
+.speech{background:#f4f1ff;border:2px solid var(--ink);border-radius:17px 17px 17px 5px;padding:13px 15px;font-size:14.5px;line-height:1.6;font-weight:600;white-space:pre-line}
+.choicesTitle{display:flex;justify-content:space-between;align-items:center;margin:0 0 10px;font-weight:900;font-size:12px}
+.choice{width:100%;text-align:left;background:#fff;border:2px solid var(--ink);border-radius:14px;padding:12px 14px;margin-bottom:9px;box-shadow:3px 3px 0 var(--ink);display:block;transition:transform .12s,box-shadow .12s}
+.choice:nth-of-type(3n+2){background:#f5ffde}
+.choice:nth-of-type(3n+3){background:#fff0f6}
+.choiceLabel{font-weight:900;font-size:14px;line-height:1.4}
+.choiceHint{font-size:11px;color:#54536e;margin-top:5px;font-weight:700;line-height:1.4}
+.footerHelp{text-align:center;margin:12px 0 14px;font-size:11px;color:#6b697d;font-weight:700}
+.resultHeader{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.resultIcon{font-size:30px}
+.resultBody{font-size:14.5px;font-weight:600;line-height:1.6}
+.deltaList{display:flex;flex-wrap:wrap;gap:7px;margin:13px 0}
+.delta{padding:6px 9px;border:2px solid var(--ink);border-radius:9px;background:#f4f1ff;font-weight:800;font-size:12px}
+.delta.good{background:var(--mint)}
+.delta.bad{background:#ffdae2}
+.nextNote{border-left:4px solid var(--purple);padding:9px 11px;background:#eceaff;border-radius:0 9px 9px 0;font-weight:700;font-size:12px;margin:10px 0;line-height:1.45}
+.alertNote{border-left:4px solid var(--red);padding:9px 11px;background:#ffe7ee;border-radius:0 9px 9px 0;font-weight:800;font-size:12px;margin:10px 0;color:#9b1c41;line-height:1.45}
+.divider{border-top:2px dashed #a9a6bc;margin:16px 0}
+.statusBrief{background:#f8f5ff;border:2px dashed #b0a7db;border-radius:12px;padding:11px;font-size:12px;line-height:1.55}
+.summaryGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:14px 0}
+.summaryBox{border:2px solid var(--ink);border-radius:12px;padding:12px;background:#f5f3ff}
+.summaryBox strong{display:block;font-size:20px;font-weight:900}
+.badgeText{background:#e9fcab;border:2px solid var(--ink);border-radius:9px;padding:7px 10px;font-weight:900;display:inline-block;font-size:12px;transform:rotate(-2deg);margin:8px 0 12px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#17172b;color:#fff;padding:10px 16px;border-radius:10px;font-weight:800;font-size:12px;z-index:90;max-width:92%;box-shadow:0 6px 18px rgba(0,0,0,.25);pointer-events:none;animation:cardPop .18s}
+.outline{background:#fff;border:2px solid var(--ink);border-radius:11px;padding:9px 12px;font-weight:800;font-size:12px;box-shadow:2px 2px 0 var(--ink)}
+.outline:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink)}
+.utility{display:flex;justify-content:space-between;align-items:center;gap:7px;margin:13px 0}
+.dialogShade{position:fixed;inset:0;background:#17172bbd;display:grid;place-items:center;padding:18px;z-index:100;backdrop-filter:blur(2px)}
+.dialog{background:var(--paper);border:var(--border);box-shadow:var(--shadow);border-radius:20px;padding:18px;max-width:460px;width:100%;max-height:85dvh;overflow:auto}
+.dialog p{font-size:13px;line-height:1.55}
+.dialog h2{margin-top:0}
+.dialog .secondary{margin-top:8px}
+.privacy{font-size:11px;color:#65617d;text-align:center;margin-top:18px;line-height:1.5}
+.tape{font-size:11px;font-weight:900;background:#fef1bd;border:2px solid var(--ink);transform:rotate(-3deg);display:inline-block;padding:5px 8px;margin-bottom:12px}
+.shake{animation:shake .28s linear 2}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+.dangerPulse{animation:dangerPulse 1.2s infinite;border-color:var(--red)!important}
+@keyframes dangerPulse{0%,100%{box-shadow:0 0 0 0 rgba(233,75,125,0)}50%{box-shadow:0 0 0 4px rgba(233,75,125,.6)}}
+.perkCard{background:#fff;border:2px solid var(--ink);border-radius:13px;padding:12px;margin-bottom:9px;text-align:left;box-shadow:3px 3px 0 var(--ink);display:block;width:100%;transition:transform .12s,box-shadow .12s}
+.perkCard:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
+.perkCardTitle{font-weight:900;font-size:14px;display:flex;align-items:center;gap:6px}
+.perkCardDesc{font-size:11.5px;color:#54536e;margin-top:4px;font-weight:700;line-height:1.45}
+.compendiumGrid{display:grid;grid-template-columns:1fr;gap:7px;margin:12px 0}
+.compCard{border:1.5px solid var(--ink);border-radius:10px;padding:9px;background:#fff;font-size:12px}
+.compCard.locked{background:#f0edf8;color:#85839b;border-style:dashed}
+.compCardHead{display:flex;align-items:center;justify-content:space-between;font-weight:800;margin-bottom:4px}
+.compTag{font-size:9.5px;padding:2px 5px;border-radius:6px;border:1px solid var(--ink);font-weight:800}
+.achGrid{display:grid;grid-template-columns:1fr;gap:7px;margin:12px 0}
+.achItem{display:flex;align-items:center;gap:10px;border:1.5px solid var(--ink);border-radius:10px;padding:9px;background:#fff}
+.achItem.unlocked{background:#f6ffec}
+.achItem.locked{background:#f2eff9;opacity:.65}
+.achIcon{font-size:26px;flex-shrink:0}
+.achName{font-weight:900;font-size:13px}
+.achDesc{font-size:11px;color:#615e75;margin-top:2px;line-height:1.4}
+.scoreRow{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e1deec;font-size:12.5px}
+.scoreRow:last-child{border-bottom:0}
+.scoreRank{width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;display:inline-grid;place-items:center;font-size:11px;font-weight:900;margin-right:6px}
+@media(min-width:640px){.app{padding-top:24px}.panel{padding:24px}.cardBody{padding:22px 24px 26px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+
+.statPills { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 5px; }
+.statPill { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; border: 1px solid var(--ink); background: #fff; box-shadow: 1px 1px 0 var(--ink); }
+.statPill.e { background: #e6fcf0; color: #15693e; }
+.statPill.b { background: #fff2eb; color: #9c3612; }
+.statPill.r { background: #f0edff; color: #4331a8; }
+.statPill.roll { background: #fff9db; color: #7a5800; }
+.statPill.queue { background: #eafaf4; color: #0d5840; border-style: dashed; }
+.choiceTeaser { font-size: 12px; font-weight: 700; color: #4b4863; line-height: 1.45; }
+.hudHighlight { border-color: var(--purple) !important; box-shadow: 0 0 0 3px rgba(105, 87, 236, 0.45), 3px 3px 0 var(--ink) !important; transform: translateY(-3px) scale(1.02); transition: transform 0.15s ease, box-shadow 0.15s ease; }
+
+</style>
+</head>
+<body>
+<div class="app" id="appRoot">
+<header class="top">
+<div class="brand"><span class="brandMark">OS!</span><span>OFFICE SURVIVAL</span></div>
+<div class="topActions">
+<button id="audioToggle" class="miniButton" type="button" title="Bật/Tắt âm thanh" aria-label="Bật hoặc tắt âm thanh">🔊</button>
+<button id="compBtn" class="miniButton" type="button" title="Sổ tay sự kiện">📚 Sổ tay</button>
+<button id="rankBtn" class="miniButton" type="button" title="Bảng kỷ lục">🏆 Kỷ lục</button>
+<button id="help" class="miniButton" type="button" title="Luật chơi">❔</button>
+</div>
+</header>
+<main id="root" aria-live="polite"></main>
+<footer class="privacy">Office Survival v1.0 · Hoàn toàn Offline · Tự lưu trên thiết bị</footer>
+</div>
+<div id="dialogHost"></div>
+<script>
+(()=>{'use strict';
+const TIMES=['09:00','09:45','10:30','11:30','13:30','15:00','16:30','17:59'];
+const KEY='office-survival-v03';
+const KEY_DISCOVERED='office-survival-discovered';
+const KEY_ACHS='office-survival-achs';
+const KEY_SCORES='office-survival-highscores';
+const KEY_MUTED='office-survival-muted';
+
+// ==================== WEB AUDIO SOUND SYSTEM ====================
+const Snd=(()=>{
+  let ctx=null;
+  let muted=localStorage.getItem(KEY_MUTED)==='1';
+  function init(){
+    if(!ctx){
+      const AC=window.AudioContext||window.webkitAudioContext;
+      if(AC)ctx=new AC();
+    }
+    if(ctx&&ctx.state==='suspended')ctx.resume().catch(()=>{});
+  }
+  function tone(freq,type,dur,gStart,gEnd=0.001,delay=0){
+    if(muted)return;
+    try{
+      init();
+      if(!ctx)return;
+      const t=ctx.currentTime+delay;
+      const osc=ctx.createOscillator();
+      const gain=ctx.createGain();
+      osc.type=type;
+      osc.frequency.setValueAtTime(freq,t);
+      gain.gain.setValueAtTime(gStart,t);
+      gain.gain.exponentialRampToValueAtTime(gEnd,t+dur);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t+dur);
+    }catch(_){}
+  }
+  return {
+    isMuted:()=>muted,
+    toggle:()=>{
+      muted=!muted;
+      localStorage.setItem(KEY_MUTED,muted?'1':'0');
+      return muted;
+    },
+    click:()=>{tone(750,'sine',0.04,0.12,0.01);},
+    card:()=>{tone(320,'triangle',0.06,0.1,0.01);tone(480,'triangle',0.07,0.09,0.01,0.03);},
+    success:()=>{tone(523.25,'sine',0.09,0.14,0.01,0);tone(659.25,'sine',0.09,0.14,0.01,0.06);tone(783.99,'sine',0.18,0.16,0.01,0.12);},
+    fail:()=>{tone(240,'sawtooth',0.1,0.14,0.01,0);tone(160,'sawtooth',0.2,0.16,0.01,0.07);},
+    damage:()=>{tone(140,'square',0.16,0.22,0.01,0);tone(80,'sawtooth',0.24,0.24,0.01,0.05);},
+    dayClear:()=>{tone(392,'sine',0.1,0.15,0.01,0);tone(523.25,'sine',0.1,0.15,0.01,0.08);tone(659.25,'sine',0.12,0.18,0.01,0.16);tone(783.99,'triangle',0.32,0.22,0.01,0.25);},
+    over:()=>{tone(329.63,'sawtooth',0.18,0.16,0.01,0);tone(293.66,'sawtooth',0.22,0.16,0.01,0.14);tone(246.94,'sawtooth',0.4,0.18,0.01,0.29);},
+    perk:()=>{tone(440,'triangle',0.09,0.15,0.01,0);tone(554.37,'triangle',0.1,0.16,0.01,0.07);tone(659.25,'sine',0.22,0.18,0.01,0.14);}
+  };
+})();
+
+// ==================== PERKS (PHÚC LỢI CÔNG CỤ) ====================
+const ALL_PERKS=[
+  {id:'headphones',name:'Tai nghe chống ồn',emoji:'🎧',desc:'Giảm 1 năng lượng tiêu hao trong các cuộc họp.'},
+  {id:'thermos',name:'Bình giữ nhiệt 1.5L',emoji:'☕',desc:'Sang ngày mới được hồi thêm +1 Năng lượng (tổng +5).'},
+  {id:'leave_form',name:'Mẫu đơn nghỉ phép',emoji:'📑',desc:'Bảo hiểm: Tự động hoá giải 1 lần khủng hoảng Backlog (giảm 3 việc).'},
+  {id:'sunglasses',name:'Kính râm ngủ gật',emoji:'🕶️',desc:'Bảo hiểm: Miễn nhiễm mất mạng lần đầu tiên khi năng lượng về 0.'},
+  {id:'boba_card',name:'Thẻ tích điểm Phúc Long',emoji:'🧋',desc:'Mỗi lần giảm việc tồn được cộng thêm +5 điểm thưởng.'},
+  {id:'power_strip',name:'Ổ cắm đa năng',emoji:'🔌',desc:'Tăng 15% tỷ lệ thành công của các lựa chọn may rủi 🎲.'},
+  {id:'cactus',name:'Xương rồng để bàn',emoji:'🪴',desc:'Uy tín không bao giờ giảm xuống dưới 1 từ các lựa chọn thông thường.'},
+  {id:'stress_ball',name:'Bóng xả stress',emoji:'🎾',desc:'Mỗi khi gặp thẻ Khủng hoảng, tự động hồi +1 Năng lượng.'}
+];
+
+// ==================== MODIFIERS ====================
+const MODIFIERS=[
+  {id:'normal',name:'BÌNH YÊN GIẢ TẠO',desc:'Không có hiệu ứng đặc biệt. Sự bình yên là đáng nghi.'},
+  {id:'nocoffee',name:'CẤM CÀ PHÊ',desc:'Mọi lần hồi năng lượng từ thẻ bị giảm 1 (không xuống âm).'},
+  {id:'kpi',name:'ĐẠI HỘI KPI',desc:'Mọi lựa chọn tăng việc tồn sẽ cộng thêm 1 việc.'},
+  {id:'bonus',name:'CÔNG TY PHÁT BÁNH',desc:'Lần đầu giải quyết việc tồn trong ngày được +5 điểm thưởng.'},
+  {id:'wifi',name:'WIFI CÓ LINH HỒN',desc:'Cơ hội rút thẻ hiếm tăng đáng kể.'}
+];
+
+// ==================== ACHIEVEMENTS ====================
+const ALL_ACHS=[
+  {id:'day3',name:'Kẻ Sống Sót',desc:'Vượt qua Ngày 3 thành công',icon:'🥉'},
+  {id:'day7',name:'Chiến Thần Deadline',desc:'Vượt qua Ngày 7 thành công',icon:'🥈'},
+  {id:'day10',name:'Bất Tử Văn Phòng',desc:'Vượt qua Ngày 10 thành công',icon:'👑'},
+  {id:'max_rep',name:'Gương Mặt Thương Hiệu',desc:'Đạt tối đa 5 ⭐ Uy tín',icon:'⭐'},
+  {id:'clean_sheet',name:'Bậc Thầy Dọn Dẹp',desc:'Đưa danh sách việc tồn về 0 📋',icon:'🧹'},
+  {id:'crisis_champ',name:'Trâu Bò Vô Địch',desc:'Sống sót qua khủng hoảng kiệt sức',icon:'💪'},
+  {id:'gambler',name:'Bàn Tay Vàng',desc:'Thắng một lựa chọn may rủi 🎲',icon:'🎲'},
+  {id:'perk_buff',name:'Được Công Ty Cưng',desc:'Sở hữu 3 vật phẩm phúc lợi trong 1 run',icon:'🎁'},
+  {id:'scholar',name:'Học Giả Công Sở',desc:'Khám phá từ 30 thẻ sự kiện trở lên',icon:'📚'},
+  {id:'score500',name:'Nhân Viên Tiêu Biểu',desc:'Đạt trên 500 điểm trong một run',icon:'🏆'}
+];
+
+const C={};
+function card(id,type,who,emoji,title,body,choices){C[id]={id,type,who,emoji,title,body,choices};}
+function ch(label,hint,d,message,extra={}){return {label,hint,d,message,...extra};}
+const q=(id,delay)=>({id,delay});
+
+// ==================== 58 CARDS REGISTRATION ====================
+// Regular base cards
+card('urgent','base','Sếp tổng','👔','Cực kỳ đơn giản','"Em làm hộ anh 30 slide trước trưa nhé. Không gấp đâu, chỉ có CEO đang đợi thôi."',[
+ ch('Dạ em nhận ạ!','Làm sếp nở mũi nhưng lịch làm việc toang',{e:-2,b:2,r:1},'Sếp thả tim. Lịch của bạn thả trôi.',{queue:[q('urgent_follow',3)]}),
+ ch('Xin xác nhận ưu tiên','Bảo vệ ranh giới cá nhân, chấp nhận sếp phật ý',{e:-1,b:-1,r:-1},'Sếp trả lời: "Em trưởng thành rồi đó." Bạn chưa biết đây có phải lời khen.',{queue:[q('urgent_negotiated',3)]}),
+ ch('Gửi ảnh mèo thay báo cáo','Canh bạc liều lĩnh: Được khen sáng tạo hoặc ăn biên bản',{},'Bạn gửi một ảnh mèo mặc vest.',{roll:{chance:.5,win:{d:{b:-2,r:1},message:'CEO trả lời: "Thuyết trình rất sáng tạo." Bạn vừa phát minh ra báo cáo bằng mèo.'},lose:{d:{r:-2,b:2},message:'CEO hỏi: "Mèo này có số liệu Q3 không?" Sếp tag cả công ty.'}}})
+]);
+card('printer','base','Máy in tầng 4','🖨️','Máy in đòi quyền công dân','Máy in nhả ra một tờ giấy: "TÔI KHÔNG IN NỮA. TÔI MUỐN THĂNG TIẾN."',[
+ ch('Phong máy in làm trưởng phòng','Tạo ra cấp quản lý vô cơ để xoa dịu cuộc khủng hoảng',{b:1,r:1},'HR cập nhật sơ đồ tổ chức. Bạn vừa tạo ra một cấp quản lý không có linh hồn.',{flag:'printerBoss',queue:[q('printer_promoted',3)]}),
+ ch('Tắt máy rồi bật lại','Chiêu thức kinh điển: Đơn giản nhưng hiệu quả',{e:-1,b:-1},'Máy in quay lại làm việc nhưng giờ biết bạn sợ nó.'),
+ ch('Thương lượng bằng giấy A4','Đàm phán hòa bình với thiết bị văn phòng',{},'Đại diện công đoàn giấy A4 bước vào phòng.',{roll:{chance:.65,win:{d:{e:2,b:-1},message:'Máy in đồng ý đổi một ngày nghỉ lấy 10 tờ A4.'},lose:{d:{e:-2,b:2},message:'Máy in yêu cầu bảo hiểm, lương tháng 13 và một chỗ đậu xe.'}}})
+]);
+card('excel','base','Phòng kế toán','📊','Excel thức tỉnh','File báo cáo của bạn bỗng hiện dòng: =IF(SẾP_TỨC_GIẬN,"CHẠY", "CHẠY_NHANH")',[
+ ch('Sửa công thức cho đàng hoàng','Cặm cụi tìm lỗi tham chiếu vòng để cứu file',{e:-2,b:-2},'Bạn tìm ra lỗi tham chiếu vòng. Excel lặng im như chưa từng biết nói.'),
+ ch('Đổi tên file thành FINAL_v99','Đùn đẩy vấn đề cho tương lai bằng phép thuật đổi tên',{e:1,b:2},'Không ai dám mở bản FINAL_v99 nữa.',{queue:[q('excel_revenge',4)]}),
+ ch('Đề nghị Excel làm CFO','Bổ nhiệm nhân sự mới vào bộ máy lãnh đạo',{r:1,b:1},'CFO mới yêu cầu có ngay một bảng lương cho các hàm SUM.')
+]);
+card('meeting','base','Lịch Outlook','📅','Cuộc họp để lên lịch họp','Bạn nhận lời mời họp dài 90 phút, nội dung: "Thảo luận xem khi nào nên họp."',[
+ ch('Từ chối kèm agenda đề xuất','Bảo vệ ranh giới cá nhân, chấp nhận sếp phật ý',{e:-1,b:-1,r:-1},'Mọi người ghét bạn vì yêu cầu có mục tiêu rõ ràng.'),
+ ch('Tham gia và nói "em đồng ý"','Gật đầu vô thức để cuộc họp nhanh kết thúc',{e:-2,r:1},'Bạn không biết mình vừa đồng ý với cái gì.',{queue:[q('meeting_follow',3)]}),
+ ch('Đặt lịch họp để huỷ họp','Vòng lặp lịch họp: Giải phóng hoặc nhân ba số cuộc họp',{},'Outlook rung lên dữ dội.',{roll:{chance:.45,win:{d:{b:-2,r:1},message:'Vòng lặp lịch họp tự triệt tiêu. Cả công ty được giải thoát.'},lose:{d:{e:-2,b:2},message:'Hệ thống tạo thêm ba cuộc họp tiền-họp.'}}})
+]);
+card('client','base','Khách hàng VIP','📱','Khách đổi yêu cầu lần thứ 17','"Màu tím này hơi tím. Em làm tím kiểu không tím được không?"',[
+ ch('Hỏi mã màu cụ thể','Bảo vệ ranh giới cá nhân, chấp nhận sếp phật ý',{e:-1,b:-1,r:-1},'Khách gửi mã #TÍM_VỪA_VỪA.'),
+ ch('Bảo "Dạ được" trước đã','Uy tín +1 · 📋 +2 · Có hậu quả',{r:1,b:2},'Bạn tự hứa đây là lần cuối hứa suông.',{queue:[q('client_follow',3)]}),
+ ch('Làm hẳn màu trong suốt','🎲 55% khách thích',{},'Bạn gửi bản thiết kế vô hình.',{roll:{chance:.55,win:{d:{b:-2,r:1},message:'Khách gọi đây là đỉnh cao minimalism.'},lose:{d:{b:2,r:-1},message:'Khách hỏi liệu logo cũng có thể vô hình như nhân sự không.'}}})
+]);
+card('coffee','base','Máy cà phê','☕','Cà phê có lời tiên tri','Máy cà phê báo: "Hôm nay bạn sẽ gặp một người có rất nhiều task." Trong phòng chỉ có bạn.',[
+ ch('Uống ngay hai ly','⚡ +3 · 📋 +1',{e:3,b:1},'Bạn tỉnh như sáo. Mắt cũng giật như sáo.',{queue:[q('coffee_follow',3)]}),
+ ch('Bỏ cà phê, làm việc tiếp','Chiêu thức kinh điển: Đơn giản nhưng hiệu quả',{e:-1,b:-1},'Bạn mạnh mẽ vượt qua cám dỗ của hạt cà phê.'),
+ ch('Xin máy cà phê nghỉ phép hộ','🎲 40% thoát việc',{},'Máy cà phê gõ một email đầy caffein.',{roll:{chance:.4,win:{d:{b:-3},message:'HR chấp nhận đơn do máy cà phê gửi. Công ty chưa biết nó không phải người.'},lose:{d:{r:-1,b:1},message:'HR yêu cầu giấy xác nhận hạt cà phê có thẩm quyền.'}}})
+]);
+card('coworker','base','Đồng nghiệp bàn bên','🤓','"Giúp tí thôi"','Bạn được nhờ giúp một việc "5 phút", nhưng file đính kèm nặng 2 GB.',[
+ ch('Giúp đồng nghiệp','⚡ −2 · Uy tín +1 · Có hậu quả',{e:-2,r:1},'Đồng nghiệp cảm động và hứa sẽ trả ơn.',{queue:[q('coworker_help',3)]}),
+ ch('Từ chối lịch sự','📋 −1 · Uy tín −1',{b:-1,r:-1},'Đồng nghiệp bảo bạn "tự lập quá".'),
+ ch('Giao lại việc cho con vịt cao su','⚡ +1 · 📋 +1',{e:1,b:1},'Con vịt được cấp một tài khoản Jira.')
+]);
+card('wifi','base','Bộ phận IT','📡','Wi-Fi xin nghỉ phép','Toàn bộ mạng văn phòng chuyển tên thành "Anh_Em_Dung_Tim_Nhau_Nua".',[
+ ch('Chuyển sang làm offline','⚡ −1 · 📋 −2',{e:-1,b:-2},'Bạn phát hiện máy vẫn có thể làm việc nếu không mở 47 tab.'),
+ ch('Dùng 4G cá nhân cứu công ty','Gật đầu vô thức để cuộc họp nhanh kết thúc',{e:-2,r:1},'Cả phòng gọi bạn là trạm phát sóng sống.'),
+ ch('Mời router tham gia team building','🎲 60% nối lại',{},'Router muốn được lắng nghe.',{roll:{chance:.6,win:{d:{e:2,b:-1},message:'Router thấy mình thuộc về nơi này. Wi-Fi phục hồi.'},lose:{d:{b:2,r:-1},message:'Router bỏ đi cùng máy in.'}}})
+]);
+card('chat','base','Nhóm chat công ty','💬','Sticker nhầm người','Bạn định gửi sticker con gấu ngủ vào nhóm bạn bè nhưng lại gửi vào nhóm có CEO.',[
+ ch('Thu hồi trong 2 giây','⚡ −1 · Uy tín giữ nguyên',{e:-1},'CEO hỏi: "Sao lại thu hồi? Tôi chưa lưu."'),
+ ch('Nói đó là linh vật công ty','Uy tín +1 · Có hậu quả',{r:1},'Phòng Marketing chuẩn bị chiến dịch thương hiệu.',{queue:[q('sticker_viral',4)]}),
+ ch('Thả tiếp 37 sticker','🎲 45% được lên chức',{},'Nhóm chat biến thành vườn thú.',{roll:{chance:.45,win:{d:{r:2,b:-1},message:'CEO đổi ảnh đại diện thành gấu ngủ và ban hành ngày "Không họp thứ Sáu".'},lose:{d:{r:-2,b:1},message:'HR mời bạn giải trình về "hành vi gấu hoá tập thể".'}}})
+]);
+card('deadline','base','Hệ thống task','⏰','Deadline mọc thêm chân','Task ghi hạn thứ Sáu đột nhiên tự chạy về hôm nay.',[
+ ch('Chốt phạm vi, làm phần quan trọng','Cặm cụi tìm lỗi tham chiếu vòng để cứu file',{e:-2,b:-2},'Bạn thắng được deadline trong hiệp một.'),
+ ch('Đổi múi giờ máy tính','⚡ +1 · 📋 +2',{e:1,b:2},'Deadline vẫn tới. Lần này nó nói tiếng Nhật.'),
+ ch('Gửi task đi nghỉ dưỡng','🎲 50% giảm việc',{},'Bạn mua vé đi Đà Lạt cho task.',{roll:{chance:.5,win:{d:{b:-3},message:'Task quyết định nghỉ việc và mở homestay.'},lose:{d:{b:2,e:-1},message:'Task quay về cùng hai task con.'}}})
+]);
+card('payroll','base','Phòng nhân sự','💸','Lương về... bằng điểm kinh nghiệm','HR thông báo tháng này sẽ trả thưởng bằng huy hiệu "Chiến binh công sở cấp S".',[
+ ch('Yêu cầu quy đổi huy hiệu ra tiền','⚡ −1 · Uy tín −1 · 📋 −1',{e:-1,r:-1,b:-1},'HR trả lời: "Em thực dụng quá." Nhưng khối việc đã được xem xét lại.'),
+ ch('Nhận huy hiệu và mỉm cười','Uy tín +1 · ⚡ −1',{r:1,e:-1},'Bạn nhận được huy hiệu làm bằng Excel.'),
+ ch('Dùng huy hiệu mua công ty','🎲 30% mua được ghế CEO',{},'Một cuộc giao dịch siêu thực diễn ra.',{roll:{chance:.3,win:{d:{r:2,b:-3},message:'Bạn mua được quyền tắt thông báo trong 15 phút. Đáng giá.'},lose:{d:{b:2,r:-1},message:'Bạn bị tính thêm phí quản lý huy hiệu.'}}})
+]);
+card('intern','base','Thực tập sinh','🐣','Intern hỏi câu nguy hiểm','"Anh/chị ơi, tại sao mình không xoá hết các task cho đỡ quá tải?"',[
+ ch('Giải thích backlog và độ ưu tiên','⚡ −1 · 📋 −1 · Uy tín +1',{e:-1,b:-1,r:1},'Intern hiểu ra. Một người trẻ được cứu khỏi Jira.'),
+ ch('Cho intern quyền admin','📋 −2 · Có hậu quả',{b:-2},'Tất cả task biến mất. Không ai biết đây có phải chiến thắng.',{queue:[q('intern_admin',3)]}),
+ ch('Mời intern giữ chức CTO','Bổ nhiệm nhân sự mới vào bộ máy lãnh đạo',{r:1,b:1},'Intern đổi toàn bộ mật khẩu thành 1234567.')
+]);
+card('officeplant','base','Cây trầu bà','🪴','Cây cảnh biết đọc KPI','Cây trầu bà ở góc phòng bỗng nộp báo cáo hiệu suất tốt hơn bạn.',[
+ ch('Học cách tập trung của cây','⚡ +1 · 📋 −1',{e:1,b:-1},'Cây dạy bạn phương pháp ngồi yên nhưng có mục đích.'),
+ ch('Đề cử cây làm nhân viên tháng','Uy tín +1 · Có hậu quả',{r:1},'Cây được cấp email nội bộ.',{queue:[q('plant_promoted',3)]}),
+ ch('Nói cây là đối thủ cạnh tranh','⚡ −1 · Uy tín −1',{e:-1,r:-1},'Cây không phản hồi. Chiến tranh lạnh bắt đầu.')
+]);
+card('lunch','base','Căn-tin tầng trệt','🍜','Bữa trưa cuối cùng','Căn-tin chỉ còn một suất cơm. Bảy phòng ban đang đấu thầu.',[
+ ch('Đổi task lấy suất cơm','⚡ +3 · 📋 +1',{e:3,b:1},'Bạn ăn no và được giao thêm một việc vặt.'),
+ ch('Ăn bánh mì đem theo','⚡ +2',{e:2},'Bữa trưa khiêm tốn, tinh thần chiến lược.'),
+ ch('Tổ chức đấu giá bằng KPI','🎲 50% thắng suất cơm',{},'Tất cả bắt đầu tranh luận về KPI của nước mắm.',{roll:{chance:.5,win:{d:{e:4,r:1},message:'Bạn giành được suất cơm và sự kính trọng của căn-tin.'},lose:{d:{e:-1,r:-1},message:'Bạn mất suất cơm và được bổ nhiệm trưởng ban đấu giá.'}}})
+]);
+card('calendar','base','Trợ lý AI nội bộ','🤖','AI đã viết mail thay bạn','AI gửi cho CEO một email 2.000 chữ kết thúc bằng: "Trân trọng, người máy có tâm hồn."',[
+ ch('Thu hồi và viết lại','Gật đầu vô thức để cuộc họp nhanh kết thúc',{e:-2,r:1},'CEO cảm ơn vì email đã ngắn hơn 1.800 chữ.'),
+ ch('Giả vờ AI là nhân sự mới','📋 +1 · Có hậu quả',{b:1},'HR bắt đầu chuẩn bị hợp đồng lao động cho AI.',{queue:[q('ai_contract',3)]}),
+ ch('Yêu cầu AI tự giải thích','🎲 50% giải quyết êm đẹp',{},'AI tạo thêm một email xin lỗi.',{roll:{chance:.5,win:{d:{b:-1,r:1},message:'CEO thích sự trung thực của AI. Bạn được cộng điểm quản lý.'},lose:{d:{r:-2,b:1},message:'AI CC cả công ty vào bản kiểm điểm 13 trang.'}}})
+]);
+card('aircon','base','Điều hoà văn phòng','🥶','Nhiệt độ gây chia rẽ','Một nửa phòng muốn 16°C, nửa còn lại muốn 30°C. Remote nằm trong tay CEO.',[
+ ch('Đề xuất 25°C và làm việc tiếp','Chiêu thức kinh điển: Đơn giản nhưng hiệu quả',{e:-1,b:-1},'Không ai vui. Nghĩa là bạn đã đạt thỏa hiệp.'),
+ ch('Mặc thêm áo khoác','⚡ +1 · Uy tín −1',{e:1,r:-1},'Bạn trông như chuẩn bị đi Bắc Cực, trong mắt CEO.'),
+ ch('Bầu điều hoà làm quản lý','Bổ nhiệm nhân sự mới vào bộ máy lãnh đạo',{r:1,b:1},'Điều hoà lập tức yêu cầu bảng chấm công.')
+]);
+
+// NEW Base Cards
+card('boba','base','Hội mê trà sữa','🧋','Kèo trà sữa 15:00','Đồng nghiệp gọi to: "Ai trà sữa không? 5 ly freeship, ai đứng ra ứng tiền trước lát mọi người bank lại nè!"',[
+ ch('Dạ em ứng tiền trước cho cả phòng!','Tạo ra cấp quản lý vô cơ để xoa dịu cuộc khủng hoảng',{b:1,r:1},'Mọi người tung hô bạn là thiên thần. Ví tiền của bạn khóc thầm.',{queue:[q('boba_debt',3)]}),
+ ch('Em đang cai đường, xin miễn','⚡ −1',{e:-1},'Bạn giữ được ví nhưng nhìn mọi người cắm ống hút lòng quặn thắt.'),
+ ch('Xin sếp tài trợ quỹ gắn kết','🎲 50% sếp duyệt',{},'Bạn tag sếp vào đơn đặt 8 ly full topping.',{roll:{chance:.5,win:{d:{e:2,r:1},message:'Sếp duyệt và khen bạn biết khơi dậy tinh thần đồng đội.'},lose:{d:{r:-1,b:1},message:'Sếp hỏi: "Thế KPI tháng này đã ngọt ngào như trà sữa chưa?"'}}})
+]);
+card('sunday_call','base','Sếp tổng','📱','Tin nhắn lúc 21:00 Chủ Nhật','Màn hình điện thoại sáng lên dòng chữ quen thuộc: "Alo em, rảnh không anh nhờ tí xíu..."',[
+ ch('Xem và trả lời "Dạ em nghe sếp"','⚡ −2 · Uy tín +1 · Có hậu quả',{e:-2,r:1},'Sếp cảm kích vì sự cống hiến không ngừng nghỉ của bạn.',{queue:[q('sunday_task',3)]}),
+ ch('Giả vờ đang ở vùng mất sóng','⚡ +1 · Uy tín −1',{e:1,r:-1},'Bạn bảo vệ được giấc ngủ, nhưng sáng thứ Hai bước vào công ty hơi rụt rè.'),
+ ch('Cài tin nhắn tự động đòi phí ngoài giờ','🎲 40% sếp tưởng bot',{},'Hệ thống tự gửi: "Tin nhắn hỗ trợ ngoài giờ có phí 500k."', {roll:{chance:.4,win:{d:{b:-1,r:1},message:'Sếp tưởng tin nhắn nhà mạng Viettel nên tự giác tắt máy đi ngủ.'},lose:{d:{r:-2,b:2},message:'Sếp chụp màn hình gửi vào nhóm ban giám đốc: "Nhân sự dạo này hài hước quá." Khối lượng việc tăng gấp đôi.'}}})
+]);
+card('salary_review','base','Phòng nhân sự','📈','Đánh giá tăng lương 6 tháng','HR hẹn bạn vào phòng họp kính: "Em hãy chứng minh vì sao công ty nên tăng cho em 5% lương?"',[
+ ch('Thuyết trình slide 40 trang cống hiến','⚡ −2 · Uy tín +1 · Có hậu quả',{e:-2,r:1},'HR ghi nhận bạn là nhân tố cày cuốc gương mẫu.',{queue:[q('salary_outcome',3)]}),
+ ch('Kể khổ tiền trọ tăng, giá xăng tăng','📋 −1 · Uy tín −1',{b:-1,r:-1},'HR mỉm cười: "Công ty là gia đình, đừng quá nặng lòng vì vật chất em nhé."'),
+ ch('Khoe khéo có offer công ty đối thủ','🎲 50% tăng lương khủng',{},'Bạn đặt nhẹ chiếc danh thiếp của đối thủ lên bàn.',{roll:{chance:.5,win:{d:{e:2,r:2,b:-1},message:'Công ty lập tức duyệt tăng 15% để giữ chân người tài!'},lose:{d:{r:-2,b:2},message:'HR chúc em lên đường may mắn và giao thêm 10 task bàn giao gấp.'}}})
+]);
+card('fire_drill','base','Toà nhà văn phòng','🚨','Báo cháy giả tầng 18','Còi báo cháy hú vang trời lúc 14:00. Khói không thấy đâu nhưng cả toà nhà xôn xao.',[
+ ch('Chạy bộ 18 tầng thang thoát hiểm','⚡ −2 · 📋 −1',{e:-2,b:-1},'Chân run lẩy bẩy nhưng an toàn là trên hết. Task tạm thời hoãn lại.'),
+ ch('Ngồi lại ráng lưu nốt file Excel','⚡ −1 · 📋 −2',{e:-1,b:-2},'Đúng là tinh thần thép của dân công sở. Báo cáo hoàn tất.'),
+ ch('Mang theo cây trầu bà và máy in','🎲 50% thành anh hùng',{},'Bạn ôm tài sản chạy xuống sảnh.',{roll:{chance:.5,win:{d:{r:2,e:1},message:'Ban quản lý toà nhà khen ngợi ý thức bảo vệ tài sản công cộng.'},lose:{d:{e:-2,r:-1},message:'Máy in kẹt ở góc cầu thang. Bạn bị bảo vệ lập biên bản cản trở lối thoát.'}}})
+]);
+card('group_drama','base','Hội bồ câu ẩn danh','🦜','Drama bùng nổ trong group kín','Group chat không có sếp bỗng leak ảnh sếp đang ngủ ngáy giữa giờ họp hội đồng.',[
+ ch('Thả icon haha trong vô thức','Uy tín −1 · Có hậu quả',{r:-1},'Bạn lỡ tay bấm thả cảm xúc. Một vết gợn lịch sử.',{queue:[q('group_caught',3)]}),
+ ch('Lặng lẽ out group bảo toàn tính mạng','⚡ −1 · Uy tín +1',{e:-1,r:1},'Đồng nghiệp bảo bạn chảnh, nhưng bạn sống dai nhất toà nhà.'),
+ ch('Đổi chủ đề sang nhắc deadline KPI','📋 +1 · Uy tín +1',{b:1,r:1},'Cả nhóm im bặt. Bạn chính là kẻ dập tắt cuộc vui chuyên nghiệp.')
+]);
+card('blackout','base','Điện lực toà nhà','🕯️','Mất điện đột ngột','Điều hoà tắt phụt. Căn phòng 50 người biến thành lò bánh mì, laptop còn 8% pin.',[
+ ch('Gập máy, chuồn về sớm đi uống bia','⚡ +2 · 📋 +1',{e:2,b:1},'Trời sập cũng không ngăn được bước chân tan ca.'),
+ ch('Cắm sạc dự phòng bật 4G làm tiếp','⚡ −2 · 📋 −2 · Uy tín +1',{e:-2,b:-2,r:1},'Mồ hôi ướt đẫm bàn phím nhưng task vẫn về đích đúng hẹn.'),
+ ch('Tụ tập cả phòng kể chuyện ma','🎲 65% gắn kết',{},'Cả phòng thắp đèn flash điện thoại kể chuyện.',{roll:{chance:.65,win:{d:{e:2,r:1},message:'Không khí gắn kết kỳ lạ. Tinh thần đồng đội lên cao vút.'},lose:{d:{e:-1,r:-1},message:'Đang đến đoạn rùng rợn thì sếp xuất hiện lù lù sau lưng áo.'}}})
+]);
+card('chair_broken','base','Phòng hành chính','🪑','Ghế công thái học Shopee 299k','Công ty vừa trang bị loạt ghế mới. Bạn ngồi xuống thì gãy bánh xe kêu cái "rắc".',[
+ ch('Đứng làm việc như dân Thung Lũng','Chiêu thức kinh điển: Đơn giản nhưng hiệu quả',{e:-1,b:-1},'Cột sống cảm ơn bạn. Bắp chuối thì đang biểu tình.'),
+ ch('Lén tráo ghế với phòng Giám đốc','⚡ +1 · Uy tín −1',{e:1,r:-1},'Ghế da êm ái vô cùng, trừ ánh mắt của chị lao công.'),
+ ch('Lấy băng dính vàng sửa bánh xe','🎲 50% ghế sống lại',{},'Bạn trổ tài kỹ sư cơ khí văn phòng.',{roll:{chance:.5,win:{d:{e:1,b:-1},message:'Ghế vững chãi lạ kỳ. Kỹ năng sinh tồn đạt đỉnh cao.'},lose:{d:{e:-2,b:1},message:'Ghế sụp lần hai. Bạn ngã bật ngửa trước mặt toàn thể đồng nghiệp.'}}})
+]);
+card('teambuilding_beach','base','Công đoàn công ty','🏖️','Teambuilding giữa trưa nắng 39°C','HR cầm loa gào: "12:00 trưa nay cả công ty ra bãi cát kéo co để thể hiện tinh thần máu lửa!"',[
+ ch('Xông pha kéo co hết mình','⚡ −3 · Uy tín +2',{e:-3,r:2},'Bạn cháy hết mình vì màu cờ sắc áo. Da bạn cũng cháy nắng theo.'),
+ ch('Giả say nắng trốn trong phòng máy lạnh','⚡ +2 · Uy tín −1',{e:2,r:-1},'Bạn đánh một giấc ngon lành 3 tiếng giữa trưa hè.'),
+ ch('Đề xuất chơi ma sói trong nhà','🎲 50% được hưởng ứng',{},'Bạn đứng lên phản biện bằng khoa học.',{roll:{chance:.5,win:{d:{e:1,r:1},message:'Cả công ty vỗ tay rầm rộ. Bạn vừa cứu 50 mạng người khỏi say nắng.'},lose:{d:{r:-2,b:1},message:'HR phê bình bạn thiếu tinh thần dấn thân vì tập thể.'}}})
+]);
+card('standup_talkshow','base','Team dự án','🎙️','Daily Standup biến thành Talkshow','Cuộc họp cập nhật tiến độ 15 phút bỗng kéo dài sang tiếng thứ hai với chủ đề "Ý nghĩa cuộc đời".',[
+ ch('Gật đầu chăm chú và ghi chép','Gật đầu vô thức để cuộc họp nhanh kết thúc',{e:-2,r:1},'Sếp rất thích vì thấy bạn biết lắng nghe triết lý kinh doanh.'),
+ ch('Lén mở điện thoại chơi game','⚡ +1 · 📋 +1',{e:1,b:1},'Bạn qua được 3 màn Candy Crush trong im lặng.'),
+ ch('Dũng cảm giơ tay xin chốt to-do list','🎲 60% giải thoát',{},'Bạn cất lời giữa bài diễn thuyết của trưởng nhóm.',{roll:{chance:.6,win:{d:{b:-2,r:1},message:'Cả phòng thở phào nhẹ nhõm. Bạn là vị cứu tinh của buổi sáng.'},lose:{d:{r:-2,b:2},message:'Trưởng nhóm bảo bạn nôn nóng, giao thêm 2 biên bản cuộc họp.'}}})
+]);
+card('keyboard_spill','base','Bàn làm việc','☕','Đổ trà sữa vào bàn phím cơ','Cốc trà sữa nghiêng đổ trúng bàn phím cơ xanh đỏ. Các phím bắt đầu tự nhảy liên tục dòng "ssssssss".',[
+ ch('Rút dây ngay, tháo keycap sấy khô','⚡ −2 · 📋 −1',{e:-2,b:-1},'Bàn phím được cứu sau 40 phút phẫu thuật khẩn cấp.'),
+ ch('Dùng bàn phím dự phòng cùi bắp','⚡ −1 · 📋 +1',{e:-1,b:1},'Bàn phím cao su mờ chữ khiến bạn gõ sai 40% chính tả.'),
+ ch('Bảo khách "sssss" là phong cách mới','🎲 45% khách thích',{},'Email gửi cho đối tác có 40 chữ sssss.',{roll:{chance:.45,win:{d:{r:2,b:-1},message:'Khách khen công ty có phong cách giao tiếp sáng tạo độc lạ!'},lose:{d:{r:-2,b:2},message:'Khách hỏi bạn đang nuôi rắn hổ mang trong văn phòng à?'}}})
+]);
+card('birthday_fund','base','Thủ quỹ văn phòng','🎂','Góp quỹ sinh nhật tháng này','Thủ quỹ ghé bàn: "Tháng này có 6 người sinh nhật, mỗi bạn góp 200k mua quà và bánh kem nhé!"',[
+ ch('Vui vẻ chuyển khoản, ăn bánh trừ cơm','⚡ +1 · 📋 +1',{e:1,b:1},'Đường huyết tăng cao, tạm thời quên đi nỗi đau ví tiền.'),
+ ch('Khai man sinh nhật mình vào tuần sau','Uy tín −1 · Có hậu quả',{r:-1},'Bạn tính kế thu hồi vốn bằng một ngày sinh nhật giả.',{queue:[q('birthday_revival',3)]}),
+ ch('Tặng tranh tự vẽ thay tiền mặt','⚡ −1 · Uy tín +1',{e:-1,r:1},'Bức tranh vẽ sếp được treo ngay lối ra vào phòng họp.')
+]);
+card('boss_singing','base','Quán Karaoke gần công ty','🎤','Sếp rủ đi Karaoke sau giờ làm','Sếp bảo: "Hôm nay ai không đi hát là không tôn trọng tình anh em công ty nhé!"',[
+ ch('Đi quẩy hết mình, vỗ tay sếp hát 10 bài','⚡ −3 · Uy tín +2',{e:-3,r:2},'Sếp xúc động gọi bạn là cánh tay phải đắc lực.'),
+ ch('Nói dối nhà bị ngập nước để về','⚡ +1 · Uy tín −1',{e:1,r:-1},'Bạn thoát được màn tra tấn màng nhĩ, ngủ một giấc đẫy đà.'),
+ ch('Xung phong lên song ca bài tủ với sếp','🎲 55% song kiếm hợp bích',{},'Bạn cầm micro nốt cao.',{roll:{chance:.55,win:{d:{r:2,e:1},message:'Hai thầy trò song ca bùng nổ quán hát! Cả công ty quẩy tưng bừng.'},lose:{d:{r:-2,e:-2},message:'Bạn vô tình giật mic đúng đoạn ngân của sếp. Không khí chùng xuống.'}}})
+]);
+
+// Callbacks
+card('urgent_follow','callback','Sếp tổng','👔','Báo cáo 30 slide quay lại','Sếp hỏi: "Em xong chưa? Anh cần thêm 40 slide phụ lục, nhưng vẫn đúng hạn cũ."',[
+ ch('Chọn 10 slide quan trọng nhất','⚡ −2 · 📋 −2 · Uy tín −1',{e:-2,b:-2,r:-1},'Bạn cứu bản trình bày bằng kỹ năng ưu tiên.'),
+ ch('Bảo đã hoàn thành 110%','📋 +2 · Uy tín +1',{b:2,r:1},'Sếp vui. Calendar âm thầm tạo một cuộc họp kiểm thử.',{queue:[q('boss_audit',3)]})
+]);
+card('urgent_negotiated','callback','Sếp tổng','👔','Cái giá của ranh giới','Sếp gửi một tin: "Anh nghĩ lại rồi, ưu tiên em nói hôm trước rất hợp lý."',[
+ ch('Chốt phạm vi bằng email','⚡ −1 · 📋 −2 · Uy tín +1',{e:-1,b:-2,r:1},'Từ đó, cụm từ "phạm vi công việc" trở thành truyền thuyết.'),
+ ch('Nhận thêm 1 yêu cầu nhỏ','Uy tín +1 · 📋 +2',{r:1,b:2},'Một yêu cầu nhỏ sinh đôi trong Jira.')
+]);
+card('printer_promoted','callback','Trưởng phòng Máy In','🖨️','Máy in mở họp 1:1','Trưởng phòng Máy In yêu cầu bạn trình bày KPI "số tờ được cứu".',[
+ ch('Chuẩn bị báo cáo KPI cho máy','Gật đầu vô thức để cuộc họp nhanh kết thúc',{e:-2,r:1},'Máy in đóng dấu APPROVED bằng mực hồng.',{queue:[q('printer_audit',3)]}),
+ ch('Rút dây nguồn phòng họp','📋 −2 · Uy tín −1',{b:-2,r:-1},'Cuộc họp kết thúc. Bộ phận Pháp chế thiết bị đang điều tra.',{flag:'printerDispute'})
+]);
+card('printer_audit','callback','Ban kiểm toán Máy In','📎','Kiểm toán giấy tờ bất ngờ','Trưởng phòng Máy In phát hiện bạn từng in một mặt và viết email khi chưa xin phép.',[
+ ch('Nộp bản tự kiểm điểm A4','⚡ −1 · Uy tín +1',{e:-1,r:1},'Máy in nức nở in một lá thư tha thứ.'),
+ ch('Tố máy in làm thất thoát mực','🎲 55% lật kèo',{},'Cả văn phòng dõi theo bạn.',{roll:{chance:.55,win:{d:{b:-3,r:1},message:'Máy in xin nghỉ phép. Bạn được ân xá toàn bộ ticket in ấn.'},lose:{d:{b:2,r:-2},message:'Máy in gọi bảo vệ là chiếc máy scan.'}}})
+]);
+card('excel_revenge','callback','File FINAL_v99','📊','Bản FINAL nổi loạn','Có 23 file FINAL mới trong thư mục. Một file tự nhận là file gốc.',[
+ ch('Dọn version, đặt quy tắc đặt tên','Cặm cụi tìm lỗi tham chiếu vòng để cứu file',{e:-2,b:-2},'Công ty bình yên. Trong 4 phút.'),
+ ch('Để Excel tự bầu trưởng file','⚡ +1 · 📋 +2',{e:1,b:2},'FINAL_v99_FINAL_REAL bắt đầu họp hội đồng.')
+]);
+card('meeting_follow','callback','Lịch Outlook','📅','Cái gật đầu định mệnh','Bạn được ghi tên làm chủ trì "Diễn đàn chiến lược thảo luận họp quý".',[
+ ch('Gửi biên bản 3 dòng và huỷ','⚡ −1 · 📋 −2',{e:-1,b:-2},'Ba dòng của bạn giải phóng toàn bộ tầng 7.'),
+ ch('Mở thêm một nhóm điều phối','Uy tín +1 · 📋 +2',{r:1,b:2},'Hội đồng đã bầu ra ban thư ký của ban thư ký.')
+]);
+card('client_follow','callback','Khách hàng VIP','📱','Màu tím phiên bản 18','Khách nhắn: "Em ơi, anh nghĩ màu tím không còn hợp. Đổi sang màu không có màu nhé."',[
+ ch('Chốt lại phạm vi bằng văn bản','⚡ −2 · 📋 −2 · Uy tín −1',{e:-2,b:-2,r:-1},'Khách gọi bạn là người khó tính nhưng chuyên nghiệp.'),
+ ch('Dạ để em thử tiếp ạ','📋 +2 · Uy tín +1',{b:2,r:1},'Ngày mai khách có thể muốn dùng màu của âm thanh.')
+]);
+card('coffee_follow','callback','Máy cà phê','☕','Cà phê đòi tiền bản quyền','Hai ly cà phê sáng nay gửi hóa đơn "Phí tăng năng suất tâm hồn".',[
+ ch('Tự pha, dứt điểm cuộc tranh cãi','Chiêu thức kinh điển: Đơn giản nhưng hiệu quả',{e:-1,b:-1},'Máy cà phê chấp nhận tách khỏi bộ máy kế toán.'),
+ ch('Ký hợp đồng nhượng quyền','⚡ +2 · 📋 +2',{e:2,b:2},'Cà phê cấp thêm năng lượng và 2 nhiệm vụ bán hàng.')
+]);
+card('coworker_help','callback','Đồng nghiệp bàn bên','🤓','Đến lúc trả ơn','Đồng nghiệp bạn từng giúp nói: "Để tui gánh hộ một phần việc cho!"',[
+ ch('Nhờ xử lý hai task khó','📋 −2 · Uy tín +1',{b:-2,r:1},'Đồng nghiệp xử lý gọn. Tình người vẫn còn.'),
+ ch('Cảm ơn, tự làm nốt','Chiêu thức kinh điển: Đơn giản nhưng hiệu quả',{e:-1,b:-1},'Bạn giữ lại niềm vui giải quyết vấn đề.')
+]);
+card('sticker_viral','callback','Phòng Marketing','🐻','Con gấu thành bộ nhận diện','CEO muốn tung merch con gấu ngủ. Bạn bị đưa vào ban chỉ đạo.',[
+ ch('Đưa ra bộ sticker mẫu rồi rút','⚡ −1 · 📋 −2 · Uy tín +1',{e:-1,b:-2,r:1},'Con gấu được bảo vệ bản quyền. Bạn giữ được giờ nghỉ trưa.'),
+ ch('Nhận chức Giám đốc Gấu','📋 +2 · Uy tín +2',{b:2,r:2},'Email của bạn giờ có đuôi @bear.')
+]);
+card('intern_admin','callback','Thực tập sinh','🐣','Toàn bộ task biến mất lần nữa','Intern xóa cả nút "Khôi phục". Công ty vẫn yêu cầu báo cáo tiến độ.',[
+ ch('Phục hồi từ backup','Cặm cụi tìm lỗi tham chiếu vòng để cứu file',{e:-2,b:-2},'Backup cứu bạn. Intern học được giá trị của nút Undo.'),
+ ch('Thông báo đây là chuyển đổi số','Uy tín +1 · 📋 +2',{r:1,b:2},'CEO trình bày case study tại hội thảo. Bạn toát mồ hôi.')
+]);
+card('plant_promoted','callback','Cây trầu bà','🪴','Cây gọi bạn họp hiệu suất','Trưởng nhóm Cây Trầu Bà muốn nâng KPI "số lá xanh/nhân viên".',[
+ ch('Tưới cây, chốt KPI hợp lý','⚡ −1 · 📋 −2',{e:-1,b:-2},'Cây ra lá mới. Bạn giải quyết xong 2 việc.'),
+ ch('Đăng ký thi đua quang hợp','Gật đầu vô thức để cuộc họp nhanh kết thúc',{e:-2,r:1},'Bạn làm việc dưới nắng. Cây rất ấn tượng.')
+]);
+card('ai_contract','callback','Phòng nhân sự','🤖','AI đòi nghỉ phép có lương','HR trình đơn xin nghỉ của AI để "đi tìm bản ngã giữa các token".',[
+ ch('Cho AI nghỉ, viết email thủ công','Chiêu thức kinh điển: Đơn giản nhưng hiệu quả',{e:-1,b:-1},'Bạn hít thở sâu, học lại gõ bàn phím.'),
+ ch('Yêu cầu AI đào tạo nhân sự mới','📋 −2 · Uy tín −1',{b:-2,r:-1},'AI tổ chức khoá học "Làm sao để xin nghỉ phép từ chính mình".')
+]);
+card('boss_audit','callback','Sếp tổng','👔','Kiểm toán 110%','Sếp hỏi báo cáo 110% là 110% của cái gì. Bạn không biết.',[
+ ch('Thành thật nhận thiếu sót','⚡ −1 · Uy tín −1 · 📋 −1',{e:-1,r:-1,b:-1},'Sếp yêu cầu bản gọn hơn. Bạn thở phào.'),
+ ch('Đổi KPI thành 120%','🎲 35% sếp tin',{},'Bạn tăng phần trăm bằng niềm tin.',{roll:{chance:.35,win:{d:{r:2,b:-2},message:'CEO gọi bạn là đại sứ tăng trưởng.'},lose:{d:{r:-2,b:2},message:'Sếp đặt lịch cuộc họp về định nghĩa phần trăm.'}}})
+]);
+
+// NEW Callbacks
+card('boba_debt','callback','Ví tiền của bạn','💸','Nợ trà sữa 3 tuần chưa ai trả','Tin nhắn "Ê mọi người bank lại tiền trà sữa nha" rơi vào hố đen tĩnh lặng của vũ trụ.',[
+ ch('Tag thẳng mặt từng người đòi nợ','Uy tín −1 · 📋 −1',{r:-1,b:-1},'Đồng nghiệp giả vờ bận, nhưng 2 người đã ngậm ngùi chuyển khoản.'),
+ ch('Tự nhủ coi như tiền cúng cô hồn','⚡ −1 · Uy tín +1',{e:-1,r:1},'Tâm bất biến giữa dòng đời vạn biến. Bạn giác ngộ chân lý.')
+]);
+card('sunday_task','callback','Email hộp thư đến','📩','Hậu quả của tin nhắn Chủ Nhật','File "Phụ lục 60 trang" sếp gửi nửa đêm đang nằm chờ bạn xử lý trước 10:00.',[
+ ch('Cày cuốc hết tốc lực','⚡ −3 · 📋 −2 · Uy tín +1',{e:-3,b:-2,r:1},'Báo cáo nộp đúng hạn. Mắt bạn thâm quầng như gấu trúc.'),
+ ch('Nhờ AI viết tóm tắt rồi nộp','🎲 60% sếp không nhận ra',{},'Bạn paste toàn bộ vào AI tạo tóm tắt.',{roll:{chance:.6,win:{d:{b:-2,e:1},message:'Tóm tắt súc tích đến kinh ngạc. Sếp khen tư duy chiến lược.'},lose:{d:{b:2,r:-1},message:'AI để lộ câu: "Là một mô hình AI, tôi thấy báo cáo này quá vô lý." Sếp yêu cầu viết tay.'}}})
+]);
+card('salary_outcome','callback','Phòng nhân sự','💌','Thư thông báo tăng lương','HR gửi thư mật: "Sau khi cân nhắc kỹ lưỡng, công ty quyết định tăng cho em 150.000đ/tháng!"',[
+ ch('Mỉm cười nhận mức tăng 150k','⚡ −1 · Uy tín +1',{e:-1,r:1},'Mỗi ngày bạn được thêm một cốc trà đá vỉa hè. Động lực tràn trề.'),
+ ch('Dùng 150k khao bánh cả phòng','Uy tín +2 · ⚡ −1',{r:2,e:-1},'Cả phòng xúc động trước tấm lòng thảo thơm của bạn.')
+]);
+card('group_caught','callback','Sếp tổng','👀','Sếp phát hiện group chat kín','Sếp gửi thông báo toàn công ty: "Tôi biết các bạn hay thả icon haha sau lưng tôi..."',[
+ ch('Dũng cảm nhận lỗi thay cả nhóm','⚡ −2 · Uy tín +2 · 📋 +1',{e:-2,r:2,b:1},'Cả phòng nợ bạn một món nợ ân tình sâu sắc.'),
+ ch('Đổ lỗi cho bot Nga tấn công mạng','🎲 50% sếp tin',{},'Bạn giải thích đây là lỗi bảo mật mạng.',{roll:{chance:.5,win:{d:{b:-2,r:1},message:'IT xác nhận có dấu hiệu nghẽn mạng. Sếp tha thứ cho tất cả.'},lose:{d:{r:-2,b:2},message:'Sếp mở lịch sử thấy avatar bạn to đùng. Bạn bị trừ điểm thi đua.'}}})
+]);
+card('birthday_revival','callback','Cả phòng làm việc','🎂','Bánh kem báo oán','Cả phòng bất ngờ ùa vào với chiếc bánh kem mừng "sinh nhật giả" của bạn!',[
+ ch('Ăn bánh kem trong sự cắn rứt','⚡ +2 · Uy tín −1',{e:2,r:-1},'Bánh ngọt ngào nhưng lương tâm đắng ngắt. Bạn hứa không lừa ai nữa.'),
+ ch('Thú nhận sự thật và khao lại trà sữa','⚡ −1 · Uy tín +2',{e:-1,r:2},'Mọi người cười bò vì độ lầy lội của bạn. Tình đồng nghiệp gắn kết.')
+]);
+
+// Crisis cards
+card('energy_crisis','crisis','Cơ thể bạn','😵','Não đang cập nhật Windows','Năng lượng quá thấp. Bạn nhìn con trỏ chuột và tưởng nó đang nhìn lại.',[
+ ch('Đứng dậy, nghỉ ngắn','⚡ +3 · 📋 +1',{e:3,b:1},'Bạn được nghỉ. Công việc vẫn chờ đó.'),
+ ch('Cố làm thêm cho xong','Cặm cụi tìm lỗi tham chiếu vòng để cứu file',{e:-2,b:-2},'Bạn cố gắng quá sức. Cơ thể có thể phản đối.')
+]);
+card('backlog_crisis','crisis','Jira','🧨','Backlog sắp lên làm CEO','Danh sách việc tồn dài hơn điều lệ công ty. Nó bắt đầu có ý chí riêng.',[
+ ch('Cắt bỏ task không còn giá trị','⚡ −2 · 📋 −3 · Uy tín −1',{e:-2,b:-3,r:-1},'Có người giận vì ticket của họ bị đóng, nhưng vũ trụ nhẹ hơn.'),
+ ch('Chuyển task cho team tương lai','📋 −2 · Uy tín −2',{b:-2,r:-2},'Bạn cứu hiện tại bằng cách thế chấp tương lai.'),
+ ch('Đổi backlog thành backlog.txt','🎲 50% có hiệu quả',{},'Bạn thử dùng pháp thuật đổi tên.',{roll:{chance:.5,win:{d:{b:-3},message:'Task không tìm thấy đường về. Một chiến thắng đáng ngờ.'},lose:{d:{b:2,e:-1},message:'Backlog.txt tự nhân đôi vì được backup.'}}})
+]);
+card('rep_crisis','crisis','Tin đồn công ty','📣','Uy tín chạm đáy','Có lời đồn bạn đã từ chối một cuộc họp mà chưa gửi ba đơn giải trình.',[
+ ch('Chủ động giải thích và giúp một việc','⚡ −2 · Uy tín +2',{e:-2,r:2},'Mọi người thấy bạn vẫn là con người.'),
+ ch('Mua trà sữa hoà giải','⚡ +1 · Uy tín +1 · 📋 +1',{e:1,r:1,b:1},'Cả phòng tha thứ. Đơn đặt trà sữa trở thành task.')
+]);
+
+// Rare cards
+card('ufo','rare','Người ngoài hành tinh','👽','UFO muốn tuyển bạn','Người ngoài hành tinh đỗ phi thuyền ở bãi xe. Họ đề nghị tuyển bạn vì trái đất đã có nhiều kinh nghiệm chịu đựng.',[
+ ch('Nhận phỏng vấn bằng tiếng Sao Hoả','⚡ +2 · Uy tín −1',{e:2,r:-1},'Họ khen bạn chịu áp lực cao. Bạn vẫn bị bắt quay về làm việc.'),
+ ch('Xin họ bắt cóc backlog','🎲 60% task biến mất',{},'Một tia sáng chiếu vào Jira.',{roll:{chance:.6,win:{d:{b:-3},message:'Phi thuyền chở ba task đi khỏi hệ Mặt Trời.'},lose:{d:{b:2},message:'Người ngoài hành tinh clone task để nghiên cứu.'}}})
+]);
+card('catceo','rare','CEO mới','🐈','CEO là một con mèo','Thông báo nội bộ: "Từ nay CEO sẽ là mèo vì người tiền nhiệm mất ngủ."',[
+ ch('Dâng cá khô để xin giảm task','📋 −2 · Uy tín +1',{b:-2,r:1},'CEO kêu meo. Ban điều hành phiên dịch là "Approved".'),
+ ch('Hỏi về chiến lược 5 năm','⚡ −1 · 📋 +1',{e:-1,b:1},'CEO gạt ly nước xuống đất. Các phòng ban gọi đó là chiến lược tái cấu trúc.')
+]);
+card('timeloop','rare','Đồng hồ chấm công','⌛','Thứ Hai lặp lại 4 lần','Đồng hồ chấm công bảo: "Tôi không công nhận thứ Ba."',[
+ ch('Dùng vòng lặp để xử lý backlog','⚡ −2 · 📋 −3',{e:-2,b:-3},'Bốn bản sao của bạn cùng làm sprint.'),
+ ch('Tận hưởng bốn lần nghỉ trưa','⚡ +3 · 📋 +2',{e:3,b:2},'Bạn ăn bốn bữa cơm nhưng task cũng sinh thêm hai bản.')
+]);
+card('duck','rare','Con vịt cao su','🦆','Con vịt đòi tăng lương','Vịt cao su trên bàn thông báo: "Từ giờ tôi chỉ debug với mức đãi ngộ Senior."',[
+ ch('Công nhận vai trò của vịt','⚡ +2 · Uy tín +1',{e:2,r:1},'Vịt giải quyết vấn đề bằng một tiếng kêu và sự tự tin.'),
+ ch('Đề nghị phỏng vấn coding','🎲 50% bị vịt vượt mặt',{},'Vịt nhìn bạn chằm chằm.',{roll:{chance:.5,win:{d:{b:-2},message:'Vịt tìm ra bug. Bạn vẫn giữ việc làm.'},lose:{d:{r:-1,b:2},message:'Vịt nhận offer Staff Engineer. Bạn được giao viết tài liệu onboarding.'}}})
+]);
+
+// Finale cards
+card('end_normal','finale','Sếp tổng','🌇','17:59 — Em ơi, một chút thôi!','Sếp xuất hiện ngay khi bạn đặt tay lên nút tắt máy. Câu "một chút" dài như vũ trụ.',[
+ ch('Hẹn xử lý vào sáng mai, có ghi chú','Bảo vệ ranh giới cá nhân, chấp nhận sếp phật ý',{e:-1,b:-1,r:-1},'Sếp tiếc nuối nhưng bạn đã giữ được ranh giới.'),
+ ch('Ngồi lại làm đến "một chút"','⚡ −2 · 📋 −2 · Uy tín +1',{e:-2,b:-2,r:1},'Bạn rời công ty lúc trời tối. Chiếc ghế tạm biệt bằng tiếng cót két.')
+]);
+card('end_printer','finale','Trưởng phòng Máy In','🖨️','17:59 — Máy in ký lệnh đuổi việc','Máy in thông báo sẽ sa thải toàn bộ nhân viên không biết in hai mặt.',[
+ ch('Dạy máy in in đảo mặt','Cặm cụi tìm lỗi tham chiếu vòng để cứu file',{e:-2,b:-2},'Trưởng phòng Máy In rơi một giọt mực cảm động.'),
+ ch('Gọi HR hỏi ai ký quyết định này','Uy tín −1 · 📋 −1',{r:-1,b:-1},'HR nhận ra máy in chưa có tư cách ký. Một chiến thắng pháp lý.')
+]);
+card('end_kpi','finale','Phòng KPI','📈','17:59 — Đánh giá hiệu suất phút cuối','Hệ thống hỏi: "Hôm nay bạn đã làm được bao nhiêu việc có thể chứng minh bằng 60 slide?"',[
+ ch('Nộp bảng kết quả ngắn, rõ ràng','⚡ −1 · 📋 −2',{e:-1,b:-2},'Thậm chí KPI cũng phải công nhận kết quả.'),
+ ch('Tạo một dashboard chớp nhoáng','Uy tín +1 · 📋 +2',{r:1,b:2},'Dashboard chạy rất đẹp. Không ai biết nó đo cái gì.')
+]);
+card('end_wfh','finale','Nhân sự','🏢','17:59 — Ngày mai họp toàn công ty','HR gửi lời mời họp 7:00 sáng mai với tiêu đề: "Cùng tạo một môi trường không có họp."',[
+ ch('Đề nghị khảo sát không đồng bộ','Chiêu thức kinh điển: Đơn giản nhưng hiệu quả',{e:-1,b:-1},'Bạn tạm cứu cả công ty khỏi một cuộc họp vô nghĩa.'),
+ ch('Xung phong dẫn chương trình','Uy tín +2 · 📋 +2',{r:2,b:2},'Bạn được giao dẫn thêm một chương trình nữa. Vì bạn nói quá hay.')
+]);
+
+const REG=Object.values(C).filter(x=>x.type==='base').map(x=>x.id);
+const RARE=Object.values(C).filter(x=>x.type==='rare').map(x=>x.id);
+const FIN=Object.values(C).filter(x=>x.type==='finale').map(x=>x.id);
+
+const ROOT=document.getElementById('root'),HOST=document.getElementById('dialogHost'),APPROOT=document.getElementById('appRoot');
+let S=null;
+
+// ==================== HELPER STORAGE FUNCTIONS ====================
+function getDiscovered(){try{return JSON.parse(localStorage.getItem(KEY_DISCOVERED))||[];}catch(_){return[];}}
+function markDiscovered(id){
+  if(!id)return;
+  const list=getDiscovered();
+  if(!list.includes(id)){
+    list.push(id);
+    try{localStorage.setItem(KEY_DISCOVERED,JSON.stringify(list));}catch(_){}
+    if(list.length>=30)unlockAch('scholar');
+  }
+}
+function getAchs(){try{return JSON.parse(localStorage.getItem(KEY_ACHS))||[];}catch(_){return[];}}
+function unlockAch(id){
+  const list=getAchs();
+  if(!list.includes(id)){
+    list.push(id);
+    try{localStorage.setItem(KEY_ACHS,JSON.stringify(list));}catch(_){}
+    const ach=ALL_ACHS.find(a=>a.id===id);
+    if(ach){
+      toast(`🏆 Mở khoá danh hiệu: ${ach.name}!`);
+      Snd.success();
+    }
+  }
+}
+function getHighScores(){try{return JSON.parse(localStorage.getItem(KEY_SCORES))||[];}catch(_){return[];}}
+function saveHighScore(){
+  if(!S||S.score<=0)return;
+  const list=getHighScores();
+  const item={
+    score:S.score,
+    day:S.day,
+    total:S.total,
+    triggerCount:S.triggerCount||0,
+    title:titleEnd(),
+    date:new Date().toLocaleDateString('vi-VN')
+  };
+  list.push(item);
+  list.sort((a,b)=>b.score-a.score||b.day-a.day);
+  const top5=list.slice(0,5);
+  try{localStorage.setItem(KEY_SCORES,JSON.stringify(top5));}catch(_){}
+}
+
+function esc(t){return String(t??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));}
+function safeSave(){if(!S)return;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(_){}}
+function safeLoad(){
+  try{
+    const data=JSON.parse(localStorage.getItem(KEY));
+    if(!data||data.version!==3||!['play','result','day','over'].includes(data.stage))return null;
+    if(!Number.isFinite(data.seed)||!Number.isFinite(data.day)||(!C[data.current]&&data.stage==='play'))return null;
+    if(!Array.isArray(data.perks))data.perks=[];
+    return data;
+  }catch(_){return null;}
+}
+
+// Deterministic non-zero PRNG
+function rnd(){
+  if(!S.seed||S.seed===0)S.seed=(Date.now()>>>0)||123456789;
+  let x=S.seed|0;
+  x^=x<<13;x^=x>>>17;x^=x<<5;
+  S.seed=x>>>0;
+  if(S.seed===0)S.seed=123456789;
+  return S.seed/4294967296;
+}
+function pick(xs){return xs[Math.floor(rnd()*xs.length)];}
+
+function initial(){
+  return {
+    version:3,stage:'play',seed:(Date.now()>>>0)||1,
+    day:1,turn:0,total:0,lives:3,e:8,b:2,r:3,score:0,cleanBonus:0,
+    flag:{},pending:[],seen:{},last:[],current:null,lastResult:null,
+    dailyStart:{lives:3,e:8,b:2,r:3,score:0},
+    modifier:'normal',dayEnd:null,history:[],maxDay:0,triggerCount:0,
+    perks:[],deathReason:''
+  };
+}
+
+function hasPerk(id){return Array.isArray(S?.perks)&&S.perks.includes(id);}
+function mod(){return MODIFIERS.find(m=>m.id===S.modifier)||MODIFIERS[0];}
+
+function chooseCard(){
+  if(S.turn===7){
+    if(S.flag.printerBoss&&S.day>1&&S.total%3===1)return 'end_printer';
+    const a=FIN.filter(x=>x!=='end_printer');
+    return weighted(a);
+  }
+  if(S.turn===0&&S.day===1)return 'urgent';
+  const due=S.pending.filter(x=>x.due<=S.total&&C[x.id]);
+  if(due.length){
+    due.sort((a,b)=>a.due-b.due);
+    const selected=due[0];
+    S.pending.splice(S.pending.indexOf(selected),1);
+    return selected.id;
+  }
+  if((S.e<=2||S.b>=6||S.r<=1)&&rnd()<.54){
+    if(S.e<=2)return 'energy_crisis';
+    if(S.b>=6)return 'backlog_crisis';
+    return 'rep_crisis';
+  }
+  const rareChance=S.modifier==='wifi'?.26:.11;
+  if(S.day>=2&&rnd()<rareChance)return weighted(RARE);
+  return weighted(REG);
+}
+
+function weighted(ids){
+  let recent=S.last.slice(-Math.min(3,Math.max(1,ids.length-1)));
+  let list=ids.filter(id=>!recent.includes(id));
+  if(!list.length)list=ids;
+  const weights=list.map(id=>Math.max(1,8-Math.min(7,(S.seen[id]||0)*3))),sum=weights.reduce((a,b)=>a+b,0);
+  let n=rnd()*sum;
+  for(let i=0;i<list.length;i++){
+    n-=weights[i];
+    if(n<=0)return list[i];
+  }
+  return list[list.length-1];
+}
+
+function prepare(){
+  S.current=chooseCard();
+  markDiscovered(S.current);
+  S.seen[S.current]=(S.seen[S.current]||0)+1;
+  S.last.push(S.current);
+  if(S.last.length>12)S.last.shift();
+  // Stress ball perk effect
+  if(C[S.current]?.type==='crisis'&&hasPerk('stress_ball')){
+    S.e=Math.min(10,S.e+1);
+  }
+  S.stage='play';
+  safeSave();
+  render();
+  Snd.card();
+}
+
+function start(){
+  S=initial();
+  prepare();
+}
+
+function iconFor(k){return {e:'⚡',b:'📋',r:'⭐'}[k]||'';}
+function statLabel(k){return {e:'Năng lượng',b:'Việc tồn',r:'Uy tín'}[k]||k;}
+function statChange(before,after){
+  let ret=[];
+  for(const k of ['e','b','r']){
+    const diff=after[k]-before[k];
+    if(diff)ret.push({name:statLabel(k),label:iconFor(k)+' '+(diff>0?'+':'')+diff,good:k==='b'?diff<0:diff>0});
+  }
+  const dl=S.lives-before.lives;
+  if(dl)ret.push({name:'Mạng',label:'❤️ '+dl,good:dl>0});
+  return ret;
+}
+
+function maybeQueue(items){
+  (items||[]).forEach(x=>{
+    if(C[x.id]&&!S.pending.some(p=>p.id===x.id)){
+      S.pending.push({id:x.id,due:S.total+x.delay});
+    }
+  });
+}
+
+function applyD(d,cardObj){
+  const x={...d};
+  if(S.modifier==='nocoffee'&&x.e>0)x.e=Math.max(0,x.e-1);
+  if(S.modifier==='kpi'&&x.b>0)x.b+=1;
+  // Headphones perk: reduces energy cost in meetings
+  if(hasPerk('headphones')&&x.e<0&&(cardObj?.id?.includes('meeting')||cardObj?.title?.toLowerCase().includes('họp'))){
+    x.e=Math.min(0,x.e+1);
+  }
+  // Cactus perk: protects reputation from hitting 0 in normal choices
+  if(hasPerk('cactus')&&x.r<0&&(S.r+x.r)<1){
+    x.r=Math.max(x.r,1-S.r);
+  }
+  S.e=Math.min(10,S.e+(x.e||0));
+  S.b=Math.max(0,S.b+(x.b||0));
+  S.r=Math.min(5,Math.max(0,S.r+(x.r||0)));
+  return x;
+}
+
+function doChoice(index){
+  if(S.stage!=='play')return;
+  const cardObj=C[S.current],choice=cardObj.choices[index];
+  if(!choice)return;
+
+  // Haptics if available
+  if(navigator.vibrate)navigator.vibrate(35);
+  Snd.click();
+
+  const before={e:S.e,b:S.b,r:S.r,lives:S.lives};
+  let allMessages=[choice.message],queued=[],failureNotes=[];
+  S.total++;S.turn++;S.score+=10;
+
+  if(choice.flag)S.flag[choice.flag]=true;
+  applyD(choice.d||{},cardObj);
+  maybeQueue(choice.queue);
+  if(choice.queue?.length)queued.push('Quyết định này có thể quay lại vào một lượt sau.');
+
+  if(choice.roll){
+    const bonus=hasPerk('power_strip')?0.15:0;
+    const chance=Math.min(0.95,choice.roll.chance+bonus);
+    const win=rnd()<chance;
+    const part=win?choice.roll.win:choice.roll.lose;
+    allMessages.push((win?'✨ THÀNH CÔNG: ':'💥 XUI RỦI: ')+part.message);
+    applyD(part.d||{},cardObj);
+    maybeQueue(part.queue);
+    if(part.queue?.length)queued.push('Một hậu quả mới đã được ghi vào lịch.');
+    if(win){
+      unlockAch('gambler');
+      Snd.success();
+    }else{
+      Snd.fail();
+    }
+  }
+
+  if(cardObj.type==='callback'){S.score+=15;S.triggerCount++;}
+
+  // Backlog reduction rewards
+  const backlogBeforeSafety=S.b;
+  const cleared=Math.max(0,before.b-backlogBeforeSafety);
+  let reward=Math.min(20-S.cleanBonus,cleared*5);
+  if(hasPerk('boba_card')&&cleared>0)reward+=5;
+  if(reward>0){S.score+=reward;S.cleanBonus+=reward;}
+  if(S.modifier==='bonus'&&cleared>0&&!S.flag['bonus_'+S.day]){
+    S.score+=5;S.flag['bonus_'+S.day]=true;
+  }
+
+  // Check achievements
+  if(S.r>=5)unlockAch('max_rep');
+  if(S.b===0)unlockAch('clean_sheet');
+  if(S.score>=500)unlockAch('score500');
+
+  // Crisis / Failure conditions
+  let failures=[];
+  if(S.e<=0){
+    if(hasPerk('sunglasses')){
+      S.perks=S.perks.filter(p=>p!=='sunglasses');
+      S.e=3;
+      failureNotes.push('🕶️ Kính râm ngủ gật phát huy tác dụng! Sếp tưởng bạn đang suy tư sâu sắc. Thoát kiệt sức!');
+    }else{
+      failures.push('Kiệt sức');
+      S.e=3;
+      unlockAch('crisis_champ');
+    }
+  }
+  if(S.b>=8){
+    if(hasPerk('leave_form')){
+      S.perks=S.perks.filter(p=>p!=='leave_form');
+      S.b=Math.max(0,S.b-3);
+      failureNotes.push('📑 Mẫu đơn nghỉ phép tự động kích hoạt! Tránh được khủng hoảng quá tải.');
+    }else{
+      failures.push('Backlog vượt ngưỡng');
+      S.b=5;
+      unlockAch('crisis_champ');
+    }
+  }
+
+  S.lastTurnLostLife=failures.length>0;
+  if(failures.length){
+    S.lives--;
+    Snd.damage();
+    if(navigator.vibrate)navigator.vibrate([80,40,80]);
+    if(APPROOT){
+      APPROOT.classList.remove('shake');
+      void APPROOT.offsetWidth;
+      APPROOT.classList.add('shake');
+    }
+    failureNotes.push('🚨 '+failures.join(' + ')+': mất 1 mạng. Hệ thống đã hỗ trợ phục hồi tạm thời.');
+  }
+
+  if(S.r===0)queued.push('Uy tín đã chạm 0. Nếu không hồi phục trước cuối ngày, bạn sẽ mất 1 mạng.');
+
+  const delta=statChange(before,{e:S.e,b:S.b,r:S.r,lives:S.lives});
+  const fullMessage=allMessages.join('\n\n');
+
+  S.history.unshift({day:S.day,time:TIMES[Math.max(0,S.turn-1)],card:cardObj.title,choice:choice.label});
+  S.history=S.history.slice(0,15);
+
+  if(S.lives<=0){
+    S.stage='over';
+    S.maxDay=S.day;
+    S.deathReason=failures.join(' + ')||'Hết mạng làm việc';
+    S.lastResult={title:cardObj.title,choice:choice.label,message:fullMessage,delta,queued,failureNotes};
+    saveHighScore();
+    safeSave();
+    render();
+    Snd.over();
+    return;
+  }
+
+  S.lastResult={
+    title:cardObj.title,choice:choice.label,message:fullMessage,
+    delta,queued,failureNotes,callback:cardObj.type==='callback',bonus:reward
+  };
+  S.stage='result';
+  safeSave();
+  render();
+}
+
+function proceed(){
+  if(S.stage!=='result')return;
+  Snd.click();
+  if(S.turn>=8)finishDay();
+  else prepare();
+}
+
+function finishDay(){
+  const before={e:S.e,b:S.b,r:S.r,lives:S.lives};
+  let notes=[];
+  if(S.b>=6){S.r=Math.max(0,S.r-1);notes.push('Backlog cao (≥6): uy tín −1.');}
+  if(S.r<=0){
+    if(!S.lastTurnLostLife){
+      S.lives--;
+      notes.push('Uy tín về 0 lúc tổng kết: mất 1 mạng.');
+    }else{
+      notes.push('Uy tín về 0, nhưng lượt cuối đã mất mạng nên không trừ mạng lần thứ hai.');
+    }
+    S.r=2;
+  }
+  S.maxDay=S.day;
+
+  // Day survival achievement
+  if(S.lives>0){
+    S.score+=40;
+    notes.push('Hoàn thành ngày làm việc: +40 điểm.');
+    if(S.day>=3)unlockAch('day3');
+    if(S.day>=7)unlockAch('day7');
+    if(S.day>=10)unlockAch('day10');
+  }
+
+  const breakdown=statChange(before,{e:S.e,b:S.b,r:S.r,lives:S.lives});
+  S.dayEnd={
+    day:S.day,notes,delta:breakdown,daysurvived:S.lives>0,
+    scoreGained:S.score-S.dailyStart.score,callbackCount:S.triggerCount
+  };
+
+  if(S.lives<=0){
+    S.stage='over';
+    S.deathReason='Mất hết uy tín lúc tổng kết ngày';
+    saveHighScore();
+    safeSave();
+    render();
+    Snd.over();
+    return;
+  }
+
+  S.stage='day';
+  safeSave();
+  render();
+  Snd.dayClear();
+}
+
+function pickPerk(perkId){
+  if(!Array.isArray(S.perks))S.perks=[];
+  if(!S.perks.includes(perkId)){
+    S.perks.push(perkId);
+    if(S.perks.length>=3)unlockAch('perk_buff');
+    const p=ALL_PERKS.find(x=>x.id===perkId);
+    toast(`Đã nhận phúc lợi: ${p?.emoji||'🎁'} ${p?.name||perkId}`);
+    Snd.perk();
+  }
+  nextDay();
+}
+
+function nextDay(){
+  if(S.stage!=='day')return;
+  Snd.click();
+  S.day++;
+  S.turn=0;
+  S.lastTurnLostLife=false;
+  S.cleanBonus=0;
+  const energyRecover=hasPerk('thermos')?5:4;
+  S.e=Math.min(10,S.e+energyRecover);
+  S.modifier=S.day<=2?'normal':pick(MODIFIERS).id;
+  S.dailyStart={lives:S.lives,e:S.e,b:S.b,r:S.r,score:S.score};
+  prepare();
+}
+
+function reset(){
+  if(S&&S.stage!=='over'&&!confirm('Chơi lại từ Ngày 1? Tiến trình hiện tại sẽ bị xoá.'))return;
+  start();
+}
+
+function hearts(){
+  return '<span class="heartFull">'+('♥'.repeat(Math.max(0,S.lives)))+'</span><span class="heartEmpty">'+('♡'.repeat(Math.max(0,3-S.lives)))+'</span>';
+}
+function meter(val,max,color){
+  return `<div class="miniBar"><div class="miniBarInner" style="width:${Math.max(0,Math.min(100,val/max*100))}%;background:${color}"></div></div>`;
+}
+
+function hud(){
+  const m=mod();
+  const eDanger=S.e<=2?' dangerPulse':'';
+  const bDanger=S.b>=6?' dangerPulse':'';
+  const rDanger=S.r<=1?' dangerPulse':'';
+
+  const perkBadges=(S.perks||[]).map(pid=>{
+    const p=ALL_PERKS.find(x=>x.id===pid);
+    return p?`<span class="perkBadge" title="${esc(p.desc)}">${p.emoji} ${esc(p.name)}</span>`:'';
+  }).join('');
+
+  return `<div class="screenHeader">
+    <div>
+      <div class="eyebrow">Sinh tồn chốn công sở</div>
+      <div class="dayName">NGÀY ${String(S.day).padStart(2,'0')}</div>
+      <div class="daySub">Lượt ${Math.min(S.turn+1,8)}/8 · Trụ càng lâu điểm càng cao</div>
+    </div>
+    <div class="clock">🕒 ${TIMES[Math.min(S.turn,7)]}</div>
+  </div>
+  <div class="progress" aria-label="Tiến độ trong ngày">
+    <div class="progressFill" style="width:${(S.turn/8)*100}%"></div>
+  </div>
+  <div class="hud">
+    <div class="hudItem">
+      <div class="hudLabel">❤️ Mạng</div>
+      <div class="hudValue">${hearts()}</div>
+      <div class="smallcaps" style="margin-top:7px;color:#6b697d">${S.lives}/3 còn lại</div>
+    </div>
+    <div class="hudItem${eDanger}">
+      <div class="hudLabel">⚡ Năng lượng</div>
+      <div class="hudValue">${S.e}/10</div>
+      ${meter(S.e,10,'#57cfa0')}
+    </div>
+    <div class="hudItem${bDanger}">
+      <div class="hudLabel">📋 Việc tồn</div>
+      <div class="hudValue">${S.b}/8</div>
+      ${meter(S.b,8,'#ff8c69')}
+    </div>
+  </div>
+  <div class="wideStatus">
+    <div class="${rDanger}" style="border-radius:6px;padding:2px 4px;min-width:98px">⭐ Uy tín ${S.r}/5 ${meter(S.r,5,'#a18cf5')}</div>
+    <span>🏆 <b>${S.score.toLocaleString('vi-VN')}</b> điểm</span>
+  </div>
+  ${perkBadges?`<div class="perkBar">${perkBadges}</div>`:''}
+  ${S.day>2?`<div class="modifier">🗓️ MODIFIER: <b>${esc(m.name)}</b> — ${esc(m.desc)}</div>`:''}`;
+}
+
+function welcome(){
+  const topScore=getHighScores()[0];
+  const totalDisc=getDiscovered().length;
+  return `<section class="panel intro">
+    <span class="stamp">PHÒNG HR ĐANG THEO DÕI 👀</span>
+    <div class="emojiLarge" aria-hidden="true">🧑‍💻 💥 🖨️</div>
+    <div class="eyebrow">Game sinh tồn công sở phi lý</div>
+    <h1>ĐI LÀM<br>HAY ĐI<br>SINH TỒN?</h1>
+    <p class="introBlurb">Mục tiêu: Còn thở khi sếp nhắn "em ơi". Sống sót qua các cuộc họp vô nghĩa, máy in nổi loạn và drama trà sữa.</p>
+    <div class="introFeatures">
+      <div class="feature"><span>❤️</span>3 mạng</div>
+      <div class="feature"><span>🃏</span>58 thẻ sự kiện</div>
+      <div class="feature"><span>♾️</span>Vô tận</div>
+    </div>
+    ${topScore?`<p class="note" style="margin-bottom:12px">🏆 Kỷ lục cá nhân: <b>${topScore.score.toLocaleString('vi-VN')} điểm</b> (Ngày ${topScore.day} · ${esc(topScore.title)})</p>`:''}
+    <div class="buttons">
+      <button class="primary" data-act="start">🚀 NHẬN VIỆC NGAY <span>→</span></button>
+      ${safeLoad()?'<button class="secondary" data-act="continue">↩ Tiếp tục run đã lưu</button>':''}
+    </div>
+    <p class="note" style="margin:16px 0 0">Chơi hoàn toàn không cần mạng. Đã khám phá: <b>${totalDisc}/58</b> sự kiện.</p>
+  </section>
+  <p class="footerHelp">Mẹo: Một lựa chọn có lợi trước mắt có thể kéo theo nghiệp quật sau vài lượt.</p>`;
+}
+
+function play(){
+  const x=C[S.current];
+  return `${hud()}
+  <section class="card">
+    <div class="cardTop ${x.type==='finale'?'special':x.type==='crisis'?'crisis':x.type==='callback'?'callback':x.type==='rare'?'rare':''}">
+      <span>${{base:'📨 THẺ SỰ KIỆN',callback:'🔁 NGHIỆP QUẬT',crisis:'🚨 KHỦNG HOẢNG',rare:'✨ SỰ KIỆN HIẾM',finale:'🌆 CHỐT SỔ CUỐI NGÀY'}[x.type]}</span>
+      <span>#${String(S.total+1).padStart(3,'0')}</span>
+    </div>
+    <div class="cardBody">
+      <div class="sender">
+        <div class="avatar">${x.emoji}</div>
+        <div>
+          <div class="senderTitle">${esc(x.who)}</div>
+          <div class="senderType">Vừa gửi một thông điệp định mệnh...</div>
+        </div>
+      </div>
+      <h2 class="cardTitle">${esc(x.title)}</h2>
+      <div class="speech">${esc(x.body)}</div>
+    </div>
+  </section>
+  <div class="choicesTitle">
+    <span>CHỌN CÁCH SỐNG SÓT</span>
+    <span style="color:#77738e">${x.choices.length} phương án</span>
+  </div>
+  <div id="choiceHost">
+    ${x.choices.map((c, i) => {
+    const stats = [];
+    if (c.d?.e || c.roll?.win.d?.e || c.roll?.lose.d?.e) stats.push('e');
+    if (c.d?.b || c.roll?.win.d?.b || c.roll?.lose.d?.b) stats.push('b');
+    if (c.d?.r || c.roll?.win.d?.r || c.roll?.lose.d?.r) stats.push('r');
+
+    const pills = [];
+    if (stats.includes('e')) pills.push('<span class="statPill e">⚡ Năng lượng</span>');
+    if (stats.includes('b')) pills.push('<span class="statPill b">📋 Việc tồn</span>');
+    if (stats.includes('r')) pills.push('<span class="statPill r">⭐ Uy tín</span>');
+    if (c.roll) pills.push('<span class="statPill roll">🎲 May rủi</span>');
+    if (c.queue?.length) pills.push('<span class="statPill queue">⏳ Có hậu quả</span>');
+
+    return `<button type="button" class="choice" data-choice="${i}" data-affects="${stats.join(',')}">
+      <div class="choiceLabel">${String.fromCharCode(65 + i)}. ${esc(c.label)}</div>
+      <div class="choiceHint">
+        <div class="statPills">${pills.join('')}</div>
+        <div class="choiceTeaser">${esc(c.hint)}</div>
+      </div>
+    </button>`;
+  }).join('')}
+  </div>
+  <div class="utility">
+    <span class="note">Rủi ro có 🎲 được báo trước xác suất.</span>
+    <button class="outline" data-act="history">📖 Nhật ký</button>
+  </div>
+  <p class="footerHelp">Bấm phím 1 / 2 / 3 hoặc A / B / C để chọn nhanh</p>`;
+}
+
+function deltas(xs){
+  return xs.length
+    ?`<div class="deltaList">${xs.map(x=>`<span class="delta ${x.good?'good':'bad'}" title="${esc(x.name)}">${esc(x.label)}</span>`).join('')}</div>`
+    :'<p class="note">Chỉ số không đổi.</p>';
+}
+
+function result(){
+  const z=S.lastResult;
+  return `<section class="panel">
+    <div class="tape">BIÊN BẢN SỰ CỐ #${String(S.total).padStart(3,'0')}</div>
+    <div class="resultHeader">
+      <span class="resultIcon">📣</span>
+      <h2 style="margin:0">Chuyện đã xảy ra...</h2>
+    </div>
+    <div class="eyebrow">Bạn chọn: ${esc(z.choice)}</div>
+    <p class="resultBody" style="white-space:pre-line;margin:13px 0">${esc(z.message)}</p>
+    ${deltas(z.delta)}
+    ${(z.failureNotes||[]).map(s=>`<div class="alertNote">${esc(s)}</div>`).join('')}
+    ${z.callback?'<div class="nextNote">🔁 Bạn vừa giải quyết một hậu quả quá khứ: +15 điểm.</div>':''}
+    ${(z.queued||[]).map(s=>`<div class="nextNote">${esc(s)}</div>`).join('')}
+    <div class="divider"></div>
+    <div class="statusBrief">
+      ❤️ ${S.lives}/3 mạng &nbsp; · &nbsp; ⚡ ${S.e}/10 năng lượng &nbsp; · &nbsp; 📋 ${S.b}/8 việc tồn &nbsp; · &nbsp; ⭐ ${S.r}/5 uy tín
+      <div style="margin-top:6px"><b>🏆 ${S.score.toLocaleString('vi-VN')} điểm</b></div>
+    </div>
+    <div style="height:17px"></div>
+    <button class="primary" data-act="proceed">${S.turn>=8?'📋 TỔNG KẾT NGÀY':'➡️ SỰ KIỆN TIẾP THEO'}</button>
+  </section>
+  <button class="secondary" data-act="history">📖 Xem nhật ký sự kiện</button>`;
+}
+
+function day(){
+  const z=S.dayEnd;
+  const ownedPerks=S.perks||[];
+  const availablePerks=ALL_PERKS.filter(p=>!ownedPerks.includes(p.id));
+  let perkChoices=[];
+  if(availablePerks.length){
+    // pick up to 3 random perks to offer
+    const shuffled=[...availablePerks].sort(()=>rnd()-0.5);
+    perkChoices=shuffled.slice(0,3);
+  }
+
+  return `<section class="panel">
+    <div class="eyebrow">ĐÃ QUA 18:00, VẪN CÒN SỐNG</div>
+    <div class="emojiLarge" style="font-size:72px;text-align:center">🏃‍♂️💼</div>
+    <h2>Tan ca thành công.<br>Ngày mai tính tiếp.</h2>
+    <div class="badgeText">🏆 NHÂN VIÊN CHƯA BỊ SA THẢI</div>
+    <div class="summaryGrid">
+      <div class="summaryBox">Đã vượt qua<strong>${S.day} ngày</strong></div>
+      <div class="summaryBox">Điểm run<strong>${S.score.toLocaleString('vi-VN')}</strong></div>
+      <div class="summaryBox">Mạng còn<strong>${S.lives}/3</strong></div>
+      <div class="summaryBox">Việc tồn<strong>${S.b}/8</strong></div>
+    </div>
+    <div class="statusBrief">
+      ${z.notes.map(t=>`<div>• ${esc(t)}</div>`).join('')}
+      <div>• Sang ngày mới: hồi tối đa ${hasPerk('thermos')?'5':'4'} năng lượng.</div>
+    </div>
+    ${perkChoices.length?`
+      <div class="divider"></div>
+      <div class="eyebrow" style="margin-bottom:8px">🎁 PHÚC LỢI CHO NGÀY MAI (CHỌN 1)</div>
+      <div class="perkSelection">
+        ${perkChoices.map(p=>`
+          <button class="perkCard" type="button" data-perk="${esc(p.id)}">
+            <div class="perkCardTitle">${p.emoji} ${esc(p.name)}</div>
+            <div class="perkCardDesc">${esc(p.desc)}</div>
+          </button>
+        `).join('')}
+      </div>
+      <button class="secondary" data-act="nextday" style="margin-top:6px">Bỏ qua & Đi làm ngay ☀️</button>
+    `:`
+      <div style="height:17px"></div>
+      <button class="primary" data-act="nextday">☀️ ĐI LÀM NGÀY TIẾP THEO →</button>
+    `}
+  </section>
+  <button class="secondary" data-act="history">📖 Xem nhật ký run</button>`;
+}
+
+function titleEnd(){
+  if(S.day>=12)return 'HUYỀN THOẠI TĂNG CA';
+  if(S.day>=7)return 'BẤT TỬ VĂN PHÒNG';
+  if(S.day>=4)return 'CỪU CHIẾN CÔNG SỞ';
+  if(S.day>=2)return 'NHÂN VIÊN TIỀM NĂNG';
+  return 'THỰC TẬP SINH CỦA ĐỊNH MỆNH';
+}
+
+function over(){
+  const z=S.lastResult;
+  return `<section class="panel" style="background:#fff0f1">
+    <div class="eyebrow">HỒ SƠ NHÂN SỰ ĐÃ ĐÓNG</div>
+    <div style="font-size:74px;text-align:center;margin:12px 0">💀📎</div>
+    <h1 style="font-size:42px;text-align:center;margin-bottom:8px">GAME<br>OVER!</h1>
+    <div style="text-align:center"><div class="badgeText">${titleEnd()}</div></div>
+    ${S.deathReason?`<div class="alertNote" style="text-align:center"><b>Nguyên nhân thất bại:</b> ${esc(S.deathReason)}</div>`:''}
+    ${z?`<p class="note" style="margin-top:10px">Sự kiện cuối: <b>${esc(z.title)}</b><br>${esc((z.message||'').slice(-220))}</p>`:''}
+    <div class="summaryGrid">
+      <div class="summaryBox">Ngày đạt tới<strong>${S.day}</strong></div>
+      <div class="summaryBox">Điểm cuối<strong>${S.score.toLocaleString('vi-VN')}</strong></div>
+      <div class="summaryBox">Lượt xử lý<strong>${S.total}</strong></div>
+      <div class="summaryBox">Nghiệp đã trả<strong>${S.triggerCount||0}</strong></div>
+    </div>
+    <div class="buttons">
+      <button class="primary" data-act="restart">🔄 ỨNG TUYỂN LẠI TỪ ĐẦU</button>
+      <button class="secondary" data-act="share">📤 Chia sẻ thành tích</button>
+      <button class="secondary" data-act="highscores">🏆 Xem bảng vàng kỷ lục</button>
+      <button class="secondary" data-act="history">📖 Nhật ký tai nạn</button>
+    </div>
+  </section>`;
+}
+
+function render(){
+  // Update sound icon
+  const aBtn=document.getElementById('audioToggle');
+  if(aBtn)aBtn.textContent=Snd.isMuted()?'🔇':'🔊';
+
+  if(!S){ROOT.innerHTML=welcome();return;}
+  ROOT.innerHTML=({play,result,day,over}[S.stage]||welcome)();
+}
+
+function openHelp(){
+  Snd.click();
+  HOST.innerHTML=`<div class="dialogShade" role="presentation">
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <h2 id="helpTitle">📎 Sổ tay nhân viên</h2>
+      <p><b>Mục tiêu:</b> Sống sót càng nhiều ngày càng tốt. Mỗi ngày có 8 sự kiện; sự kiện cuối là lúc 17:59 trước giờ tan tầm.</p>
+      <p><b>❤️ Mạng:</b> Bắt đầu với 3 mạng. Hết mạng là hợp đồng bị chấm dứt (Game Over).</p>
+      <p><b>⚡ Năng lượng:</b> Về 0 mất 1 mạng rồi được cấp cứu hồi 3; sang ngày mới hồi tối đa 4 (hoặc 5 nếu có Bình giữ nhiệt).</p>
+      <p><b>📋 Việc tồn:</b> Chạm 8 mất 1 mạng rồi giảm về 5. Nếu hết ngày còn ≥6, uy tín bị giảm 1.</p>
+      <p><b>⭐ Uy tín:</b> Về 0 ở cuối ngày sẽ mất 1 mạng rồi hồi 2.</p>
+      <p><b>🎁 Phúc lợi (Perks):</b> Hoàn thành mỗi ngày bạn được chọn 1 vật phẩm hỗ trợ mang theo suốt run.</p>
+      <p><b>🔁 Nghiệp quật:</b> Lựa chọn hôm nay có thể là quả đắng (hoặc quả ngọt) vài lượt sau.</p>
+      <p><b>🎲 May rủi:</b> Các lựa chọn có xúc xắc luôn hiển thị tỷ lệ thành công dự kiến.</p>
+      <p><b>🏆 Điểm số:</b> +10/lượt, +40/ngày vượt qua, +5/việc xử lý (tối đa 20 điểm/ngày), +15/hậu quả giải quyết.</p>
+      <button class="secondary" data-act="close">ĐÃ HIỂU — QUAY LẠI GAME</button>
+    </section>
+  </div>`;
+}
+
+function history(){
+  Snd.click();
+  let hist=S?.history||[];
+  HOST.innerHTML=`<div class="dialogShade"><section class="dialog" role="dialog" aria-modal="true">
+    <h2>📖 Nhật ký công sở</h2>
+    <p class="note">15 sự kiện gần nhất trong run này.</p>
+    <div style="border:2px solid var(--ink);border-radius:12px;background:#fff;padding:10px 12px;margin:10px 0;max-height:55vh;overflow:auto">
+      ${hist.length?hist.map(h=>`<div style="font-size:12px;line-height:1.5;padding:7px 0;border-bottom:1px solid #dedce7"><b>Ngày ${h.day} · ${h.time}</b> — ${esc(h.card)}<br><span style="color:#6a6683">↳ ${esc(h.choice)}</span></div>`).join(''):'<p class="note">Chưa có sự kiện nào.</p>'}
+    </div>
+    <button class="secondary" data-act="close">ĐÓNG</button>
+  </section></div>`;
+}
+
+function openCompendium(){
+  Snd.click();
+  const disc=getDiscovered();
+  const allCards=Object.values(C);
+  const total=allCards.length;
+  const count=disc.length;
+
+  HOST.innerHTML=`<div class="dialogShade"><section class="dialog" role="dialog" aria-modal="true">
+    <h2>📚 Sổ tay sự kiện</h2>
+    <p class="note">Đã mở khoá: <b>${count}/${total}</b> thẻ (${Math.round(count/total*100)}%)</p>
+    <div style="max-height:58vh;overflow:auto;padding-right:4px" class="compendiumGrid">
+      ${allCards.map(c=>{
+        const isUnlocked=disc.includes(c.id);
+        const tagMap={base:'Cơ bản',callback:'Nghiệp quật',crisis:'Khủng hoảng',rare:'Hiếm',finale:'Chốt ngày'};
+        if(!isUnlocked){
+          return `<div class="compCard locked">
+            <div class="compCardHead"><span>🔒 ???</span><span class="compTag">${tagMap[c.type]||c.type}</span></div>
+            <div>Sự kiện này chưa xảy ra với bạn...</div>
+          </div>`;
+        }
+        return `<div class="compCard">
+          <div class="compCardHead">
+            <span>${c.emoji} <b>${esc(c.title)}</b></span>
+            <span class="compTag">${tagMap[c.type]||c.type}</span>
+          </div>
+          <div style="color:#65627a;font-size:11px;margin-bottom:3px">Từ: ${esc(c.who)}</div>
+          <div style="font-style:italic;color:#333146">${esc(c.body.slice(0,90))}${c.body.length>90?'...':''}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <button class="secondary" data-act="close" style="margin-top:12px">ĐÓNG</button>
+  </section></div>`;
+}
+
+function openRankings(){
+  Snd.click();
+  const scores=getHighScores();
+  const achs=getAchs();
+  HOST.innerHTML=`<div class="dialogShade"><section class="dialog" role="dialog" aria-modal="true">
+    <h2>🏆 Bảng vàng & Thành tích</h2>
+    
+    <div class="eyebrow" style="margin:12px 0 6px">🏅 TOP 5 RUN XUẤT SẮC NHẤT</div>
+    <div style="border:2px solid var(--ink);border-radius:12px;background:#fff;padding:8px 12px;margin-bottom:14px">
+      ${scores.length?scores.map((s,i)=>`
+        <div class="scoreRow">
+          <div><span class="scoreRank">${i+1}</span><b>${s.score.toLocaleString('vi-VN')} đ</b> · Ngày ${s.day}</div>
+          <div style="font-size:11px;color:#6b6782">${esc(s.date)}</div>
+        </div>
+      `).join(''):'<p class="note">Chưa có kỷ lục nào được ghi nhận.</p>'}
+    </div>
+
+    <div class="eyebrow" style="margin:12px 0 6px">🎖️ HUY HIỆU ĐÃ MỞ KHOÁ (${achs.length}/${ALL_ACHS.length})</div>
+    <div style="max-height:35vh;overflow:auto" class="achGrid">
+      ${ALL_ACHS.map(a=>{
+        const isUnlocked=achs.includes(a.id);
+        return `<div class="achItem ${isUnlocked?'unlocked':'locked'}">
+          <div class="achIcon">${a.icon}</div>
+          <div>
+            <div class="achName">${esc(a.name)} ${isUnlocked?'✓':''}</div>
+            <div class="achDesc">${esc(a.desc)}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <button class="secondary" data-act="close" style="margin-top:14px">ĐÓNG</button>
+  </section></div>`;
+}
+
+function toast(s){
+  const t=document.createElement('div');
+  t.className='toast';
+  t.textContent=s;
+  document.body.append(t);
+  setTimeout(()=>t.remove(),2400);
+}
+
+function share(){
+  const msg=`Tui sống sót đến Ngày ${S.day} trong OFFICE SURVIVAL 🧑‍💻💥\n🏆 ${S.score.toLocaleString('vi-VN')} điểm | 🃏 ${S.total} sự kiện | 🔁 ${S.triggerCount||0} lần nghiệp quật\nDanh hiệu: ${titleEnd()}`;
+  if(navigator.share){
+    navigator.share({title:'Office Survival',text:msg}).catch(()=>{});
+  }else if(navigator.clipboard){
+    navigator.clipboard.writeText(msg).then(()=>toast('Đã sao chép kết quả vào bộ nhớ tạm!')).catch(()=>toast('Không thể sao chép trên trình duyệt này.'));
+  }else toast('Chia sẻ không khả dụng trên trình duyệt này.');
+}
+
+// ==================== EVENT LISTENERS ====================
+document.addEventListener('click',ev=>{
+  const btn=ev.target.closest('[data-act],[data-choice],[data-perk]');
+  if(!btn)return;
+
+  const perkId=btn.getAttribute('data-perk');
+  if(perkId){
+    pickPerk(perkId);
+    return;
+  }
+
+  const choice=btn.getAttribute('data-choice');
+  if(choice!==null){
+    doChoice(+choice);
+    return;
+  }
+
+  switch(btn.dataset.act){
+    case'start':
+      if(safeLoad()&&!confirm('Bắt đầu run mới? Tiến trình cũ sẽ bị thay thế.'))return;
+      Snd.click();
+      start();
+      break;
+    case'continue':
+      S=safeLoad();
+      Snd.click();
+      if(S)render();else start();
+      break;
+    case'proceed':proceed();break;
+    case'nextday':nextDay();break;
+    case'restart':Snd.click();reset();break;
+    case'history':history();break;
+    case'highscores':openRankings();break;
+    case'close':
+      Snd.click();
+      HOST.innerHTML='';
+      break;
+    case'share':share();break;
+  }
+});
+
+document.getElementById('audioToggle').addEventListener('click',()=>{
+  const isMuted=Snd.toggle();
+  document.getElementById('audioToggle').textContent=isMuted?'🔇':'🔊';
+  toast(isMuted?'Đã tắt âm thanh':'Đã bật âm thanh');
+});
+document.getElementById('compBtn').addEventListener('click',openCompendium);
+document.getElementById('rankBtn').addEventListener('click',openRankings);
+document.getElementById('help').addEventListener('click',openHelp);
+
+document.addEventListener('keydown',e=>{
+  if(HOST.innerHTML){
+    if(e.key==='Escape')HOST.innerHTML='';
+    return;
+  }
+  const key=e.key.toLowerCase();
+  if(S?.stage==='play'){
+    if(/^[123]$/.test(key))doChoice(Number(key)-1);
+    else if(key==='a')doChoice(0);
+    else if(key==='b')doChoice(1);
+    else if(key==='c')doChoice(2);
+  }else if((e.key==='Enter'||e.key===' ')&&S?.stage==='result'){
+    e.preventDefault();
+    proceed();
+  }else if((e.key==='Enter'||e.key===' ')&&S?.stage==='day'){
+    e.preventDefault();
+    nextDay();
+  }
+  if(key==='h'&&!HOST.innerHTML)history();
+  if(key==='m'){
+    const isMuted=Snd.toggle();
+    document.getElementById('audioToggle').textContent=isMuted?'🔇':'🔊';
+    toast(isMuted?'Đã tắt âm thanh':'Đã bật âm thanh');
+  }
+});
+
+if(safeLoad()){S=safeLoad();render();}else render();
+
+window.OfficeSurvivalTest={
+  getState:()=>structuredClone(S),
+  setState:(s)=>{S=s;render();},
+  getCards:()=>C,
+  getPerks:()=>ALL_PERKS,
+  newRun:start,
+  choose:doChoice,
+  next:proceed,
+  finishDay,
+  nextDay,
+  pickPerk,
+  openCompendium,
+  openRankings
+};
+})();
+</script>
+</body>
+</html>
