@@ -171,11 +171,11 @@ export class GameEngine {
   }
 
   titleEnd(): string {
-    if (this.state.day >= 12) return 'HUYỀN THOẠI TĂNG CA';
-    if (this.state.day >= 7) return 'BẤT TỬ VĂN PHÒNG';
-    if (this.state.day >= 4) return 'CỪU CHIẾN CÔNG SỞ';
-    if (this.state.day >= 2) return 'NHÂN VIÊN TIỀM NĂNG';
-    return 'THỰC TẬP SINH CỦA ĐỊNH MỆNH';
+    if (this.state.day >= 12) return 'BÀ TRÙM MERCHANDISER QUỐC TẾ';
+    if (this.state.day >= 7) return 'CHIẾN THẦN CẢNG BIỂN CÁT LÁI';
+    if (this.state.day >= 4) return 'CHUYÊN VIÊN XỬ LÝ LỆCH TỒN KHO';
+    if (this.state.day >= 2) return 'THỰC TẬP SINH ĐO THƯỚC DÂY';
+    return 'TÂN BINH HỌC VIỆC XUẤT NHẬP KHẨU';
   }
 
   doChoice(index: number): void {

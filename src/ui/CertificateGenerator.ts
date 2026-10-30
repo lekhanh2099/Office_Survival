@@ -103,15 +103,15 @@ export function renderCertificateToCanvas(
   // 3. Document Title
   const isDead = state.lives <= 0;
   ctx.fillStyle = isDead ? '#dc2626' : '#15803d';
-  ctx.font = '900 34px Nunito, sans-serif';
-  ctx.fillText(isDead ? 'QUYẾT ĐỊNH CHO THÔI VIỆC' : 'CHỨNG NHẬN CHIẾN THẦN CÔNG SỞ', W / 2, 172);
+  ctx.font = '900 32px Nunito, sans-serif';
+  ctx.fillText(isDead ? 'BIÊN BẢN SA THẢI & ĐỀN HÀNG' : 'CHỨNG NHẬN CHIẾN THẦN XUẤT NHẬP KHẨU', W / 2, 172);
 
   ctx.fillStyle = '#5c5875';
-  ctx.font = 'bold 14px Nunito, sans-serif';
+  ctx.font = 'bold 13.5px Nunito, sans-serif';
   ctx.fillText(
     isDead
-      ? '(V/v: Chấm dứt hợp đồng lao động và giải phóng một tâm hồn mệt mỏi)'
-      : '(V/v: Tuyên dương nhân sự bất tử đã sống sót qua bão táp công sở)',
+      ? '(V/v: Chấm dứt hợp đồng vì rớt tàu Cát Lái & lệch tồn kho vải)'
+      : '(V/v: Tuyên dương nhân sự bất tử đã sống sót qua mùa bão cước tàu & audit)',
     W / 2,
     198
   );
@@ -264,9 +264,9 @@ export function renderCertificateToCanvas(
 
   ctx.textAlign = 'center';
   ctx.fillStyle = '#dc2626';
-  ctx.font = '900 11px Nunito, sans-serif';
-  ctx.fillText('★ CÔNG TY TNHH HẾT HƠI ★', 0, -18);
-  ctx.font = '900 22px Nunito, sans-serif';
+  ctx.font = '900 10.5px Nunito, sans-serif';
+  ctx.fillText('★ TẬP ĐOÀN DỆT MAY & XNK HẾT HƠI ★', 0, -18);
+  ctx.font = '900 21px Nunito, sans-serif';
   ctx.fillText(isDead ? 'ĐÃ SA THẢI' : 'CHIẾN THẦN', 0, 10);
   ctx.font = 'bold 10px monospace';
   ctx.fillText(new Date().toLocaleDateString('vi-VN'), 0, 26);

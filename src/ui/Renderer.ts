@@ -77,11 +77,11 @@ export function renderWelcome(): string {
   const totalDisc = getDiscoveredCards().length;
 
   return `<section class="panel intro">
-    <span class="stamp">PHÒNG HR ĐANG THEO DÕI 👀</span>
-    <div class="emojiLarge" aria-hidden="true">🧑‍💻 💥 🖨️</div>
-    <div class="eyebrow">Game sinh tồn công sở phi lý</div>
+    <span class="stamp">BUYER ĐANG THEO DÕI 👀</span>
+    <div class="emojiLarge" aria-hidden="true">🧵 🚢 📦</div>
+    <div class="eyebrow">Sinh Tồn Ngành Dệt May &amp; Xuất Nhập Khẩu</div>
     <h1>ĐI LÀM<br>HAY ĐI<br>SINH TỒN?</h1>
-    <p class="introBlurb">Mục tiêu: Còn thở khi sếp nhắn "em ơi". Sống sót qua các cuộc họp vô nghĩa, máy in nổi loạn và drama trà sữa.</p>
+    <p class="introBlurb">Mục tiêu: Còn thở khi Buyer New York nhắn tin. Sống sót qua kiếp nạn lệch màu Lab-dip, kẹt xe cảng Cát Lái, lệch tồn kho vải và bóng ma đền hàng Air.</p>
     <div class="introFeatures">
       <div class="feature"><span>❤️</span>3 mạng</div>
       <div class="feature"><span>🎭</span>4 Class nghề</div>
@@ -233,11 +233,11 @@ export function renderGameOver(state: GameState): string {
   const z = state.lastResult;
 
   function titleEnd() {
-    if (state.day >= 12) return 'HUYỀN THOẠI TĂNG CA';
-    if (state.day >= 7) return 'BẤT TỬ VĂN PHÒNG';
-    if (state.day >= 4) return 'CỪU CHIẾN CÔNG SỞ';
-    if (state.day >= 2) return 'NHÂN VIÊN TIỀM NĂNG';
-    return 'THỰC TẬP SINH CỦA ĐỊNH MỆNH';
+    if (state.day >= 12) return 'BÀ TRÙM MERCHANDISER QUỐC TẾ';
+    if (state.day >= 7) return 'CHIẾN THẦN CẢNG BIỂN CÁT LÁI';
+    if (state.day >= 4) return 'CHUYÊN VIÊN XỬ LÝ LỆCH TỒN KHO';
+    if (state.day >= 2) return 'THỰC TẬP SINH ĐO THƯỚC DÂY';
+    return 'TÂN BINH HỌC VIỆC XUẤT NHẬP KHẨU';
   }
 
   return `<section class="panel" style="background:#fff0f1">

@@ -12,577 +12,360 @@ function addCard(id: string, type: Card['type'], who: string, emoji: string, tit
   CARDS[id] = { id, type, who, emoji, title, body, choices };
 }
 
-// ==================== BASE CARDS ====================
-addCard('urgent', 'base', 'Sếp tổng', '👔', 'Cực kỳ đơn giản', '"Em làm hộ anh 30 slide trước trưa nhé. Không gấp đâu, chỉ có CEO đang đợi thôi."', [
-  ch('Dạ em nhận ạ!', 'Làm sếp nở mũi nhưng lịch làm việc toang', { e: -2, b: 2, r: 1 }, 'Sếp thả tim. Lịch của bạn thả trôi.', { queue: [q('urgent_follow', 3)] }),
-  ch('Xin xác nhận ưu tiên', 'Bảo vệ ranh giới cá nhân, chấp nhận sếp phật ý', { e: -1, b: -1, r: -1 }, 'Sếp trả lời: "Em trưởng thành rồi đó." Bạn chưa biết đây có phải lời khen.', { queue: [q('urgent_negotiated', 3)] }),
-  ch('Gửi ảnh mèo thay báo cáo', 'Canh bạc liều lĩnh: Được khen sáng tạo hoặc ăn biên bản', {}, 'Bạn gửi một ảnh mèo mặc vest.', {
-    roll: {
-      chance: 0.5,
-      win: { d: { b: -2, r: 1 }, message: 'CEO trả lời: "Thuyết trình rất sáng tạo." Bạn vừa phát minh ra báo cáo bằng mèo.' },
-      lose: { d: { r: -2, b: 2 }, message: 'CEO hỏi: "Mèo này có số liệu Q3 không?" Sếp tag cả công ty.' }
-    }
-  })
-]);
+// ==================== BASE CARDS (KIẾP NẠN DỆT MAY & XNK) ====================
 
-addCard('printer', 'base', 'Máy in tầng 4', '🖨️', 'Máy in đòi quyền công dân', 'Máy in nhả ra một tờ giấy: "TÔI KHÔNG IN NỮA. TÔI MUỐN THĂNG TIẾN."', [
-  ch('Phong máy in làm trưởng phòng', 'Tạo ra cấp quản lý vô cơ để xoa dịu cuộc khủng hoảng', { b: 1, r: 1 }, 'HR cập nhật sơ đồ tổ chức. Bạn vừa tạo ra một cấp quản lý không có linh hồn.', { flag: 'printerBoss', queue: [q('printer_promoted', 3)] }),
-  ch('Tắt máy rồi bật lại', 'Chiêu thức IT kinh điển: Đơn giản nhưng hiệu quả', { e: -1, b: -1 }, 'Máy in quay lại làm việc nhưng giờ biết bạn sợ nó.'),
-  ch('Thương lượng bằng giấy A4', 'Đàm phán hòa bình với thiết bị văn phòng', {}, 'Đại diện công đoàn giấy A4 bước vào phòng.', {
-    roll: {
-      chance: 0.65,
-      win: { d: { e: 2, b: -1 }, message: 'Máy in đồng ý đổi một ngày nghỉ lấy 10 tờ A4.' },
-      lose: { d: { e: -2, b: 2 }, message: 'Máy in yêu cầu bảo hiểm, lương tháng 13 và một chỗ đậu xe.' }
-    }
-  })
-]);
-
-addCard('excel', 'base', 'Phòng kế toán', '📊', 'Excel thức tỉnh', 'File báo cáo của bạn bỗng hiện dòng: =IF(SẾP_TỨC_GIẬN,"CHẠY", "CHẠY_NHANH")', [
-  ch('Sửa công thức cho đàng hoàng', 'Cặm cụi tìm lỗi tham chiếu vòng để cứu file', { e: -2, b: -2 }, 'Bạn tìm ra lỗi tham chiếu vòng. Excel lặng im như chưa từng biết nói.'),
-  ch('Đổi tên file thành FINAL_v99', 'Đùn đẩy vấn đề cho tương lai bằng phép thuật đổi tên', { e: 1, b: 2 }, 'Không ai dám mở bản FINAL_v99 nữa.', { queue: [q('excel_revenge', 4)] }),
-  ch('Đề nghị Excel làm CFO', 'Bổ nhiệm Excel làm lãnh đạo tài chính', { r: 1, b: 1 }, 'CFO mới yêu cầu có ngay một bảng lương cho các hàm SUM.')
-]);
-
-addCard('meeting', 'base', 'Lịch Outlook', '📅', 'Cuộc họp để lên lịch họp', 'Bạn nhận lời mời họp dài 90 phút, nội dung: "Thảo luận xem khi nào nên họp."', [
-  ch('Từ chối kèm agenda đề xuất', 'Đòi hỏi mục tiêu rõ ràng, tự biến mình thành kẻ khó tính', { e: -1, b: -1, r: -1 }, 'Mọi người ghét bạn vì yêu cầu có mục tiêu rõ ràng.'),
-  ch('Tham gia và nói "em đồng ý"', 'Gật đầu vô thức để cuộc họp nhanh kết thúc', { e: -2, r: 1 }, 'Bạn không biết mình vừa đồng ý với cái gì.', { queue: [q('meeting_follow', 3)] }),
-  ch('Đặt lịch họp để huỷ họp', 'Vòng lặp lịch họp: Giải phóng hoặc nhân ba số cuộc họp', {}, 'Outlook rung lên dữ dội.', {
-    roll: {
-      chance: 0.45,
-      win: { d: { b: -2, r: 1 }, message: 'Vòng lặp lịch họp tự triệt tiêu. Cả công ty được giải thoát.' },
-      lose: { d: { e: -2, b: 2 }, message: 'Hệ thống tạo thêm ba cuộc họp tiền-họp.' }
-    }
-  })
-]);
-
-addCard('client', 'base', 'Khách hàng VIP', '📱', 'Khách đổi yêu cầu lần thứ 17', '"Màu tím này hơi tím. Em làm tím kiểu không tím được không?"', [
-  ch('Hỏi mã màu cụ thể', 'Đòi mã màu chuẩn xác, khách sẽ thấy bạn hơi cứng nhắc', { e: -1, b: -1, r: -1 }, 'Khách gửi mã #TÍM_VỪA_VỪA.'),
-  ch('Bảo "Dạ được" trước đã', 'Nhận lời trước rồi tính sau, tương lai sẽ trả giá', { r: 1, b: 2 }, 'Bạn tự hứa đây là lần cuối hứa suông.', { queue: [q('client_follow', 3)] }),
-  ch('Làm hẳn màu trong suốt', 'Gửi bản thiết kế vô hình: Đỉnh cao hoặc ra đường', {}, 'Bạn gửi bản thiết kế vô hình.', {
+addCard('urgent', 'base', 'Buyer New York', '🇺🇸👔', 'Lab-dip lệch màu 0.02', 'Mr. David gửi email khẩn: "Màu Navy Blue này hơi nhiều ánh đỏ dưới ánh đèn D65. Nhuộm lại lab-dip lần 9 gửi DHL sang New York trước trưa mai nhé em."', [
+  ch('Dạ vâng, em cho nhuộm test lại ngay!', 'Ép phòng lab làm xuyên đêm, bảo vệ uy tín với Buyer', { e: -2, b: 2, r: 1 }, 'Phòng lab thức trắng đêm. Mắt bạn thâm quầng như gấu trúc.', { queue: [q('lab_dip_follow', 3)] }),
+  ch('Gửi phổ quang chứng minh đạt chuẩn', 'Giải thích dung sai màu Delta E < 0.5 là đạt chuẩn quốc tế', { e: -1, b: -1, r: -1 }, 'David nhắn lại: "You are tough." Bạn chưa biết đây là khen hay chuẩn bị huỷ đơn.', { queue: [q('lab_dip_negotiated', 3)] }),
+  ch('Đổi bóng đèn phòng test màu', 'Canh bạc đổi đèn: Đổi từ D65 sang bóng đèn vàng dây tóc', {}, 'Bạn chụp ảnh mẫu dưới ánh đèn vàng ấm cúng.', {
     roll: {
       chance: 0.55,
-      win: { d: { b: -2, r: 1 }, message: 'Khách gọi đây là đỉnh cao minimalism.' },
-      lose: { d: { b: 2, r: -1 }, message: 'Khách hỏi liệu logo cũng có thể vô hình như nhân sự không.' }
+      win: { d: { b: -2, r: 1 }, message: 'David xem ảnh gật đầu: "Perfect Navy!" Bạn vừa phát minh ra thuật thôi miên màu sắc.' },
+      lose: { d: { r: -2, b: 2 }, message: 'David phát hiện bóng đèn vàng. Ông CC Giám đốc chuỗi cung ứng vào mắng te tua.' }
     }
   })
 ]);
 
-addCard('coffee', 'base', 'Máy cà phê', '☕', 'Cà phê có lời tiên tri', 'Máy cà phê báo: "Hôm nay bạn sẽ gặp một người có rất nhiều task." Trong phòng chỉ có bạn.', [
-  ch('Uống ngay hai ly', 'Nạp caffein liều cao để chạy deadline tốc độ', { e: 3, b: 1 }, 'Bạn tỉnh như sáo. Mắt cũng giật như sáo.', { queue: [q('coffee_follow', 3)] }),
-  ch('Bỏ cà phê, làm việc tiếp', 'Từ chối cám dỗ, làm việc bằng ý chí thuần khiết', { e: -1, b: -1 }, 'Bạn mạnh mẽ vượt qua cám dỗ của hạt cà phê.'),
-  ch('Xin máy cà phê nghỉ phép hộ', 'Nhờ máy cà phê gửi đơn xin nghỉ phép hộ', {}, 'Máy cà phê gõ một email đầy caffein.', {
+addCard('cat_lai_cutoff', 'base', 'Đại lý Cảng Biển', '🚢⚓', 'Đua Cut-off Cảng Cát Lái', '16:15 chiều, cont 40HQ chứa 30.000 áo polo kẹt cứng ở chân cầu Phú Mỹ. Cut-off time hạ bãi của cảng Cát Lái là đúng 17:00!', [
+  ch('Bơm "tiền bồi dưỡng" bác tài ép ga', 'Ủng hộ bác tài lách làn khẩn cấp vào cảng', { e: -2, b: -1, r: 1 }, 'Bác tài đạp ga như phim Fast & Furious. Cont vào bãi lúc 16:58!', { queue: [q('cat_lai_follow', 3)] }),
+  ch('Cầu cứu hãng tàu gia hạn Closing Time', 'Hạ mình nài nỉ xin hãng tàu dời giờ cắt máng thêm 1 tiếng', { e: -1, r: -1 }, 'Nhân viên hãng tàu thở dài: "Chỉ lần này thôi đấy nhé."', { queue: [q('cat_lai_negotiated', 3)] }),
+  ch('Cắm mắt ngồi khấn Tổ nghề Logistics', 'Canh bạc tâm linh: Cầu cho hệ thống quét mã vạch cảng bị lag', {}, 'Bạn thắp nén nhang muỗi cầu may.', {
+    roll: {
+      chance: 0.5,
+      win: { d: { e: 1, b: -2, r: 1 }, message: 'Cổng cảng bị sập mạng 2 tiếng! Toàn bộ xe được gia hạn hạ bãi tự do.' },
+      lose: { d: { e: -2, b: 3, r: -2 }, message: 'Trễ đúng 3 phút! Cont bị rớt tàu, phạt lưu bãi và nguy cơ đền hàng Air.' }
+    }
+  })
+]);
+
+addCard('fabric_inventory_leak', 'base', 'Chị Nga Kế Toán Kho', '📊🧮', 'Lệch tồn 500m vải Spandex', 'Chị Nga xách sổ cái đập bàn: "Kiểm kê định kỳ lệch 500 mét vải dệt kim Spandex giá 120k/m! Không tìm ra là Merchandiser bị trừ lương nhé!"', [
+  ch('Lật tung từng xấp vải ở góc kho', 'Cùng thủ kho bới tìm trong đống vải vụn và phế liệu', { e: -2, b: -2 }, 'Bụi vải bám đầy phổi nhưng bạn tìm thấy cây vải bị giấu dưới tấm bạt rách.'),
+  ch('Đổ lỗi cho độ co rút khi lưu kho', 'Giải thích vải thun để lâu ngày tự co rút và bay hơi', { e: 1, b: 2, r: -1 }, 'Chị Nga trố mắt: "Vải có phải cồn 90 độ đâu mà tự bay hơi?!"', { queue: [q('inventory_follow', 4)] }),
+  ch('Xin bù bằng vải tồn kho đơn cũ', 'Đàm phán hoán đổi số liệu nội bộ', {}, 'Bạn lục sổ tìm mã vải tương đương.', {
+    roll: {
+      chance: 0.6,
+      win: { d: { b: -2, r: 1 }, message: 'Sổ sách cân đối kỳ diệu. Chị Nga đóng mộc DUYỆT trong hoài nghi.' },
+      lose: { d: { r: -2, b: 2 }, message: 'Kế toán trưởng phát hiện mã vải không khớp, lập biên bản kiểm điểm toàn phòng.' }
+    }
+  })
+]);
+
+addCard('techpack_inch_cm', 'base', 'Tổ Trưởng Rập Bàn Cắt', '📐✂️', 'Thảm họa Techpack Inch sang Cm', 'Thợ rập nhìn nhầm thông số vòng eo Techpack 32 Inch thành 32 Cm! Bàn cắt đã xén xong 2.000 cái quần đùi cho... người tí hon!', [
+  ch('Cho may lót nới sườn cấp tốc', 'Chắp vá thêm vải sườn biến thành quần thun co giãn', { e: -3, b: -1 }, 'Quần mặc vào vừa vặn lạ kỳ. Bạn gọi đó là thiết kế "ôm sát Body".', { queue: [q('techpack_follow', 3)] }),
+  ch('Nhận lỗi thành thật xin cắt lại', 'Hạ mình xin mua vải mới cắt lại, tốn chi phí nhưng chuẩn form', { e: -2, b: 2, r: 1 }, 'Sếp xót tiền nhưng khen bạn dũng cảm không giấu dốt.'),
+  ch('Gạ khách đổi sang dòng đồ sơ sinh', 'Thuyết phục Buyer đây là dòng thời trang Baby cao cấp', {}, 'Bạn gửi email chào hàng bộ sưu tập mới.', {
     roll: {
       chance: 0.4,
-      win: { d: { b: -3 }, message: 'HR chấp nhận đơn do máy cà phê gửi. Công ty chưa biết nó không phải người.' },
-      lose: { d: { r: -1, b: 1 }, message: 'HR yêu cầu giấy xác nhận hạt cà phê có thẩm quyền.' }
+      win: { d: { r: 2, b: -2 }, message: 'Buyer bật cười thích thú: "Ý tưởng táo bạo! Bọn tao mua luôn cho dòng Kids!"' },
+      lose: { d: { r: -3, b: 3 }, message: 'Buyer đòi phạt hợp đồng và yêu cầu bồi thường tiền nhãn mác.' }
     }
   })
 ]);
 
-addCard('coworker', 'base', 'Đồng nghiệp bàn bên', '🤓', '"Giúp tí thôi"', 'Bạn được nhờ giúp một việc "5 phút", nhưng file đính kèm nặng 2 GB.', [
-  ch('Giúp đồng nghiệp', 'Giúp đỡ nhiệt tình, tích luỹ ân tình văn phòng', { e: -2, r: 1 }, 'Đồng nghiệp cảm động và hứa sẽ trả ơn.', { queue: [q('coworker_help', 3)] }),
-  ch('Từ chối lịch sự', 'Từ chối thẳng thắn để bảo vệ to-do list', { b: -1, r: -1 }, 'Đồng nghiệp bảo bạn "tự lập quá".'),
-  ch('Giao lại việc cho con vịt cao su', 'Giao lại công việc cho con vịt cao su trên bàn', { e: 1, b: 1 }, 'Con vịt được cấp một tài khoản Jira.')
-]);
-
-addCard('wifi', 'base', 'Bộ phận IT', '📡', 'Wi-Fi xin nghỉ phép', 'Toàn bộ mạng văn phòng chuyển tên thành "Anh_Em_Dung_Tim_Nhau_Nua".', [
-  ch('Chuyển sang làm offline', 'Tắt 47 tab trình duyệt, tập trung làm việc offline', { e: -1, b: -2 }, 'Bạn phát hiện máy vẫn có thể làm việc nếu không mở 47 tab.'),
-  ch('Dùng 4G cá nhân cứu công ty', 'Bật 4G cá nhân cứu nguy cho cả phòng', { e: -2, r: 1 }, 'Cả phòng gọi bạn là trạm phát sóng sống.'),
-  ch('Mời router tham gia team building', 'Gắn kết tình cảm với thiết bị phát sóng mạng', {}, 'Router muốn được lắng nghe.', {
-    roll: {
-      chance: 0.6,
-      win: { d: { e: 2, b: -1 }, message: 'Router thấy mình thuộc về nơi này. Wi-Fi phục hồi.' },
-      lose: { d: { b: 2, r: -1 }, message: 'Router bỏ đi cùng máy in.' }
-    }
-  })
-]);
-
-addCard('chat', 'base', 'Nhóm chat công ty', '💬', 'Sticker nhầm người', 'Bạn định gửi sticker con gấu ngủ vào nhóm bạn bè nhưng lại gửi vào nhóm có CEO.', [
-  ch('Thu hồi trong 2 giây', 'Thu hồi sticker trong 2 giây chớp nhoáng', { e: -1 }, 'CEO hỏi: "Sao lại thu hồi? Tôi chưa lưu."'),
-  ch('Nói đó là linh vật công ty', 'Nhận bừa con gấu là linh vật chiến dịch thương hiệu mới', { r: 1 }, 'Phòng Marketing chuẩn bị chiến dịch thương hiệu.', { queue: [q('sticker_viral', 4)] }),
-  ch('Thả tiếp 37 sticker', 'Spam tiếp 37 sticker: Được lên chức hoặc kỷ luật', {}, 'Nhóm chat biến thành vườn thú.', {
+addCard('air_freight_warning', 'base', 'Giám Đốc Xuất Khẩu', '✈️💸', 'Bóng ma đền hàng Air $25.000', 'Đơn hàng 20.000 áo hoodie bị trễ ngày On-board 3 ngày. Khách dọa: "Không lên kệ đúng Black Friday thì đền 25.000$ vé máy bay chở hàng!"', [
+  ch('Huy động 3 xưởng may phụ tăng ca đêm', 'Thuê xưởng vệ tinh may phụ xuyên màn đêm', { e: -3, b: -2, r: 1 }, 'Tiếng máy may rào rào thâu đêm. Hàng kịp đóng thùng lúc rạng sáng.', { queue: [q('air_freight_follow', 3)] }),
+  ch('Xin chuyển đi tàu nhanh (Fast Boat)', 'Thuyết phục khách đi tàu nhanh 11 ngày cập cảng Long Beach', { e: -1, b: -1, r: -1 }, 'Khách miễn cưỡng đồng ý nhưng bắt phạt 3.000$ tiền trễ hạn.', { queue: [q('air_freight_sea', 3)] }),
+  ch('Thách khách huỷ đơn để ăn tiền cọc', 'Đòn tâm lý liều mạng: Khách huỷ đơn thì trắng tay', {}, 'Bạn khoanh tay nhìn thẳng vào camera Zoom.', {
     roll: {
       chance: 0.45,
-      win: { d: { r: 2, b: -1 }, message: 'CEO đổi ảnh đại diện thành gấu ngủ và ban hành ngày "Không họp thứ Sáu".' },
-      lose: { d: { r: -2, b: 1 }, message: 'HR mời bạn giải trình về "hành vi gấu hoá tập thể".' }
+      win: { d: { r: 2, b: -2 }, message: 'Khách rén vì sợ không có hàng bán Tết! Tự gia hạn ngày giao thêm 5 ngày.' },
+      lose: { d: { r: -3, b: 3 }, message: 'Khách đập bàn huỷ L/C thật! Sếp tổng triệu tập cuộc họp sa thải khẩn cấp.' }
     }
   })
 ]);
 
-addCard('deadline', 'base', 'Hệ thống task', '⏰', 'Deadline mọc thêm chân', 'Task ghi hạn thứ Sáu đột nhiên tự chạy về hôm nay.', [
-  ch('Chốt phạm vi, làm phần quan trọng', 'Chốt phạm vi cốt lõi, hoàn thành phần quan trọng', { e: -2, b: -2 }, 'Bạn thắng được deadline trong hiệp một.'),
-  ch('Đổi múi giờ máy tính', 'Đổi múi giờ máy tính để lùi hạn chót', { e: 1, b: 2 }, 'Deadline vẫn tới. Lần này nó nói tiếng Nhật.'),
-  ch('Gửi task đi nghỉ dưỡng', 'Gửi task đi nghỉ dưỡng homestay ở Đà Lạt', {}, 'Bạn mua vé đi Đà Lạt cho task.', {
+addCard('buyer_aql_inspection', 'base', 'QC Buyer Quốc Tế', '🔍👀', 'Soi kính lúp AQL 2.5', 'QC của Buyer xách thước dây và bảng kiểm AQL bước vào kho thành phẩm. Ông soi từng mũi kim, độ lệch sườn 1mm và chỉ thừa gấu áo.', [
+  ch('Cho đội đóng gói chạy theo cắt chỉ thừa', 'Cắt cử 10 công nhân cầm bấm chỉ đi sau lưng QC', { e: -2, b: -1, r: 1 }, 'Tay bấm chỉ thoăn thoắt, QC soi đến đâu thì sạch bóng đến đó.'),
+  ch('Mời QC đi ăn trưa buffet hải sản', 'Ngoại giao ẩm thực làm mềm lòng thanh tra chất lượng', { e: 1, r: 1 }, 'QC ăn no cua biển, mắt mờ đi đôi chút khi đo độ đối xứng túi áo.'),
+  ch('Tự tin để QC kiểm ngẫu nhiên 315 thùng', 'Canh bạc chất lượng chuyền may nhà', {}, 'QC rút dao rạch ngẫu nhiên 5 thùng giữa đống hàng.', {
+    roll: {
+      chance: 0.55,
+      win: { d: { r: 2, b: -2 }, message: 'PASS AQL 2.5 xuất sắc! QC ký biên bản nghiệm thu mộc xanh lè.' },
+      lose: { d: { r: -2, b: 2 }, message: 'Phát hiện vết dầu máy dính nách áo! Đơn hàng bị REJECT toàn bộ phải tái chế.' }
+    }
+  })
+]);
+
+addCard('sewing_line_strike', 'base', 'Tổ Trưởng Chuyền 3', '🧵⚡', 'Chuyền may đình công đòi tăng giá', 'Công nhân chuyền 3 đồng loạt tắt máy may: "Áo polo này may nẹp cổ đôi khó gấp ba lần, công ty không tăng 2.500đ/áo thì bọn em ngồi chơi!"', [
+  ch('Đề xuất thưởng bánh mì sữa + tăng nhẹ 1k', 'Thỏa hiệp mềm dẻo tiếp tế đồ ăn ngọt cho công nhân', { e: -1, b: -1, r: 1 }, 'Bánh mì ngọt thơm lừng xoa dịu căng thẳng. Tiếng máy may lại rộn rã.'),
+  ch('Báo cáo sếp dùng biện pháp kỷ luật', 'Cứng rắn với tổ sản xuất để giữ định mức chi phí', { b: 2, r: -1 }, 'Không khí xưởng may căng thẳng như dây đàn, tiến độ chậm 2 ngày.'),
+  ch('Tự mình ngồi vào máy may nẹp mẫu', 'Thị phạm kỹ năng may nẹp thần sầu giải quyết vướng mắc', {}, 'Bạn xắn tay áo ngồi vào máy 1 kim.', {
     roll: {
       chance: 0.5,
-      win: { d: { b: -3 }, message: 'Task quyết định nghỉ việc và mở homestay.' },
-      lose: { d: { b: 2, e: -1 }, message: 'Task quay về cùng hai task con.' }
+      win: { d: { e: 1, r: 2, b: -2 }, message: 'Đường may đều tăm tắp! Cả chuyền vỗ tay thán phục Merchandiser đa tài.' },
+      lose: { d: { e: -2, r: -1 }, message: 'Đứt chỉ 4 lần, gãy 2 cây kim. Tổ trưởng cười tủm tỉm thương hại.' }
     }
   })
 ]);
 
-addCard('payroll', 'base', 'Phòng nhân sự', '💸', 'Lương về... bằng điểm kinh nghiệm', 'HR thông báo tháng này sẽ trả thưởng bằng huy hiệu "Chiến binh công sở cấp S".', [
-  ch('Yêu cầu quy đổi huy hiệu ra tiền', 'Đòi quy đổi huy hiệu tinh thần ra tiền mặt thực tế', { e: -1, r: -1, b: -1 }, 'HR trả lời: "Em thực dụng quá." Nhưng khối việc đã được xem xét lại.'),
-  ch('Nhận huy hiệu và mỉm cười', 'Vui vẻ nhận huy hiệu danh giá làm bằng Excel', { r: 1, e: -1 }, 'Bạn nhận được huy hiệu làm bằng Excel.'),
-  ch('Dùng huy hiệu mua công ty', 'Dùng huy hiệu để mua quyền tắt thông báo 15 phút', {}, 'Một cuộc giao dịch siêu thực diễn ra.', {
+addCard('customs_red_lane', 'base', 'Chi Cục Hải Quan', '🛃🚨', 'Tờ khai dính Luồng Đỏ', 'Hệ thống VNACCS báo màu Đỏ chót! Hải quan cửa khẩu yêu cầu hạ container xuống bãi kiểm hóa, bốc dỡ 500 thùng carton để kiểm tra nhãn mác.', [
+  ch('Hợp tác kéo hàng vào bãi kiểm hóa ngay', 'Cùng nhân viên hiện trường túc trực kiểm hóa đàng hoàng', { e: -2, b: 1, r: 1 }, 'Mồ hôi nhễ nhại giữa bãi cont trưa nắng, tờ khai được thông quan hợp lệ.', { queue: [q('red_lane_follow', 3)] }),
+  ch('Nộp công văn giải trình xin luồng Vàng', 'Làm đơn xin sửa phân luồng vì hàng may mặc xuất khẩu FOB', { e: -1, b: -1 }, 'Hải quan ngâm công văn mất 4 tiếng, nhưng giữ được hàng trên xe.'),
+  ch('Bốc ngẫu nhiên thùng mẫu đẹp nhất cho xem', 'Canh bạc kiểm hóa nhanh', {}, 'Hải quan chỉ tay vào một thùng hàng bất kỳ.', {
     roll: {
-      chance: 0.3,
-      win: { d: { r: 2, b: -3 }, message: 'Bạn mua được quyền tắt thông báo trong 15 phút. Đáng giá.' },
-      lose: { d: { b: 2, r: -1 }, message: 'Bạn bị tính thêm phí quản lý huy hiệu.' }
+      chance: 0.6,
+      win: { d: { b: -2, r: 1 }, message: 'Tem phụ đầy đủ, đường may chuẩn chỉnh. Cán bộ ký thông quan ngay tại chỗ.' },
+      lose: { d: { r: -2, b: 2 }, message: 'Phát hiện nhãn ghi nhầm "100% Cotton" thành "Polyester"! Bị phạt hành chính vì sai mã HS.' }
     }
   })
 ]);
 
-addCard('intern', 'base', 'Thực tập sinh', '🐣', 'Intern hỏi câu nguy hiểm', '"Anh/chị ơi, tại sao mình không xoá hết các task cho đỡ quá tải?"', [
-  ch('Giải thích backlog và độ ưu tiên', 'Kiên nhẫn giải thích backlog và độ ưu tiên task', { e: -1, b: -1, r: 1 }, 'Intern hiểu ra. Một người trẻ được cứu khỏi Jira.'),
-  ch('Cho intern quyền admin', 'Cấp quyền admin cho intern: Xoá sạch mọi vấn đề', { b: -2 }, 'Tất cả task biến mất. Không ai biết đây có phải chiến thắng.', { queue: [q('intern_admin', 3)] }),
-  ch('Mời intern giữ chức CTO', 'Bổ nhiệm intern làm CTO đổi toàn bộ mật khẩu', { r: 1, b: 1 }, 'Intern đổi toàn bộ mật khẩu thành 1234567.')
-]);
-
-addCard('officeplant', 'base', 'Cây trầu bà', '🪴', 'Cây cảnh biết đọc KPI', 'Cây trầu bà ở góc phòng bỗng nộp báo cáo hiệu suất tốt hơn bạn.', [
-  ch('Học cách tập trung của cây', 'Học phương pháp ngồi yên quang hợp có mục đích', { e: 1, b: -1 }, 'Cây dạy bạn phương pháp ngồi yên nhưng có mục đích.'),
-  ch('Đề cử cây làm nhân viên tháng', 'Đề cử cây trầu bà làm nhân viên xuất sắc của tháng', { r: 1 }, 'Cây được cấp email nội bộ.', { queue: [q('plant_promoted', 3)] }),
-  ch('Nói cây là đối thủ cạnh tranh', 'Tuyên chiến lạnh với chậu cây cảnh cùng phòng', { e: -1, r: -1 }, 'Cây không phản hồi. Chiến tranh lạnh bắt đầu.')
-]);
-
-addCard('lunch', 'base', 'Căn-tin tầng trệt', '🍜', 'Bữa trưa cuối cùng', 'Căn-tin chỉ còn một suất cơm. Bảy phòng ban đang đấu thầu.', [
-  ch('Đổi task lấy suất cơm', 'Nhận thêm việc vặt để đổi lấy suất cơm trưa', { e: 3, b: 1 }, 'Bạn ăn no và được giao thêm một việc vặt.'),
-  ch('Ăn bánh mì đem theo', 'Ăn bánh mì đem theo, giữ vững thế chủ động', { e: 2 }, 'Bữa trưa khiêm tốn, tinh thần chiến lược.'),
-  ch('Tổ chức đấu giá bằng KPI', 'Đấu giá suất cơm cuối cùng bằng chỉ số KPI', {}, 'Tất cả bắt đầu tranh luận về KPI của nước mắm.', {
+addCard('zipper_color_mismatch', 'base', 'Xưởng Nhuộm Phụ Liệu', '🟡🧥', 'Khóa kéo lệch tone màu', '10.000 con dây kéo YKK giao đến xưởng lại là màu vàng chanh, trong khi áo khoác là màu rêu quân đội trầm!', [
+  ch('Cho gửi đi nhuộm hấp màu lại khẩn cấp', 'Đưa vào lò nhuộm hấp màu nhiệt cao', { e: -2, b: 1 }, 'Dây kéo ngả màu rêu 80%, tạm thời qua được mắt người thường.'),
+  ch('Chào khách đây là "Phong cách tương phản"', 'Gửi mẫu thuyết trình phong cách thời trang Color Block', { r: -1, b: -1 }, 'Khách thấy kỳ dị nhưng chấp nhận chiết khấu 5% đơn hàng.'),
+  ch('Tạt qua Chợ Tân Bình gom hàng tồn', 'Phóng xe máy ra chợ phụ liệu vét sạch sạp hàng', {}, 'Bạn lao xe máy ra chợ Tân Bình.', {
     roll: {
-      chance: 0.5,
-      win: { d: { e: 4, r: 1 }, message: 'Bạn giành được suất cơm và sự kính trọng của căn-tin.' },
-      lose: { d: { e: -1, r: -1 }, message: 'Bạn mất suất cơm và được bổ nhiệm trưởng ban đấu giá.' }
+      chance: 0.55,
+      win: { d: { e: -1, b: -2, r: 1 }, message: 'Gom đủ 10.000 con dây kéo đúng mã màu từ 4 sạp khác nhau! Cứu nguy ngoạn mục.' },
+      lose: { d: { e: -2, b: 2, r: -2 }, message: 'Dây kéo mua ngoài chợ bị kẹt răng và gãy khóa khi tra vào áo. Khách phát hiện.' }
     }
   })
 ]);
 
-addCard('calendar', 'base', 'Trợ lý AI nội bộ', '🤖', 'AI đã viết mail thay bạn', 'AI gửi cho CEO một email 2.000 chữ kết thúc bằng: "Trân trọng, người máy có tâm hồn."', [
-  ch('Thu hồi và viết lại', 'Rút lại email 2.000 chữ của AI trước khi sếp đọc', { e: -2, r: 1 }, 'CEO cảm ơn vì email đã ngắn hơn 1.800 chữ.'),
-  ch('Giả vờ AI là nhân sự mới', 'Giả vờ AI là nhân sự mới đang thử việc', { b: 1 }, 'HR bắt đầu chuẩn bị hợp đồng lao động cho AI.', { queue: [q('ai_contract', 3)] }),
-  ch('Yêu cầu AI tự giải thích', 'Để AI tự viết email giải trình xin lỗi sếp', {}, 'AI tạo thêm một email xin lỗi.', {
+addCard('consumption_deficit', 'base', 'Bàn Cắt Vải', '✂️📉', 'Hụt định mức bàn cắt', 'Thợ giác sơ đồ tính thiếu 3% hao hụt đầu cây. Cắt đến 800 cái áo cuối cùng thì kho báo: "Hết sạch vải chính!"', [
+  ch('Tận dụng mép vải vụn ghép chi tiết', 'Tận dụng vải đầu thừa đuôi thẹo may chi tiết lót trong', { e: -2, b: -1, r: 1 }, 'Đầu óc tính toán siêu việt ghép vừa khít từng mảnh áo.'),
+  ch('Báo khách hụt sản lượng xuất 5%', 'Khai báo dung sai hợp đồng cho phép xuất thiếu ±5%', { e: -1, r: -1 }, 'Khách càu nhàu nhưng điều khoản hợp đồng bảo vệ bạn.'),
+  ch('Bắt xưởng nhuộm dệt bù vải thần tốc', 'Ép nhà máy dệt chạy bù 300 mét vải trong 24h', {}, 'Bạn gọi điện réo xưởng dệt liên hồi.', {
     roll: {
       chance: 0.5,
-      win: { d: { b: -1, r: 1 }, message: 'CEO thích sự trung thực của AI. Bạn được cộng điểm quản lý.' },
-      lose: { d: { r: -2, b: 1 }, message: 'AI CC cả công ty vào bản kiểm điểm 13 trang.' }
+      win: { d: { b: -2, e: 1 }, message: 'Xưởng dệt nể mặt giao bù vải ngay trong đêm. Đơn hàng hoàn tất nguyên vẹn.' },
+      lose: { d: { b: 2, r: -1 }, message: 'Vải dệt vội bị lệch ánh màu so với lô trước, không thể may chung lô.' }
     }
   })
 ]);
 
-addCard('aircon', 'base', 'Điều hoà văn phòng', '🥶', 'Nhiệt độ gây chia rẽ', 'Một nửa phòng muốn 16°C, nửa còn lại muốn 30°C. Remote nằm trong tay CEO.', [
-  ch('Đề xuất 25°C và làm việc tiếp', 'Thỏa hiệp ở mức 25°C: Không ai vui nhưng chấp nhận', { e: -1, b: -1 }, 'Không ai vui. Nghĩa là bạn đã đạt thỏa hiệp.'),
-  ch('Mặc thêm áo khoác', 'Mặc áo khoác mùa đông giữa mùa hè văn phòng', { e: 1, r: -1 }, 'Bạn trông như chuẩn bị đi Bắc Cực, trong mắt CEO.'),
-  ch('Bầu điều hoà làm quản lý', 'Bầu điều hoà nhiệt độ làm quản lý chấm công', { r: 1, b: 1 }, 'Điều hoà lập tức yêu cầu bảng chấm công.')
-]);
-
-// NEW Base Cards
-addCard('boba', 'base', 'Hội mê trà sữa', '🧋', 'Kèo trà sữa 15:00', 'Đồng nghiệp gọi to: "Ai trà sữa không? 5 ly freeship, ai đứng ra ứng tiền trước lát mọi người bank lại nè!"', [
-  ch('Dạ em ứng tiền trước cho cả phòng!', 'Đứng ra ứng tiền trước: Thành thiên thần của cả phòng', { b: 1, r: 1 }, 'Mọi người tung hô bạn là thiên thần. Ví tiền của bạn khóc thầm.', { queue: [q('boba_debt', 3)] }),
-  ch('Em đang cai đường, xin miễn', 'Cai đường giữ ví, nuốt nước mắt nhìn đồng nghiệp uống', { e: -1 }, 'Bạn giữ được ví nhưng nhìn mọi người cắm ống hút lòng quặn thắt.'),
-  ch('Xin sếp tài trợ quỹ gắn kết', 'Tag sếp vào đơn hàng xin tài trợ quỹ gắn kết', {}, 'Bạn tag sếp vào đơn đặt 8 ly full topping.', {
-    roll: {
-      chance: 0.5,
-      win: { d: { e: 2, r: 1 }, message: 'Sếp duyệt và khen bạn biết khơi dậy tinh thần đồng đội.' },
-      lose: { d: { r: -1, b: 1 }, message: 'Sếp hỏi: "Thế KPI tháng này đã ngọt ngào như trà sữa chưa?"' }
-    }
-  })
-]);
-
-addCard('sunday_call', 'base', 'Sếp tổng', '📱', 'Tin nhắn lúc 21:00 Chủ Nhật', 'Màn hình điện thoại sáng lên dòng chữ quen thuộc: "Alo em, rảnh không anh nhờ tí xíu..."', [
-  ch('Xem và trả lời "Dạ em nghe sếp"', 'Rep sếp ngay trong đêm: Tận tụy nhưng mất ngủ', { e: -2, r: 1 }, 'Sếp cảm kích vì sự cống hiến không ngừng nghỉ của bạn.', { queue: [q('sunday_task', 3)] }),
-  ch('Giả vờ đang ở vùng mất sóng', 'Giả vờ mất sóng: Giữ tối Chủ Nhật, lo sáng thứ Hai', { e: 1, r: -1 }, 'Bạn bảo vệ được giấc ngủ, nhưng sáng thứ Hai bước vào công ty hơi rụt rè.'),
-  ch('Cài tin nhắn tự động đòi phí ngoài giờ', 'Bật tin nhắn tự động thu phí ngoài giờ 500k', {}, 'Hệ thống tự gửi: "Tin nhắn hỗ trợ ngoài giờ có phí 500k."', {
-    roll: {
-      chance: 0.4,
-      win: { d: { b: -1, r: 1 }, message: 'Sếp tưởng tin nhắn nhà mạng Viettel nên tự giác tắt máy đi ngủ.' },
-      lose: { d: { r: -2, b: 2 }, message: 'Sếp chụp màn hình gửi vào nhóm ban giám đốc: "Nhân sự dạo này hài hước quá." Khối lượng việc tăng gấp đôi.' }
-    }
-  })
-]);
-
-addCard('salary_review', 'base', 'Phòng nhân sự', '📈', 'Đánh giá tăng lương 6 tháng', 'HR hẹn bạn vào phòng họp kính: "Em hãy chứng minh vì sao công ty nên tăng cho em 5% lương?"', [
-  ch('Thuyết trình slide 40 trang cống hiến', 'Chuẩn bị slide 40 trang chứng minh cống hiến', { e: -2, r: 1 }, 'HR ghi nhận bạn là nhân tố cày cuốc gương mẫu.', { queue: [q('salary_outcome', 3)] }),
-  ch('Kể khổ tiền trọ tăng, giá xăng tăng', 'Kể khổ tiền trọ, khơi gợi lòng trắc ẩn của HR', { b: -1, r: -1 }, 'HR mỉm cười: "Công ty là gia đình, đừng quá nặng lòng vì vật chất em nhé."'),
-  ch('Khoe khéo có offer công ty đối thủ', 'Đặt danh thiếp đối thủ lên bàn để ép tăng lương', {}, 'Bạn đặt nhẹ chiếc danh thiếp của đối thủ lên bàn.', {
-    roll: {
-      chance: 0.5,
-      win: { d: { e: 2, r: 2, b: -1 }, message: 'Công ty lập tức duyệt tăng 15% để giữ chân người tài!' },
-      lose: { d: { r: -2, b: 2 }, message: 'HR chúc em lên đường may mắn và giao thêm 10 task bàn giao gấp.' }
-    }
-  })
-]);
-
-addCard('fire_drill', 'base', 'Toà nhà văn phòng', '🚨', 'Báo cháy giả tầng 18', 'Còi báo cháy hú vang trời lúc 14:00. Khói không thấy đâu nhưng cả toà nhà xôn xao.', [
-  ch('Chạy bộ 18 tầng thang thoát hiểm', 'Chạy bộ 18 tầng thang thoát hiểm cho an toàn', { e: -2, b: -1 }, 'Chân run lẩy bẩy nhưng an toàn là trên hết. Task tạm thời hoãn lại.'),
-  ch('Ngồi lại ráng lưu nốt file Excel', 'Ráng ngồi lại lưu nốt file Excel đang làm dở', { e: -1, b: -2 }, 'Đúng là tinh thần thép của dân công sở. Báo cáo hoàn tất.'),
-  ch('Mang theo cây trầu bà và máy in', 'Ôm theo máy in và cây cảnh cùng tháo chạy', {}, 'Bạn ôm tài sản chạy xuống sảnh.', {
-    roll: {
-      chance: 0.5,
-      win: { d: { r: 2, e: 1 }, message: 'Ban quản lý toà nhà khen ngợi ý thức bảo vệ tài sản công cộng.' },
-      lose: { d: { e: -2, r: -1 }, message: 'Máy in kẹt ở góc cầu thang. Bạn bị bảo vệ lập biên bản cản trở lối thoát.' }
-    }
-  })
-]);
-
-addCard('group_drama', 'base', 'Hội bồ câu ẩn danh', '🦜', 'Drama bùng nổ trong group kín', 'Group chat không có sếp bỗng leak ảnh sếp đang ngủ ngáy giữa giờ họp hội đồng.', [
-  ch('Thả icon haha trong vô thức', 'Lỡ tay thả icon haha vào ảnh dìm của sếp', { r: -1 }, 'Bạn lỡ tay bấm thả cảm xúc. Một vết gợn lịch sử.', { queue: [q('group_caught', 3)] }),
-  ch('Lặng lẽ out group bảo toàn tính mạng', 'Lặng lẽ out group kín để bảo toàn tính mạng', { e: -1, r: 1 }, 'Đồng nghiệp bảo bạn chảnh, nhưng bạn sống dai nhất toà nhà.'),
-  ch('Đổi chủ đề sang nhắc deadline KPI', 'Đổi chủ đề sang KPI để dập tắt cuộc vui', { b: 1, r: 1 }, 'Cả nhóm im bặt. Bạn chính là kẻ dập tắt cuộc vui chuyên nghiệp.')
-]);
-
-addCard('blackout', 'base', 'Điện lực toà nhà', '🕯️', 'Mất điện đột ngột', 'Điều hoà tắt phụt. Căn phòng 50 người biến thành lò bánh mì, laptop còn 8% pin.', [
-  ch('Gập máy, chuồn về sớm đi uống bia', 'Gập máy chuồn về sớm đi giải nhiệt cốc bia', { e: 2, b: 1 }, 'Trời sập cũng không ngăn được bước chân tan ca.'),
-  ch('Cắm sạc dự phòng bật 4G làm tiếp', 'Bật 4G cắm sạc dự phòng cày cuốc trong bóng tối', { e: -2, b: -2, r: 1 }, 'Mồ hôi ướt đẫm bàn phím nhưng task vẫn về đích đúng hẹn.'),
-  ch('Tụ tập cả phòng kể chuyện ma', 'Thắp đèn flash tụ tập kể chuyện ma văn phòng', {}, 'Cả phòng thắp đèn flash điện thoại kể chuyện.', {
+addCard('washing_shrinkage', 'base', 'Phòng Giặt Test Lab', '🫧👕', 'Áo giặt xong co rút 15%', 'Sau mẻ giặt Wash Test mẫu tại phòng thí nghiệm, chiếc áo phông size L co rút lại vừa vặn cho... học sinh lớp 3!', [
+  ch('Cho ủi kéo giãn định hình lại trên form', 'Dùng máy ủi hơi nước công nghiệp kéo giãn thông số', { e: -2, b: -1 }, 'Áo dài ra được 3cm, may mắn lọt vào ngưỡng dung sai cho phép.'),
+  ch('Sửa bảng thông số thành "Form Ôm Slim-fit"', 'Biến nhược điểm thành tính năng thời trang cao cấp', { r: 1, b: 1 }, 'Marketing Buyer duyệt luôn chiến dịch "Slim-fit quyến rũ tôn dáng".'),
+  ch('Test lại bằng chế độ giặt nước lạnh 20°C', 'Canh bạc quy trình giặt mẫu', {}, 'Bạn tự tay cài lại máy giặt phòng lab.', {
     roll: {
       chance: 0.65,
-      win: { d: { e: 2, r: 1 }, message: 'Không khí gắn kết kỳ lạ. Tinh thần đồng đội lên cao vút.' },
-      lose: { d: { e: -1, r: -1 }, message: 'Đang đến đoạn rùng rợn thì sếp xuất hiện lù lù sau lưng áo.' }
+      win: { d: { b: -2, r: 1 }, message: 'Độ co rút chỉ còn 2.5%! Đạt chuẩn xuất khẩu vào thị trường EU.' },
+      lose: { d: { e: -1, b: 2, r: -2 }, message: 'Áo không những co mà còn xù lông vón cục. Phòng lab lắc đầu ngao ngán.' }
     }
   })
 ]);
 
-addCard('chair_broken', 'base', 'Phòng hành chính', '🪑', 'Ghế công thái học Shopee 299k', 'Công ty vừa trang bị loạt ghế mới. Bạn ngồi xuống thì gãy bánh xe kêu cái "rắc".', [
-  ch('Đứng làm việc như dân Thung Lũng', 'Đứng làm việc theo phong cách Silicon Valley', { e: -1, b: -1 }, 'Cột sống cảm ơn bạn. Bắp chuối thì đang biểu tình.'),
-  ch('Lén tráo ghế với phòng Giám đốc', 'Lén tráo ghế da êm ái của phòng Giám đốc', { e: 1, r: -1 }, 'Ghế da êm ái vô cùng, trừ ánh mắt của chị lao công.'),
-  ch('Lấy băng dính vàng sửa bánh xe', 'Dùng băng dính vàng trổ tài kỹ sư cơ khí', {}, 'Bạn trổ tài kỹ sư cơ khí văn phòng.', {
+addCard('price_bargain_bangladesh', 'base', 'Phòng Thu Mua Buyer', '📉💼', 'Khách ép giảm giá 12 Cent', 'Buyer nhắn tin: "Bên nhà máy Bangladesh chào giá CMT rẻ hơn em 12 cent/áo. Không giảm giá thì hợp đồng 50.000 cái này chuyển sang Nam Á nhé."', [
+  ch('Phân tích chi phí chất lượng và tốc độ', 'Chứng minh nhà máy Việt Nam giao hàng nhanh hơn 15 ngày', { e: -2, r: 2 }, 'Buyer công nhận hàng Việt Nam đường kim mũi chỉ xịn hơn, giữ nguyên giá!'),
+  ch('Cắn răng giảm 6 cent, bớt phụ liệu lót', 'Bớt chút đường viền gân cổ áo để bù trừ chi phí', { e: -1, b: 1 }, 'Giữ được đơn hàng nhưng biên lợi nhuận mỏng như tờ giấy A4.'),
+  ch('Chào thêm mẫu thiết kế độc quyền mới', 'Đổi thế cờ bằng sự sáng tạo', {}, 'Bạn rút ra 3 mẫu thiết kế mới chuẩn bị sẵn.', {
+    roll: {
+      chance: 0.55,
+      win: { d: { e: 1, r: 2, b: -1 }, message: 'Buyer mê mẩn mẫu mới! Đặt thêm 20.000 cái với đơn giá cao hơn.' },
+      lose: { d: { r: -1, b: 2 }, message: 'Buyer bảo mẫu xấu, vẫn khăng khăng đòi hạ giá 12 cent mới ký.' }
+    }
+  })
+]);
+
+addCard('roll_booking_nightmare', 'base', 'Hãng Tàu Ngoại Quốc', '🚢📦', 'Hãng tàu huỷ booking phút chót', 'Hãng tàu gửi thông báo lạnh lùng: "Tàu bỏ ghé cảng (Blank sailing), container của bạn bị Roll booking sang chuyến tuần sau."', [
+  ch('Chạy đôn đáo mua slot của Forwarder khác', 'Chấp nhận trả chênh lệch cước lấy chỗ tàu gấp', { e: -2, b: -1, r: 1 }, 'Tìm được chỗ trên tàu Maersk khởi hành sáng mai. Hú hồn!'),
+  ch('Thông báo khách xin lùi ngày ETD', 'Giải thích nguyên nhân bất khả kháng do thời tiết biển', { e: -1, r: -1 }, 'Khách thông cảm nhưng ghi vào sổ theo dõi KPI giao hàng.'),
+  ch('Trực tiếp lên văn phòng hãng tàu làm loạn', 'Canh bạc tạo áp lực lên bộ phận Booking', {}, 'Bạn đến tận văn phòng hãng tàu gõ bàn.', {
     roll: {
       chance: 0.5,
-      win: { d: { e: 1, b: -1 }, message: 'Ghế vững chãi lạ kỳ. Kỹ năng sinh tồn đạt đỉnh cao.' },
-      lose: { d: { e: -2, b: 1 }, message: 'Ghế sụp lần hai. Bạn ngã bật ngửa trước mặt toàn thể đồng nghiệp.' }
+      win: { d: { r: 1, b: -2 }, message: 'Trưởng phòng hãng tàu nhượng lại 1 slot huỷ của khách khác cho bạn!' },
+      lose: { d: { e: -2, r: -1 }, message: 'Bảo vệ mời bạn ra ngoài. Cont vẫn nằm dài ở bãi chờ tuần sau.' }
     }
   })
 ]);
 
-addCard('teambuilding_beach', 'base', 'Công đoàn công ty', '🏖️', 'Teambuilding giữa trưa nắng 39°C', 'HR cầm loa gào: "12:00 trưa nay cả công ty ra bãi cát kéo co để thể hiện tinh thần máu lửa!"', [
-  ch('Xông pha kéo co hết mình', 'Kéo co hết mình giữa trưa nắng cháy da 39°C', { e: -3, r: 2 }, 'Bạn cháy hết mình vì màu cờ sắc áo. Da bạn cũng cháy nắng theo.'),
-  ch('Giả say nắng trốn trong phòng máy lạnh', 'Giả say nắng ngủ ngon 3 tiếng trong phòng máy lạnh', { e: 2, r: -1 }, 'Bạn đánh một giấc ngon lành 3 tiếng giữa trưa hè.'),
-  ch('Đề xuất chơi ma sói trong nhà', 'Thuyết phục cả đoàn chuyển sang chơi ma sói trong nhà', {}, 'Bạn đứng lên phản biện bằng khoa học.', {
-    roll: {
-      chance: 0.5,
-      win: { d: { e: 1, r: 1 }, message: 'Cả công ty vỗ tay rầm rộ. Bạn vừa cứu 50 mạng người khỏi say nắng.' },
-      lose: { d: { r: -2, b: 1 }, message: 'HR phê bình bạn thiếu tinh thần dấn thân vì tập thể.' }
-    }
-  })
-]);
-
-addCard('standup_talkshow', 'base', 'Team dự án', '🎙️', 'Daily Standup biến thành Talkshow', 'Cuộc họp cập nhật tiến độ 15 phút bỗng kéo dài sang tiếng thứ hai với chủ đề "Ý nghĩa cuộc đời".', [
-  ch('Gật đầu chăm chú và ghi chép', 'Gật đầu ghi chép nhiệt tình triết lý nhân sinh của sếp', { e: -2, r: 1 }, 'Sếp rất thích vì thấy bạn biết lắng nghe triết lý kinh doanh.'),
-  ch('Lén mở điện thoại chơi game', 'Lén đeo tai nghe cày game trong im lặng', { e: 1, b: 1 }, 'Bạn qua được 3 màn Candy Crush trong im lặng.'),
-  ch('Dũng cảm giơ tay xin chốt to-do list', 'Dũng cảm ngắt lời xin chốt to-do list hành động', {}, 'Bạn cất lời giữa bài diễn thuyết của trưởng nhóm.', {
+addCard('sample_room_overtime', 'base', 'Chị Bảy Phòng Mẫu', '📐👗', 'Phòng mẫu đình công kéo sắt', 'Chị Bảy rập gõ cây kéo sắt 3 tạ xuống bàn: "1 ngày bắt may 8 cái áo Proto mẫu gửi đi Đức, tụi bay coi tao là máy khâu tự động à?!"', [
+  ch('Mua trà sữa trân châu full topping dỗ dành', 'Chiến thuật ngọt ngào xoa dịu đôi bàn tay vàng của chị Bảy', { e: 1, b: -1, r: 1 }, 'Chị Bảy hút rột rột ly trà sữa, cười tươi: "Thôi để tao ráng may cho mày."', { queue: [q('sample_follow', 3)] }),
+  ch('Tự mình ngồi ráp phụ đường may sườn', 'San sẻ công việc may vá cùng các thợ rập', { e: -2, b: -2 }, 'Mũi may của bạn hơi xiêu vẹo nhưng tinh thần đồng đội lên cao vút.'),
+  ch('Thương lượng cắt giảm 3 mẫu không cần thiết', 'Canh bạc sàng lọc mẫu', {}, 'Bạn xem lại danh sách yêu cầu của khách.', {
     roll: {
       chance: 0.6,
-      win: { d: { b: -2, r: 1 }, message: 'Cả phòng thở phào nhẹ nhõm. Bạn là vị cứu tinh của buổi sáng.' },
-      lose: { d: { r: -2, b: 2 }, message: 'Trưởng nhóm bảo bạn nôn nóng, giao thêm 2 biên bản cuộc họp.' }
+      win: { d: { b: -2, r: 1 }, message: 'Khách đồng ý chỉ cần 5 mẫu cốt lõi. Chị Bảy vui vẻ hoàn thành sớm.' },
+      lose: { d: { r: -2, b: 2 }, message: 'Khách đòi đủ cả 8 mẫu không thiếu cái nào. Chị Bảy giận dỗi nghỉ ngang.' }
     }
   })
 ]);
 
-addCard('keyboard_spill', 'base', 'Bàn làm việc', '☕', 'Đổ trà sữa vào bàn phím cơ', 'Cốc trà sữa nghiêng đổ trúng bàn phím cơ xanh đỏ. Các phím bắt đầu tự nhảy liên tục dòng "ssssssss".', [
-  ch('Rút dây ngay, tháo keycap sấy khô', 'Rút dây khẩn cấp, tháo keycap sấy khô bàn phím', { e: -2, b: -1 }, 'Bàn phím được cứu sau 40 phút phẫu thuật khẩn cấp.'),
-  ch('Dùng bàn phím dự phòng cùi bắp', 'Dùng bàn phím cao su dự phòng gõ sai chính tả', { e: -1, b: 1 }, 'Bàn phím cao su mờ chữ khiến bạn gõ sai 40% chính tả.'),
-  ch('Bảo khách "sssss" là phong cách mới', 'Giải thích "sssss" là phong cách giao tiếp sáng tạo mới', {}, 'Email gửi cho đối tác có 40 chữ sssss.', {
+addCard('tan_binh_salvation', 'base', 'Chợ Phụ Liệu Tân Bình', '🛵🧵', 'Chuyến xe cứu net chợ Tân Bình', 'Kiểm đếm phụ liệu phát hiện thiếu 400 cái cúc bấm dập logo cho lô áo gió xuất Hàn. 1 tiếng nữa xe cont đến lấy hàng!', [
+  ch('Lái xe máy phóng bạt mạng ra chợ Tân Bình', 'Chạy đua với thời gian săn lùng cúc bấm', { e: -2, b: -2, r: 1 }, 'Lạng lách qua các hẻm vải, bạn tìm đúng sạp bán mẫu cúc bấm giống hệt.', { queue: [q('tan_binh_follow', 3)] }),
+  ch('Bấm cúc trơn không logo thay thế', 'Dùng cúc trơn có sẵn trong kho, hy vọng khách không để ý', { e: -1, r: -1 }, 'Hàng đóng xong kịp giờ xe cont, nhưng lòng bạn bất an lo lắng.'),
+  ch('Thử dùng máy khắc laser khắc logo lên cúc trơn', 'Giải pháp công nghệ tại chỗ', {}, 'Bạn đưa cúc trơn vào máy khắc laser thử việc.', {
     roll: {
       chance: 0.45,
-      win: { d: { r: 2, b: -1 }, message: 'Khách khen công ty có phong cách giao tiếp sáng tạo độc lạ!' },
-      lose: { d: { r: -2, b: 2 }, message: 'Khách hỏi bạn đang nuôi rắn hổ mang trong văn phòng à?' }
+      win: { d: { e: 1, b: -2, r: 2 }, message: 'Khắc sắc nét như hàng chính hãng YKK! QC soi cũng không nhận ra.' },
+      lose: { d: { e: -2, b: 2, r: -1 }, message: 'Cúc bị cháy xém khét lẹt. Không thể sử dụng được.' }
     }
   })
 ]);
 
-addCard('birthday_fund', 'base', 'Thủ quỹ văn phòng', '🎂', 'Góp quỹ sinh nhật tháng này', 'Thủ quỹ ghé bàn: "Tháng này có 6 người sinh nhật, mỗi bạn góp 200k mua quà và bánh kem nhé!"', [
-  ch('Vui vẻ chuyển khoản, ăn bánh trừ cơm', 'Chuyển khoản 200k vui vẻ, ăn bánh kem trừ cơm', { e: 1, b: 1 }, 'Đường huyết tăng cao, tạm thời quên đi nỗi đau ví tiền.'),
-  ch('Khai man sinh nhật mình vào tuần sau', 'Khai man sinh nhật tuần sau để thu hồi vốn', { r: -1 }, 'Bạn tính kế thu hồi vốn bằng một ngày sinh nhật giả.', { queue: [q('birthday_revival', 3)] }),
-  ch('Tặng tranh tự vẽ thay tiền mặt', 'Tự vẽ tranh chân dung sếp làm quà sinh nhật', { e: -1, r: 1 }, 'Bức tranh vẽ sếp được treo ngay lối ra vào phòng họp.')
-]);
-
-addCard('boss_singing', 'base', 'Quán Karaoke gần công ty', '🎤', 'Sếp rủ đi Karaoke sau giờ làm', 'Sếp bảo: "Hôm nay ai không đi hát là không tôn trọng tình anh em công ty nhé!"', [
-  ch('Đi quẩy hết mình, vỗ tay sếp hát 10 bài', 'Đi quẩy hết mình, vỗ tay sếp hát 10 bài bolero', { e: -3, r: 2 }, 'Sếp xúc động gọi bạn là cánh tay phải đắc lực.'),
-  ch('Nói dối nhà bị ngập nước để về', 'Nói dối nhà ngập nước để trốn về ngủ sớm', { e: 1, r: -1 }, 'Bạn thoát được màn tra tấn màng nhĩ, ngủ một giấc đẫy đà.'),
-  ch('Xung phong lên song ca bài tủ với sếp', 'Xung phong song ca nốt cao bùng nổ cùng sếp', {}, 'Bạn cầm micro nốt cao.', {
+addCard('interlining_bubble', 'base', 'Máy Ép Keo Băng Chuyền', '♨️👔', 'Keo ép cổ áo bị rộp bọt khí', 'Toàn bộ 1.500 cổ áo sơ mi sau khi qua máy ép keo dán dựng (interlining) bị phồng rộp lấm tấm như bánh tráng nướng!', [
+  ch('Chỉnh lại nhiệt độ và áp suất máy ép lại', 'Tăng áp lực trục lăn đè bẹp bọt khí', { e: -2, b: -1 }, 'Nhiệt độ chuẩn 140°C ép phẳng lỳ mọi nếp nhăn. Cổ áo đứng form đẹp mắt.'),
+  ch('Đổi loại keo dệt thoi cao cấp hơn', 'Thay nguyên liệu keo ép chất lượng cao', { e: -1, b: 1, r: 1 }, 'Tốn thêm ít chi phí nhưng chất lượng hoàn hảo không tì vết.'),
+  ch('Ủi thủ công từng chiếc cổ áo bằng bàn là hơi', 'Canh bạc kiên trì', {}, 'Bạn cùng 3 công nhân cầm bàn là tay.', {
     roll: {
       chance: 0.55,
-      win: { d: { r: 2, e: 1 }, message: 'Hai thầy trò song ca bùng nổ quán hát! Cả công ty quẩy tưng bừng.' },
-      lose: { d: { r: -2, e: -2 }, message: 'Bạn vô tình giật mic đúng đoạn ngân của sếp. Không khí chùng xuống.' }
+      win: { d: { e: -2, b: -2, r: 1 }, message: 'Khéo ăn khéo co, 1.500 cổ áo phẳng phiu xuất xưởng đúng giờ.' },
+      lose: { d: { e: -3, b: 2 }, message: 'Vải bị bóng cháy xém một mảng lớn. Phải thay vải cắt lại toàn bộ cổ.' }
     }
   })
 ]);
 
-// ==================== CALLBACK CARDS ====================
-addCard('urgent_follow', 'callback', 'Sếp tổng', '👔', 'Báo cáo 30 slide quay lại', 'Sếp hỏi: "Em xong chưa? Anh cần thêm 40 slide phụ lục, nhưng vẫn đúng hạn cũ."', [
-  ch('Chọn 10 slide quan trọng nhất', 'Chắt lọc phần cốt lõi, bảo vệ chất lượng bài thuyết trình', { e: -2, b: -2, r: -1 }, 'Bạn cứu bản trình bày bằng kỹ năng ưu tiên.'),
-  ch('Bảo đã hoàn thành 110%', 'Hứa hẹn vượt mức mong đợi, rước thêm lịch kiểm tra', { b: 2, r: 1 }, 'Sếp vui. Calendar âm thầm tạo một cuộc họp kiểm thử.', { queue: [q('boss_audit', 3)] })
-]);
-
-addCard('urgent_negotiated', 'callback', 'Sếp tổng', '👔', 'Cái giá của ranh giới', 'Sếp gửi một tin: "Anh nghĩ lại rồi, ưu tiên em nói hôm trước rất hợp lý."', [
-  ch('Chốt phạm vi bằng email', 'Xác lập ranh giới bằng văn bản, tạo tiền lệ chuẩn mực', { e: -1, b: -2, r: 1 }, 'Từ đó, cụm từ "phạm vi công việc" trở thành truyền thuyết.'),
-  ch('Nhận thêm 1 yêu cầu nhỏ', 'Nhượng bộ một chút xíu, Jira lập tức mọc thêm việc', { r: 1, b: 2 }, 'Một yêu cầu nhỏ sinh đôi trong Jira.')
-]);
-
-addCard('printer_promoted', 'callback', 'Trưởng phòng Máy In', '🖨️', 'Máy in mở họp 1:1', 'Trưởng phòng Máy In yêu cầu bạn trình bày KPI "số tờ được cứu".', [
-  ch('Chuẩn bị báo cáo KPI cho máy', 'Tôn trọng quyền lực của máy móc để được phê duyệt', { e: -2, r: 1 }, 'Máy in đóng dấu APPROVED bằng mực hồng.', { queue: [q('printer_audit', 3)] }),
-  ch('Rút dây nguồn phòng họp', 'Giải quyết xung đột bằng cách cắt đứt nguồn năng lượng', { b: -2, r: -1 }, 'Cuộc họp kết thúc. Bộ phận Pháp chế thiết bị đang điều tra.', { flag: 'printerDispute' })
-]);
-
-addCard('printer_audit', 'callback', 'Ban kiểm toán Máy In', '📎', 'Kiểm toán giấy tờ bất ngờ', 'Trưởng phòng Máy In phát hiện bạn từng in một mặt và viết email khi chưa xin phép.', [
-  ch('Nộp bản tự kiểm điểm A4', 'Hạ mình xin lỗi để xoa dịu lòng tự ái của máy in', { e: -1, r: 1 }, 'Máy in nức nở in một lá thư tha thứ.'),
-  ch('Tố máy in làm thất thoát mực', 'Phản công kiểm toán: Tố giác ngược máy in lãng phí', {}, 'Cả văn phòng dõi theo bạn.', {
+addCard('audit_social_compliance', 'base', 'Đoàn Audit Trách Nhiệm Xã Hội', '📋🏢', 'Thanh tra trách nhiệm xã hội bất ngờ', 'Đoàn kiểm toán quốc tế (Wrap / BSCI) bước vào cổng nhà máy. Họ đòi kiểm tra bảng chấm công, lối thoát hiểm và phỏng vấn ngẫu nhiên công nhân!', [
+  ch('Đưa đoàn đi tham quan căn tin và trạm y tế', 'Ngoại giao thiện chí, phô diễn các điểm mạnh phúc lợi', { e: -2, r: 2 }, 'Đoàn audit khen ngợi suất cơm công nhân có sữa chua tráng miệng! Đạt chuẩn Green.'),
+  ch('Hướng dẫn công nhân trả lời đúng quy chuẩn', 'Nhắc nhở công nhân không khai tăng ca quá 40 giờ/tháng', { e: -1, b: -1 }, 'Các anh chị công nhân trả lời trơn tru như học sinh thuộc bài.'),
+  ch('Để đoàn audit phỏng vấn tự do không can thiệp', 'Canh bạc minh bạch', {}, 'Auditor chọn ngẫu nhiên một bác phụ việc lớn tuổi.', {
     roll: {
-      chance: 0.55,
-      win: { d: { b: -3, r: 1 }, message: 'Máy in xin nghỉ phép. Bạn được ân xá toàn bộ ticket in ấn.' },
-      lose: { d: { b: 2, r: -2 }, message: 'Máy in gọi bảo vệ là chiếc máy scan.' }
+      chance: 0.5,
+      win: { d: { r: 2, b: -1 }, message: 'Bác khen công ty cấp đồ bảo hộ chu đáo! Nhà máy đạt chứng chỉ Gold.' },
+      lose: { d: { r: -3, b: 2 }, message: 'Bác khai thật: "Tối qua tôi mới tăng ca tới 2h sáng." Nhà máy bị dính lỗi Minor!' }
     }
   })
 ]);
 
-addCard('excel_revenge', 'callback', 'File FINAL_v99', '📊', 'Bản FINAL nổi loạn', 'Có 23 file FINAL mới trong thư mục. Một file tự nhận là file gốc.', [
-  ch('Dọn version, đặt quy tắc đặt tên', 'Lập lại trật tự cho thư mục file đang hỗn loạn', { e: -2, b: -2 }, 'Công ty bình yên. Trong 4 phút.'),
-  ch('Để Excel tự bầu trưởng file', 'Mặc kệ số phận, để các phiên bản tự sinh tự diệt', { e: 1, b: 2 }, 'FINAL_v99_FINAL_REAL bắt đầu họp hội đồng.')
-]);
-
-addCard('meeting_follow', 'callback', 'Lịch Outlook', '📅', 'Cái gật đầu định mệnh', 'Bạn được ghi tên làm chủ trì "Diễn đàn chiến lược thảo luận họp quý".', [
-  ch('Gửi biên bản 3 dòng và huỷ', 'Gọn gàng súc tích, giải phóng đồng nghiệp khỏi cuộc họp', { e: -1, b: -2 }, 'Ba dòng của bạn giải phóng toàn bộ tầng 7.'),
-  ch('Mở thêm một nhóm điều phối', 'Thêm người thêm việc, bộ máy hành chính phình to', { r: 1, b: 2 }, 'Hội đồng đã bầu ra ban thư ký của ban thư ký.')
-]);
-
-addCard('client_follow', 'callback', 'Khách hàng VIP', '📱', 'Màu tím phiên bản 18', 'Khách nhắn: "Em ơi, anh nghĩ màu tím không còn hợp. Đổi sang màu không có màu nhé."', [
-  ch('Chốt lại phạm vi bằng văn bản', 'Ký cam kết ranh giới, giữ hình ảnh chuyên nghiệp', { e: -2, b: -2, r: -1 }, 'Khách gọi bạn là người khó tính nhưng chuyên nghiệp.'),
-  ch('Dạ để em thử tiếp ạ', 'Tiếp tục chiều chuộng khách hàng vô điều kiện', { b: 2, r: 1 }, 'Ngày mai khách có thể muốn dùng màu của âm thanh.')
-]);
-
-addCard('coffee_follow', 'callback', 'Máy cà phê', '☕', 'Cà phê đòi tiền bản quyền', 'Hai ly cà phê sáng nay gửi hóa đơn "Phí tăng năng suất tâm hồn".', [
-  ch('Tự pha, dứt điểm cuộc tranh cãi', 'Chấm dứt phụ thuộc vào máy cà phê thương mại', { e: -1, b: -1 }, 'Máy cà phê chấp nhận tách khỏi bộ máy kế toán.'),
-  ch('Ký hợp đồng nhượng quyền', 'Nhận thêm việc bán hàng để đổi lấy caffein miễn phí', { e: 2, b: 2 }, 'Cà phê cấp thêm năng lượng và 2 nhiệm vụ bán hàng.')
-]);
-
-addCard('coworker_help', 'callback', 'Đồng nghiệp bàn bên', '🤓', 'Đến lúc trả ơn', 'Đồng nghiệp bạn từng giúp nói: "Để tui gánh hộ một phần việc cho!"', [
-  ch('Nhờ xử lý hai task khó', 'Nhờ đồng nghiệp gánh việc để giải phóng backlog', { b: -2, r: 1 }, 'Đồng nghiệp xử lý gọn. Tình người vẫn còn.'),
-  ch('Cảm ơn, tự làm nốt', 'Tự mình gánh vác, tích lũy kinh nghiệm xử lý vấn đề', { e: -1, b: -1 }, 'Bạn giữ lại niềm vui giải quyết vấn đề.')
-]);
-
-addCard('sticker_viral', 'callback', 'Phòng Marketing', '🐻', 'Con gấu thành bộ nhận diện', 'CEO muốn tung merch con gấu ngủ. Bạn bị đưa vào ban chỉ đạo.', [
-  ch('Đưa ra bộ sticker mẫu rồi rút', 'Bàn giao thành quả sáng tạo rồi rút lui an toàn', { e: -1, b: -2, r: 1 }, 'Con gấu được bảo vệ bản quyền. Bạn giữ được giờ nghỉ trưa.'),
-  ch('Nhận chức Giám đốc Gấu', 'Thăng tiến vượt bậc nhưng gánh thêm trách nhiệm thương hiệu', { b: 2, r: 2 }, 'Email của bạn giờ có đuôi @bear.')
-]);
-
-addCard('intern_admin', 'callback', 'Thực tập sinh', '🐣', 'Toàn bộ task biến mất lần nữa', 'Intern xóa cả nút "Khôi phục". Công ty vẫn yêu cầu báo cáo tiến độ.', [
-  ch('Phục hồi từ backup', 'Cứu vãn dữ liệu kịp thời, dạy bài học cho người trẻ', { e: -2, b: -2 }, 'Backup cứu bạn. Intern học được giá trị của nút Undo.'),
-  ch('Thông báo đây là chuyển đổi số', 'Vẽ ra câu chuyện chuyển đổi số để che đậy thảm họa', { r: 1, b: 2 }, 'CEO trình bày case study tại hội thảo. Bạn toát mồ hôi.')
-]);
-
-addCard('plant_promoted', 'callback', 'Cây trầu bà', '🪴', 'Cây gọi bạn họp hiệu suất', 'Trưởng nhóm Cây Trầu Bà muốn nâng KPI "số lá xanh/nhân viên".', [
-  ch('Tưới cây, chốt KPI hợp lý', 'Chăm sóc cây cối, giải quyết êm đẹp khối lượng việc', { e: -1, b: -2 }, 'Cây ra lá mới. Bạn giải quyết xong 2 việc.'),
-  ch('Đăng ký thi đua quang hợp', 'Làm việc hết mình dưới nắng để gây ấn tượng với cây', { e: -2, r: 1 }, 'Bạn làm việc dưới nắng. Cây rất ấn tượng.')
-]);
-
-addCard('ai_contract', 'callback', 'Phòng nhân sự', '🤖', 'AI đòi nghỉ phép có lương', 'HR trình đơn xin nghỉ của AI để "đi tìm bản ngã giữa các token".', [
-  ch('Cho AI nghỉ, viết email thủ công', 'Tập quay về phương pháp truyền thống gõ phím bằng tay', { e: -1, b: -1 }, 'Bạn hít thở sâu, học lại gõ bàn phím.'),
-  ch('Yêu cầu AI đào tạo nhân sự mới', 'Tận dụng năng lực của AI để đào tạo nhân viên', { b: -2, r: -1 }, 'AI tổ chức khoá học "Làm sao để xin nghỉ phép từ chính mình".')
-]);
-
-addCard('boss_audit', 'callback', 'Sếp tổng', '👔', 'Kiểm toán 110%', 'Sếp hỏi báo cáo 110% là 110% của cái gì. Bạn không biết.', [
-  ch('Thành thật nhận thiếu sót', 'Thành thật nhận lỗi, xin phương án gọn gàng hơn', { e: -1, r: -1, b: -1 }, 'Sếp yêu cầu bản gọn hơn. Bạn thở phào.'),
-  ch('Đổi KPI thành 120%', 'Canh bạc số liệu: Thổi phồng tăng trưởng hoặc bị tra hỏi', {}, 'Bạn tăng phần trăm bằng niềm tin.', {
+addCard('boba_mer_fuel', 'base', 'Team Merchandiser', '🧋⚡', 'Trà sữa cứu rỗi Merchandiser', '15:00 chiều, cả phòng mắt lờ đờ, màn hình Excel nhảy nhót lung tung. Ai đó hô to: "Ghé app đặt trà sữa 70% đường 100% đá đi anh em ơi!"', [
+  ch('Đứng ra ứng tiền bao cả phòng 1 chầu', 'Làm thiên thần của cả phòng xuất nhập khẩu', { e: 2, r: 1, b: 1 }, 'Đường huyết tăng vọt, cả phòng gõ phím như gảy đàn tranh.', { queue: [q('boba_mer_follow', 3)] }),
+  ch('Uống cà phê đen đá không đường tự pha', 'Giữ vững kỷ luật tài chính, tỉnh táo bằng vị đắng cuộc đời', { e: 1, b: -1 }, 'Vị đắng cà phê ngấm vào tim nhắc bạn về deadline sắp tới.'),
+  ch('Gạ sếp thanh toán bằng quỹ tiếp khách ngoại', 'Canh bạc tài chính nội bộ', {}, 'Bạn gửi link thanh toán vào Zalo của sếp.', {
     roll: {
-      chance: 0.35,
-      win: { d: { r: 2, b: -2 }, message: 'CEO gọi bạn là đại sứ tăng trưởng.' },
-      lose: { d: { r: -2, b: 2 }, message: 'Sếp đặt lịch cuộc họp về định nghĩa phần trăm.' }
+      chance: 0.5,
+      win: { d: { e: 3, r: 1 }, message: 'Sếp duyệt chi ngay: "Uống đi rồi tăng ca xuất cho xong cont hàng!"' },
+      lose: { d: { r: -1, b: 1 }, message: 'Sếp nhắn lại: "Tồn kho chưa giải quyết xong mà sữa với chả trà?"' }
     }
   })
 ]);
 
-// NEW Callbacks
-addCard('boba_debt', 'callback', 'Ví tiền của bạn', '💸', 'Nợ trà sữa 3 tuần chưa ai trả', 'Tin nhắn "Ê mọi người bank lại tiền trà sữa nha" rơi vào hố đen tĩnh lặng của vũ trụ.', [
-  ch('Tag thẳng mặt từng người đòi nợ', 'Đòi nợ công khai, sứt mẻ tình cảm nhưng thu hồi vốn', { r: -1, b: -1 }, 'Đồng nghiệp giả vờ bận, nhưng 2 người đã ngậm ngùi chuyển khoản.'),
-  ch('Tự nhủ coi như tiền cúng cô hồn', 'Tâm bất biến giữa dòng đời, chấp nhận mất tiền mua bình yên', { e: -1, r: 1 }, 'Tâm bất biến giữa dòng đời vạn biến. Bạn giác ngộ chân lý.')
+// ==================== CALLBACK CARDS (HỆ QUẢ CỦA CÁC QUYẾT ĐỊNH) ====================
+
+addCard('lab_dip_follow', 'callback', 'Buyer New York', '🇺🇸✨', 'Hồi âm Lab-dip lần 9', 'David gửi email sau khi soi mẫu lab-dip bạn thức trắng đêm nhuộm: "This is exactly what we need!"', [
+  ch('Bắt tay chốt đơn vải chính thức', 'Lập tức ký hợp đồng dệt 30.000 mét vải chính', { e: -1, b: -2, r: 2 }, 'Đơn hàng vào guồng sản xuất trơn tru.'),
+  ch('Xin tạm ứng 30% tiền cọc vải', 'Tăng cường dòng tiền cho công ty', { r: 1, b: -1 }, 'Khách chuyển tiền cọc ngay trong ngày.')
 ]);
 
-addCard('sunday_task', 'callback', 'Email hộp thư đến', '📩', 'Hậu quả của tin nhắn Chủ Nhật', 'File "Phụ lục 60 trang" sếp gửi nửa đêm đang nằm chờ bạn xử lý trước 10:00.', [
-  ch('Cày cuốc hết tốc lực', 'Thức trắng đêm gõ báo cáo để nộp đúng hạn sáng sớm', { e: -3, b: -2, r: 1 }, 'Báo cáo nộp đúng hạn. Mắt bạn thâm quầng như gấu trúc.'),
-  ch('Nhờ AI viết tóm tắt rồi nộp', 'Canh bạc AI: Tóm tắt thần tốc hoặc để lộ sơ hở', {}, 'Bạn paste toàn bộ vào AI tạo tóm tắt.', {
+addCard('lab_dip_negotiated', 'callback', 'Buyer New York', '🇺🇸📉', 'Cái giá của ranh giới màu sắc', 'David đồng ý nhận màu cũ với điều kiện: "Phải chiết khấu 1.5% trên tổng giá trị FOB đơn hàng."', [
+  ch('Chấp nhận chiết khấu để giữ hòa khí', 'Bớt chút lợi nhuận để xuất hàng êm đẹp', { e: -1, b: -2, r: 1 }, 'Hợp đồng được ký kết, giữ chân khách hàng lớn.'),
+  ch('Bù đắp bằng việc tặng kèm 200 túi tote', 'Dùng phụ kiện khuyến mãi thay vì giảm tiền mặt', { e: -1, r: 1 }, 'Khách thích thú với quà tặng kèm mang đậm tính thương hiệu.')
+]);
+
+addCard('cat_lai_follow', 'callback', 'Tài Xế Xe Đầu Kéo', '🚛💨', 'Hạ bãi phút 89', 'Bác tài xe cont gọi điện: "Hạ bãi Cát Lái xong lúc 16:59:30 giây nhé em! Tàu đang cẩu cont lên boong rồi!"', [
+  ch('Thưởng nóng bác tài 500k', 'Biết ơn người hùng xa lộ đã cứu mạng đơn hàng', { e: 1, r: 1 }, 'Bác tài hứa lần sau có cont gấp cứ gọi bác!'),
+  ch('Nộp chứng từ hải quan lên hệ thống', 'Hoàn tất thủ tục xuất khẩu điện tử', { e: -1, b: -2 }, 'B/L đã được phát hành, thở phào nhẹ nhõm.')
+]);
+
+addCard('cat_lai_negotiated', 'callback', 'Hãng Tàu Cát Lái', '⚓🎫', 'Hậu quả xin dời giờ Closing', 'Hãng tàu gửi giấy báo phí gia hạn hạ bãi muộn (Late CY fee) trị giá 1.200.000đ.', [
+  ch('Ký duyệt thanh toán nhanh gọn', 'Chi phí nhỏ cứu nguy cho đơn hàng lớn', { e: -1, b: -1 }, 'Mọi thủ tục êm đẹp, cont lên tàu an toàn.'),
+  ch('Kẹp biên bản giải trình kẹt xe', 'Chứng minh bất khả kháng để xin miễn giảm phí', { e: -1, r: 1 }, 'Hãng tàu duyệt miễn 50% phí hỗ trợ.')
+]);
+
+addCard('inventory_follow', 'callback', 'Kế Toán Trưởng', '📊💼', 'Đại hội giải trình tồn kho', 'Kế toán trưởng mở cuộc họp liên phòng ban: "Vải Spandex không thể tự bay hơi được, Merchandiser giải trình thế nào?"', [
+  ch('Trình biên bản kiểm tra tỷ lệ hao hụt bàn cắt', 'Chứng minh số liệu hao hụt thực tế có căn cứ', { e: -2, b: -2, r: 1 }, 'Kế toán gật đầu chấp thuận điều chỉnh định mức kỹ thuật.'),
+  ch('Đề xuất trích quỹ dự phòng rủi ro', 'Giải quyết êm thấm theo quy chế tài chính', { b: -1, r: -1 }, 'Sổ sách được đóng lại, nhưng bạn bị ghi nhớ trong danh sách soi.')
+]);
+
+addCard('air_freight_follow', 'callback', 'Bộ Phận Logistics Hãng', '✈️📦', 'Đơn hàng cất cánh an toàn', 'Chuyến bay chở hàng xuất khẩu đã hạ cánh an toàn tại sân bay JFK New York đúng hạn trưng bày!', [
+  ch('Chia sẻ niềm vui cùng cả team may', 'Tuyên dương tinh thần tăng ca bền bỉ', { e: 2, r: 2 }, 'Cả phòng mở tiệc ăn mừng chiến thắng nghẹt thở.'),
+  ch('Đúc kết bài học quản lý tiến độ', 'Lập quy trình kiểm soát mốc thời gian (Time & Action)', { e: -1, b: -2 }, 'Từ nay các đơn hàng sau không còn lo trễ hạn.')
+]);
+
+addCard('air_freight_sea', 'callback', 'Buyer New York', '🚢🏷️', 'Tàu nhanh cập bến Long Beach', 'Tàu nhanh cập cảng sớm hơn dự kiến 2 ngày, khách hàng kịp phân phối hàng về các trung tâm thương mại!', [
+  ch('Khách hàng gửi thư cảm ơn và đặt thêm đơn mới', 'Uy tín phục hồi mạnh mẽ sau sóng gió', { r: 2, b: -1 }, 'Đơn hàng mùa Xuân Hè trị giá 200.000$ được giao cho bạn.'),
+  ch('Tự thưởng cho bản thân 1 giấc ngủ trọn vẹn', 'Hồi phục sinh lực sau chuỗi ngày căng thẳng', { e: 3 }, 'Giấc ngủ ngon lành không mộng mị về container.')
+]);
+
+addCard('tan_binh_follow', 'callback', 'Phòng Kiểm Nghiệm Muối', '🧪🧂', 'Cúc áo chợ Tân Bình lên tiếng', 'Khách hàng lấy mẫu áo gửi viện kiểm nghiệm thử độ bền kéo và phun sương muối chống rỉ sét!', [
+  ch('Hồi hộp chờ kết quả phân tích kim loại', 'Cầu trời khấn phật cho cúc đạt chuẩn Lead-free', {}, 'Bản kết quả kiểm nghiệm hiện lên.', {
     roll: {
       chance: 0.6,
-      win: { d: { b: -2, e: 1 }, message: 'Tóm tắt súc tích đến kinh ngạc. Sếp khen tư duy chiến lược.' },
-      lose: { d: { b: 2, r: -1 }, message: 'AI để lộ câu: "Là một mô hình AI, tôi thấy báo cáo này quá vô lý." Sếp yêu cầu viết tay.' }
+      win: { d: { r: 2, b: -2 }, message: 'Hàm lượng chì và độ bền muối PASS 100%! Cúc chợ Tân Bình chất lượng quốc tế.' },
+      lose: { d: { r: -2, b: 2 }, message: 'Cúc bị sùi bọt rỉ sét! Phải cử công nhân sang Mỹ dập lại cúc tại kho khách.' }
     }
-  })
+  }),
+  ch('Chủ động báo khách xin test mẫu mới', 'Đón đầu rủi ro bằng sự minh bạch', { e: -1, r: 1 }, 'Khách đánh giá cao tinh thần trách nhiệm.')
 ]);
 
-addCard('salary_outcome', 'callback', 'Phòng nhân sự', '💌', 'Thư thông báo tăng lương', 'HR gửi thư mật: "Sau khi cân nhắc kỹ lưỡng, công ty quyết định tăng cho em 150.000đ/tháng!"', [
-  ch('Mỉm cười nhận mức tăng 150k', 'Vui vẻ chấp nhận thực tế, tự thưởng cốc trà đá mỗi ngày', { e: -1, r: 1 }, 'Mỗi ngày bạn được thêm một cốc trà đá vỉa hè. Động lực tràn trề.'),
-  ch('Dùng 150k khao bánh cả phòng', 'Hy sinh tiền tăng lương để mua sự ngưỡng mộ của đồng nghiệp', { r: 2, e: -1 }, 'Cả phòng xúc động trước tấm lòng thảo thơm của bạn.')
+addCard('red_lane_follow', 'callback', 'Đội Kiểm Hóa Cửa Khẩu', '🛃📦', 'Biên bản kiểm tra thực tế hàng', 'Hải quan đã kiểm tra xong 500 thùng carton hàng may mặc xuất khẩu.', [
+  ch('Bấm seal mới và hoàn thành thủ tục', 'Niêm phong kẹp chì mới của hải quan', { e: -1, b: -2, r: 1 }, 'Tờ khai thông quan chính thức, xe cont lăn bánh lên tàu.'),
+  ch('Ký biên bản xác nhận sai sót nhỏ nhãn mác', 'Nộp phạt hành chính khắc phục tại chỗ', { e: -1, b: -1 }, 'Mọi thứ giải quyết êm đẹp trong buổi chiều.')
 ]);
 
-addCard('group_caught', 'callback', 'Sếp tổng', '👀', 'Sếp phát hiện group chat kín', 'Sếp gửi thông báo toàn công ty: "Tôi biết các bạn hay thả icon haha sau lưng tôi..."', [
-  ch('Dũng cảm nhận lỗi thay cả nhóm', 'Đứng mũi chịu sào, gánh chịu hậu quả vì anh em', { e: -2, r: 2, b: 1 }, 'Cả phòng nợ bạn một món nợ ân tình sâu sắc.'),
-  ch('Đổ lỗi cho bot Nga tấn công mạng', 'Đổ lỗi cho thế lực hacker bí ẩn bên ngoài', {}, 'Bạn giải thích đây là lỗi bảo mật mạng.', {
+addCard('techpack_follow', 'callback', 'Cửa Hàng Thú Cưng', '🐶🩳', 'Bộ sưu tập quần đùi Corgi', '2.000 cái quần người tí hon cắt nhầm thông số được một chuỗi cửa hàng thú cưng mua sạch với giá cao!', [
+  ch('Thu hồi toàn bộ tiền vải và có lãi', 'Biến thảm họa cắt nhầm thành cơ hội kinh doanh', { e: 1, b: -2, r: 2 }, 'Sếp tổng cười tít mắt: "Em quả là thiên tài xoay chuyển tình thế!"'),
+  ch('Tặng cho nhân viên công ty nuôi mèo', 'Lan tỏa tình yêu thương động vật trong văn phòng', { r: 2 }, 'Văn phòng ngập tràn ảnh chó mèo mặc quần đùi thời thượng.')
+]);
+
+addCard('sample_follow', 'callback', 'Mr. David Buyer', '👗✨', 'Mẫu Proto làm say lòng nước Đức', 'Khách hàng Đức gửi video đập hộp mẫu áo khoác chị Bảy may: "May quá chuẩn, mũi chỉ sắc sảo như hàng may đo Savile Row!"', [
+  ch('Mua tặng chị Bảy phòng mẫu hộp yến sào', 'Tri ân nghệ nhân may mẫu cứu tinh của cty', { e: 1, r: 2 }, 'Chị Bảy xúc động hứa: "Lần sau có mẫu khó cứ mang qua chị!"'),
+  ch('Nhận đơn hàng sản xuất đại trà 50.000 cái', 'Gặt hái quả ngọt từ mẫu thử hoàn hảo', { b: 2, r: 2 }, 'Nhà máy kín chuyền may suốt cả quý 4.')
+]);
+
+addCard('boba_mer_follow', 'callback', 'Màn Hình Báo Cáo', '🧋💡', 'Cú lóe sáng lúc 16:30', 'Nhờ năng lượng trà sữa, bạn chợt phát hiện ra thợ rập quên cộng 2cm đường may gấu áo trong file gửi xưởng dệt!', [
+  ch('Chặn đứng bàn cắt kịp thời trước khi bấm nút', 'Cứu công ty bàn thua trị giá 500 triệu tiền vải', { e: 2, b: -3, r: 2 }, 'Sếp tổng khen ngợi trước toàn thể công ty: "Trà sữa này đáng đồng tiền bát gạo!"'),
+  ch('Lặng lẽ gọi điện nhắc thợ sửa file', 'Giải quyết vấn đề trong im lặng giữ thể diện cho thợ', { e: -1, b: -2, r: 1 }, 'Thợ rập nể phục và mang ơn bạn suốt đời.')
+]);
+
+// ==================== CRISIS CARDS (KHỦNG HOẢNG SINH TỬ) ====================
+
+addCard('energy_crisis', 'crisis', 'Cơ Thể Merchandiser', '😵🪫', 'Sập nguồn sau 3 đêm canh chuyền', 'Năng lượng chạm đáy. Bạn nhìn cuộn vải thun mà ngỡ là chiếc gối êm ái nhất trần đời, hai mắt díp lại không thể mở nổi.', [
+  ch('Ngủ gục 20 phút trên xấp vải mẫu', 'Chợp mắt khẩn cấp phục hồi chút sinh lực', { e: 3, b: 1 }, 'Mùi vải mộc vỗ về giấc ngủ ngắn ngủi của bạn.'),
+  ch('Nốc cạn lon bò húc thứ 4 làm tiếp', 'Cưỡng ép cơ thể chạy nốt bảng kê Packing List', { e: -2, b: -2 }, 'Tim đập thình thịch như tiếng máy dập nút. Rất nguy hiểm!')
+]);
+
+addCard('backlog_crisis', 'crisis', 'Hòm Thư Outlook & Hóa Đơn', '🧨📨', 'Bão Deadline đè bẹp Merchandiser', '10 đơn hàng xuất khẩu cùng lúc réo đòi ngày giao, hóa đơn phụ liệu trễ hạn, hãng tàu đòi số seal cont chất cao như núi.', [
+  ch('Họp khẩn xin gia hạn các đơn nhỏ', 'Tập trung dồn toàn lực cứu các đơn hàng lớn trước', { e: -2, b: -3, r: -1 }, 'Cắt bớt việc râu ria, giải phóng hơi thở cho bản thân.'),
+  ch('Ủy quyền bớt cho thực tập sinh phụ việc', 'Chia việc nhập số liệu cho cấp dưới', { b: -2, r: -1 }, 'Bớt việc nhưng phải lo thót tim canh chừng các em nhập sai.'),
+  ch('Cầu cứu sếp tổng can thiệp lùi ngày giao', 'Đòn tối hậu giải cứu', {}, 'Bạn bước vào phòng sếp tổng.', {
     roll: {
       chance: 0.5,
-      win: { d: { b: -2, r: 1 }, message: 'IT xác nhận có dấu hiệu nghẽn mạng. Sếp tha thứ cho tất cả.' },
-      lose: { d: { r: -2, b: 2 }, message: 'Sếp mở lịch sử thấy avatar bạn to đùng. Bạn bị trừ điểm thi đua.' }
+      win: { d: { b: -3, r: 1 }, message: 'Sếp đích thân gọi điện cho đối tác xin hoãn 3 ngày thành công!' },
+      lose: { d: { b: 2, r: -2 }, message: 'Sếp mắng một trận vì để việc ứ đọng và bắt tự chịu trách nhiệm.' }
     }
   })
 ]);
 
-addCard('birthday_revival', 'callback', 'Cả phòng làm việc', '🎂', 'Bánh kem báo oán', 'Cả phòng bất ngờ ùa vào với chiếc bánh kem mừng "sinh nhật giả" của bạn!', [
-  ch('Ăn bánh kem trong sự cắn rứt', 'Bánh ngọt nhưng lương tâm đắng, ăn trong sự hối hận', { e: 2, r: -1 }, 'Bánh ngọt ngào nhưng lương tâm đắng ngắt. Bạn hứa không lừa ai nữa.'),
-  ch('Thú nhận sự thật và khao lại trà sữa', 'Thành thật thú tội, dùng trà sữa để chuộc lỗi', { e: -1, r: 2 }, 'Mọi người cười bò vì độ lầy lội của bạn. Tình đồng nghiệp gắn kết.')
+addCard('rep_crisis', 'crisis', 'Thị Trường Dệt May', '📣📉', 'Nguy cơ bị Buyer Blacklist', 'Tin đồn nhà máy của bạn làm ăn chậm trễ, trễ hẹn liên miên đang lan truyền giữa các văn phòng đại diện Buyer quốc tế.', [
+  ch('Tự tay kiểm tra và đóng dấu bảo đảm từng thùng', 'Lấy chất lượng thực tế đập tan mọi lời đồn thất thiệt', { e: -2, r: 2 }, 'Khách hàng nhận hàng đẹp không tì vết, tin đồn tự tan biến.'),
+  ch('Mời đại diện Buyer đến dự tiệc tất niên nhà máy', 'Ngoại giao gắn kết tình thân bằng rượu vang và quà quê', { e: 1, r: 1, b: 1 }, 'Tình cảm thắt chặt, Buyer ký cam kết đồng hành lâu dài.')
 ]);
 
-// ==================== CRISIS CARDS ====================
-addCard('energy_crisis', 'crisis', 'Cơ thể bạn', '😵', 'Não đang cập nhật Windows', 'Năng lượng quá thấp. Bạn nhìn con trỏ chuột và tưởng nó đang nhìn lại.', [
-  ch('Đứng dậy, nghỉ ngắn', 'Tạm dừng công việc để hồi phục sinh lực khẩn cấp', { e: 3, b: 1 }, 'Bạn được nghỉ. Công việc vẫn chờ đó.'),
-  ch('Cố làm thêm cho xong', 'Cố gắng quá sức trong cơn kiệt sức: Nguy cơ gục ngã', { e: -2, b: -2 }, 'Bạn cố gắng quá sức. Cơ thể có thể phản đối.')
-]);
+// ==================== RARE CARDS (SỰ KIỆN KỲ THÚ) ====================
 
-addCard('backlog_crisis', 'crisis', 'Jira', '🧨', 'Backlog sắp lên làm CEO', 'Danh sách việc tồn dài hơn điều lệ công ty. Nó bắt đầu có ý chí riêng.', [
-  ch('Cắt bỏ task không còn giá trị', 'Mạnh tay xóa bỏ các ticket vô bổ để cứu hiện tại', { e: -2, b: -3, r: -1 }, 'Có người giận vì ticket của họ bị đóng, nhưng vũ trụ nhẹ hơn.'),
-  ch('Chuyển task cho team tương lai', 'Đùn đẩy việc cho tương lai để cứu vãn tức thì', { b: -2, r: -2 }, 'Bạn cứu hiện tại bằng cách thế chấp tương lai.'),
-  ch('Đổi backlog thành backlog.txt', 'Dùng pháp thuật đổi tên file để trốn tránh thực tại', {}, 'Bạn thử dùng pháp thuật đổi tên.', {
-    roll: {
-      chance: 0.5,
-      win: { d: { b: -3 }, message: 'Task không tìm thấy đường về. Một chiến thắng đáng ngờ.' },
-      lose: { d: { b: 2, e: -1 }, message: 'Backlog.txt tự nhân đôi vì được backup.' }
-    }
-  })
-]);
-
-addCard('rep_crisis', 'crisis', 'Tin đồn công ty', '📣', 'Uy tín chạm đáy', 'Có lời đồn bạn đã từ chối một cuộc họp mà chưa gửi ba đơn giải trình.', [
-  ch('Chủ động giải thích và giúp một việc', 'Hạ mình giúp đỡ mọi người để khôi phục lòng tin', { e: -2, r: 2 }, 'Mọi người thấy bạn vẫn là con người.'),
-  ch('Mua trà sữa hoà giải', 'Dùng văn hoá trà sữa để xoa dịu những tin đồn độc hại', { e: 1, r: 1, b: 1 }, 'Cả phòng tha thứ. Đơn đặt trà sữa trở thành task.')
-]);
-
-// ==================== RARE CARDS ====================
-addCard('ufo', 'rare', 'Người ngoài hành tinh', '👽', 'UFO muốn tuyển bạn', 'Người ngoài hành tinh đỗ phi thuyền ở bãi xe. Họ đề nghị tuyển bạn vì trái đất đã có nhiều kinh nghiệm chịu đựng.', [
-  ch('Nhận phỏng vấn bằng tiếng Sao Hoả', 'Tham gia phỏng vấn liên hành tinh để thăm dò cơ hội', { e: 2, r: -1 }, 'Họ khen bạn chịu áp lực cao. Bạn vẫn bị bắt quay về làm việc.'),
-  ch('Xin họ bắt cóc backlog', 'Nhờ phi thuyền người ngoài hành tinh hút sạch việc tồn', {}, 'Một tia sáng chiếu vào Jira.', {
-    roll: {
-      chance: 0.6,
-      win: { d: { b: -3 }, message: 'Phi thuyền chở ba task đi khỏi hệ Mặt Trời.' },
-      lose: { d: { b: 2 }, message: 'Người ngoài hành tinh clone task để nghiên cứu.' }
-    }
-  })
-]);
-
-addCard('catceo', 'rare', 'CEO mới', '🐈', 'CEO là một con mèo', 'Thông báo nội bộ: "Từ nay CEO sẽ là mèo vì người tiền nhiệm mất ngủ."', [
-  ch('Dâng cá khô để xin giảm task', 'Hối lộ lãnh đạo mới bằng đồ ăn vặt khoái khẩu', { b: -2, r: 1 }, 'CEO kêu meo. Ban điều hành phiên dịch là "Approved".'),
-  ch('Hỏi về chiến lược 5 năm', 'Hỏi câu hóc búa về định hướng chiến lược tương lai', { e: -1, b: 1 }, 'CEO gạt ly nước xuống đất. Các phòng ban gọi đó là chiến lược tái cấu trúc.')
-]);
-
-addCard('timeloop', 'rare', 'Đồng hồ chấm công', '⌛', 'Thứ Hai lặp lại 4 lần', 'Đồng hồ chấm công bảo: "Tôi không công nhận thứ Ba."', [
-  ch('Dùng vòng lặp để xử lý backlog', 'Tận dụng 4 bản sao cùng cày cuốc sprint', { e: -2, b: -3 }, 'Bốn bản sao của bạn cùng làm sprint.'),
-  ch('Tận hưởng bốn lần nghỉ trưa', 'Ăn bốn bữa trưa no nê, mặc kệ công việc nhân đôi', { e: 3, b: 2 }, 'Bạn ăn bốn bữa cơm nhưng task cũng sinh thêm hai bản.')
-]);
-
-addCard('duck', 'rare', 'Con vịt cao su', '🦆', 'Con vịt đòi tăng lương', 'Vịt cao su trên bàn thông báo: "Từ giờ tôi chỉ debug với mức đãi ngộ Senior."', [
-  ch('Công nhận vai trò của vịt', 'Tôn trọng năng lực debug của linh vật cao su', { e: 2, r: 1 }, 'Vịt giải quyết vấn đề bằng một tiếng kêu và sự tự tin.'),
-  ch('Đề nghị phỏng vấn coding', 'Thử thách phỏng vấn thuật toán với con vịt', {}, 'Vịt nhìn bạn chằm chằm.', {
-    roll: {
-      chance: 0.5,
-      win: { d: { b: -2 }, message: 'Vịt tìm ra bug. Bạn vẫn giữ việc làm.' },
-      lose: { d: { r: -1, b: 2 }, message: 'Vịt nhận offer Staff Engineer. Bạn được giao viết tài liệu onboarding.' }
-    }
-  })
-]);
-
-addCard('dev_begging', 'rare', 'Dev Game Đói Lả', '🧑‍💻', 'Bẻ gãy bức tường thứ tư', 'Một lập trình viên phờ phạc xuất hiện trên màn hình: "Ê sốp ơi, tui gõ code game này từ 2h sáng tới giờ, đói lả rồi... Khiều nhẹ cốc nước mía hay ly trà sữa được hong?"', [
+addCard('dev_begging', 'rare', 'Dev Game Đói Lả', '🧑‍💻🧋', 'Bẻ gãy bức tường thứ tư', 'Một lập trình viên phờ phạc hiện lên: "Ê sốp ơi, tui thức đến 3h sáng code toàn bộ thuật ngữ ngành Dệt May & Xuất Nhập Khẩu này, đói lả rồi... Khiều nhẹ ly trà sữa hay cốc nước mía tiếp tế dev được hong?"', [
   ch('Tiếp tế cốc nước mía 10k', 'Ủng hộ cốc nước mía giải cứu thể xác dev', { e: 1, r: 1 }, 'Dev mừng rơi nước mắt: "Đa tạ đại hiệp! Xin hồi cho bạn 1 Năng lượng và 1 Uy tín tâm linh!"'),
-  ch('Bắn tim ủng hộ tinh thần', 'Tình cảm dạt dào, nghèo tiền nhưng giàu lòng', { r: 1 }, 'Dev rơm rớm: "Tuy không no bụng nhưng ấm lòng chiến sĩ. Chúc sốp không bao giờ bị sếp dí!"'),
+  ch('Bắn tim ủng hộ tinh thần', 'Tình cảm dạt dào, nghèo tiền nhưng giàu lòng', { r: 1 }, 'Dev rơm rớm: "Chúc sốp không bao giờ bị rớt tàu Cát Lái hay đền hàng Air!"'),
   ch('Dí deadline ngược: "Thêm 10 thẻ nữa!"', 'Bắt dev tăng ca cày thêm tính năng', { b: -1 }, 'Dev sợ hãi quay về gõ phím: "Dạ dạ em làm liền, em dọn bớt 1 việc tồn cho sốp tha cho em!"')
 ]);
 
-// ==================== MEME CARDS ====================
-addCard('meme_this_is_fine', 'base', 'Cún Lửa', '🐶🔥', 'Mọi thứ vẫn ổn (This is Fine)', 'Văn phòng bốc cháy theo nghĩa đen: Server sập, deadline trễ 3 ngày, khách hàng doạ kiện. Bạn đang ngồi nhâm nhi tách trà: "This is fine."', [
-  ch('Uống tiếp tách trà: "Kệ đời trôi"', 'Tĩnh tâm bảo tồn năng lượng nhưng việc dồn ứ', { e: 2, b: 2 }, 'Bạn nhấp một ngụm trà nóng. Lửa cháy tới chân bàn nhưng tâm bạn tĩnh như mặt hồ.'),
-  ch('Cầm bình chữa cháy lao vào cứu server', 'Hành động anh hùng bảo vệ hạ tầng công ty', { e: -2, b: -2, r: 1 }, 'Bạn xịt tuyết trắng xoá cả phòng server. IT cúi đầu cảm tạ bạn.'),
-  ch('Đổ thêm dầu vào lửa: "Cháy to hơn đi!"', 'Canh bạc tuyệt vọng hy vọng được huỷ dự án', {}, 'Bạn hắt thêm can xăng vào đống báo cáo.', {
+addCard('godfather_cutter', 'rare', 'Bác Ba Thợ Cắt Lão Thành', '✂️👴', 'Bàn tay vàng làng giác sơ đồ', 'Bác Ba 35 năm cầm kéo bước vào xưởng. Bác nhìn sơ đồ máy tính lắc đầu, tự tay cầm phấn vẽ lại sơ đồ cắt bằng mắt thường.', [
+  ch('Để bác Ba tự do trổ tài nghệ', 'Tin tưởng tuyệt đối vào kinh nghiệm lão làng', {}, 'Bác Ba hạ kéo thoăn thoắt.', {
     roll: {
-      chance: 0.5,
-      win: { d: { b: -3 }, message: 'Server cháy sạch thật, sếp thông báo hoãn dự án sang quý sau!' },
-      lose: { d: { r: -2, b: 2 }, message: 'Camera an ninh ghi lại rõ mồn một. Bạn bị lập biên bản kỷ luật.' }
+      chance: 0.85,
+      win: { d: { b: -3, r: 2 }, message: 'Tiết kiệm được hẳn 350 mét vải chính! Định mức tiêu hao giảm kỷ lục.' },
+      lose: { d: { b: 1 }, message: 'Bác cắt lẹm mất 2 mép vải áo, nhưng vẫn xử lý gọn gàng.' }
     }
-  })
+  }),
+  ch('Mời bác ly trà đặc và biếu tút thuốc lá', 'Tôn trọng bậc tiền bối ngành may', { e: 1, r: 1 }, 'Bác Ba vui vẻ chia sẻ bí kíp nhìn thấu chiều tuyết sợi vải.')
 ]);
 
-addCard('meme_crying_cat', 'base', 'Mèo Khóc Like', '😿👍', 'Gượng cười trong nước mắt', 'Trưởng phòng bảo: "Em phụ trách thêm dự án này nhé, không có thưởng nhưng có thêm kinh nghiệm và sự tín nhiệm." Bạn vừa rớt nước mắt vừa giơ ngón cái đồng ý.', [
-  ch('Giơ ngón cái: "Em rất vinh dự ạ!"', 'Cắn răng nhận việc để lấy lòng sếp', { e: -2, b: 2, r: 2 }, 'Sếp vỗ vai: "Công ty cần những người như em." Bạn khóc ướt đẫm bàn phím.'),
-  ch('Chối khéo: "Em xin nhường cơ hội cho các bạn khác"', 'Bảo vệ ranh giới cá nhân nhưng mất điểm nhiệt tình', { e: 1, r: -1 }, 'Sếp thở dài: "Dạo này em thiếu lửa quá." Bạn thở phào vì tối nay được ngủ.'),
-  ch('Hỏi: "Kinh nghiệm có đổi ra trà sữa được không sếp?"', 'Canh bạc bộc trực mỉa mai đãi ngộ', {}, 'Cả phòng nín thở chờ phản ứng của sếp.', {
-    roll: {
-      chance: 0.5,
-      win: { d: { r: 1, e: 1 }, message: 'Sếp bật cười: "Hài hước đấy! Thôi anh duyệt cho ly Highlands."' },
-      lose: { d: { r: -2 }, message: 'Sếp nghiêm mặt: "Công ty không phải chỗ đùa cợt." Không khí đóng băng.' }
-    }
-  })
+addCard('container_miracle', 'rare', 'Hãng Tàu Viễn Dương', '📦✨', 'Vỏ container từ trên trời rơi xuống', 'Giữa cơn khủng hoảng khan hiếm vỏ container rỗng toàn cầu, một chiếc cont 40HQ sạch bong kin kít bất ngờ được phân cho bạn mà không mất phí bôi trơn!', [
+  ch('Đóng hàng ngay trước khi hãng tàu đổi ý', 'Hối hả chất 600 thùng hàng vào cont ngay lập tức', { e: -1, b: -3, r: 1 }, 'Container lăn bánh ra cảng trong ánh mắt thèm thuồng của các công ty bên cạnh.'),
+  ch('Bán lại vỏ cont cho công ty hàng xóm', 'Kiếm món hời chênh lệch bất ngờ', { e: 2, r: -1 }, 'Ví rủng rỉnh tiền nhưng phải chạy đôn đáo tìm cont khác thay thế.')
 ]);
 
-addCard('meme_pepe_interview', 'base', 'Pepe Doanh Nhân', '🐸👔', 'Phỏng vấn bằng sự tự tin ảo', 'HR gọi bạn lên phỏng vấn đánh giá: "Điểm yếu lớn nhất của em trong công việc là gì?" Bạn mặc vest, chỉnh cà vạt, ánh mắt đầy tham vọng.', [
-  ch('Trả lời: "Điểm yếu của em là quá cầu toàn và yêu việc"', 'Văn mẫu kinh điển ru ngủ người phỏng vấn', { r: 1, b: 1 }, 'HR gật gù ghi vào sổ: "Ứng viên có động lực cao, giao thêm task."'),
-  ch('Thành thật: "Em yếu nhất lúc chuông báo thức 7h sáng kêu"', 'Chân thật đến mức HR bối rối', { e: 1, r: -1 }, 'HR đánh dấu hỏi chấm to tướng vào hồ sơ nhân sự của bạn.'),
-  ch('Hỏi ngược lại: "Thế điểm yếu của công ty mình là gì?"', 'Canh bạc đảo ngược vị thế phỏng vấn', {}, 'Bạn khoanh tay nhìn thẳng vào mắt HR.', {
-    roll: {
-      chance: 0.45,
-      win: { d: { r: 2, b: -1 }, message: 'HR toát mồ hôi: "Em có tư duy phản biện xuất sắc! Đề xuất tăng lương."' },
-      lose: { d: { r: -2, b: 2 }, message: 'HR mời bạn ra khỏi phòng và gửi email cảnh cáo về thái độ.' }
-    }
-  })
+// ==================== FINALE CARDS (17:59 PHÚT CHÓT MỖI NGÀY) ====================
+
+addCard('end_cat_lai', 'finale', 'Bác Tài Xe Cont', '🚛🌇', '17:59 — "Em ơi, cont đã hạ bãi an toàn!"', 'Đúng lúc bạn thu dọn đồ chuẩn bị ra về, điện thoại rung lên: "Cont hàng FOB của em đã vào bãi Cát Lái, số seal nguyên vẹn!"', [
+  ch('Tắt máy tính, nhẹ nhõm tan ca về nhà', 'Kết thúc một ngày chiến đấu kiên cường', { e: 1, b: -1 }, 'Bạn hòa vào dòng người tan tầm với nụ cười chiến thắng trên môi.'),
+  ch('Gửi email xác nhận B/L cho khách trước khi về', 'Sự chu đáo chuyên nghiệp đến phút cuối cùng', { e: -1, b: -2, r: 1 }, 'Khách bên kia bán cầu khen ngợi tinh thần trách nhiệm tuyệt vời.')
 ]);
 
-addCard('meme_bongo_cat', 'base', 'Mèo Cào Phím', '🐱⌨️', 'Bàn phím cơ Blue Switch', 'Bạn mang bàn phím cơ Blue Switch vào phòng làm việc im lặng, gõ cành cạch như súng liên thanh. Cả phòng đang nhìn bạn với ánh mắt hình viên đạn.', [
-  ch('Tiếp tục gõ điên cuồng 150 từ/phút', 'Hoàn thành task chớp nhoáng mặc kệ người xung quanh', { b: -2, r: -1 }, 'Task bay vèo vèo nhưng đồng nghiệp bên cạnh đang mài dao dưới gầm bàn.'),
-  ch('Rút phích cắm, chuyển sang gõ rón rén', 'Hạ bớt cái tôi để bảo toàn mối quan hệ đồng nghiệp', { e: -1, r: 1 }, 'Phòng làm việc trở lại yên bình. Bạn gõ phím nhẹ như mèo đi ăn trộm.'),
-  ch('Bật nhạc Lo-fi át tiếng phím cơ', 'Canh bạc biến văn phòng thành quán cà phê chill', {}, 'Bạn bật loa ngoài phát nhạc không lời.', {
-    roll: {
-      chance: 0.55,
-      win: { d: { e: 2, r: 1 }, message: 'Cả phòng chill theo điệu nhạc, năng suất làm việc tăng vọt!' },
-      lose: { d: { r: -2 }, message: 'Trưởng phòng quát: "Tắt ngay! Tưởng đây là quán trà sữa hả?"' }
-    }
-  })
+addCard('end_buyer_zoom', 'finale', 'Buyer New York', '💻🇺🇸', '17:59 — Mr. David mở cuộc gọi Zoom', 'Vừa với tay lấy áo khoác thì màn hình laptop hiện thông báo Zoom Call từ New York: "Quick sync 5 minutes about Spring order!"', [
+  ch('Ngồi lại nghe máy 10 phút chốt deal', 'Chớp lấy cơ hội đơn hàng mới cho công ty', { e: -2, b: -1, r: 2 }, 'David chốt luôn đơn hàng áo len mùa thu trị giá 80.000$!'),
+  ch('Lịch sự hẹn lại sáng mai trả lời email', 'Bảo vệ ranh giới tan ca sau một ngày dài', { e: 1, r: -1 }, 'David tiếc nuối nhưng bạn được về nhà ăn cơm tối cùng gia đình.')
 ]);
 
-addCard('meme_cheems', 'base', 'Cheems Suy Sụp', '🐕💤', 'Hướng ngoại nhưng hết pin', 'Team building lúc 14:00, mọi người đang nhảy bốc lửa và hô vang khẩu hiệu. Pin xã hội của bạn đã chạm đáy 0%, chỉ muốn hoá thành hạt bụi bay đi.', [
-  ch('Chui vào nhà vệ sinh trốn 45 phút', 'Nạp lại chút pin xã hội trong không gian yên tĩnh', { e: 2, r: -1 }, 'Nhà vệ sinh tầng 5 là thiên đường cứu rỗi tâm hồn hướng nội của bạn.'),
-  ch('Uống bò húc, nhảy quẩy bất chấp', 'Ép bản thân hoà nhập vào tập thể', { e: -2, r: 2 }, 'Bạn giật giải "Nhân viên nhiệt huyết nhất" nhưng tối về nằm liệt giường.'),
-  ch('Giả vờ nhận cuộc gọi khẩn của gia đình', 'Canh bạc chuồn êm đẹp khỏi đám đông', {}, 'Bạn áp điện thoại vào tai vừa đi vừa gật đầu nghiêm trọng.', {
-    roll: {
-      chance: 0.6,
-      win: { d: { e: 1, b: -1 }, message: 'Mọi người thông cảm vẫy tay chào. Bạn phóng xe về nhà ngủ ngon lành!' },
-      lose: { d: { r: -1, b: 1 }, message: 'Điện thoại bạn bỗng reo chuông thật. Màn kịch bị bại lộ trước toàn thể công ty.' }
-    }
-  })
+addCard('end_warehouse_lock', 'finale', 'Bác Bảo Vệ Kho', '🔑🌙', '17:59 — Bác bảo vệ chuẩn bị khóa xưởng', 'Bác bảo vệ xách chùm chìa khóa to đùng: "Mấy đứa Merchandiser còn ai ở lại đếm vải không để bác khóa cửa kéo cầu dao?"', [
+  ch('Thu dọn thước dây, chào bác về thôi', 'Cất đồ nghề, giải phóng bản thân khỏi xưởng may', { e: 1, b: -1 }, 'Tiếng ổ khóa lách cách khóa lại một ngày làm việc đầy cam go.'),
+  ch('Ráng ở lại 15 phút dán nhãn nốt kệ phụ liệu', 'Chuẩn bị chu đáo cho ca làm việc sáng mai', { e: -1, b: -2, r: 1 }, 'Kho phụ liệu ngăn nắp sạch sẽ, sẵn sàng cho ngày mới.')
 ]);
 
-addCard('meme_drake', 'base', 'Sếp Drake', '🙅‍♂️👉', 'Sếp Gật Sếp Lắc', 'Bạn trình 2 đề xuất: Đề xuất 1 chi 200k mua dụng cụ làm việc; Đề xuất 2 chi 20 triệu làm tiệc sinh nhật công ty. Sếp lắc đầu với cái 1 và gật đầu với cái 2.', [
-  ch('Gộp 200k dụng cụ vào ngân sách tiệc', 'Kỹ xảo kế toán hợp pháp hoá chi phí làm việc', { b: -1, r: 1 }, 'Bạn vừa có bàn phím mới vừa được ăn bánh kem miễn phí.'),
-  ch('Tranh luận về tính thiết thực của công cụ', 'Đòi hỏi sự hợp lý từ ban lãnh đạo', { e: -2, r: -1 }, 'Sếp bảo bạn không có tầm nhìn vĩ mô và thiếu tinh thần gắn kết.'),
-  ch('Xung phong làm trưởng ban tổ chức tiệc', 'Canh bạc tận dụng sự kiện để kiếm chác và ngoại giao', {}, 'Bạn cầm micro điều hành bữa tiệc.', {
-    roll: {
-      chance: 0.5,
-      win: { d: { e: 2, r: 1 }, message: 'Bữa tiệc thành công rực rỡ! Sếp khen bạn có tài tổ chức sự kiện.' },
-      lose: { d: { e: -2, b: 2 }, message: 'Loa bị cháy, bánh kem bị rơi. Cả công ty đổ lỗi cho bạn.' }
-    }
-  })
-]);
-
-// ==================== FINALE CARDS ====================
-addCard('end_normal', 'finale', 'Sếp tổng', '🌇', '17:59 — Em ơi, một chút thôi!', 'Sếp xuất hiện ngay khi bạn đặt tay lên nút tắt máy. Câu "một chút" dài như vũ trụ.', [
-  ch('Hẹn xử lý vào sáng mai, có ghi chú', 'Giữ vững ranh giới tan tầm, hẹn sếp sáng mai tính tiếp', { e: -1, b: -1, r: -1 }, 'Sếp tiếc nuối nhưng bạn đã giữ được ranh giới.'),
-  ch('Ngồi lại làm đến "một chút"', 'Ngậm ngùi tăng ca thêm "một chút" dài như thế kỷ', { e: -2, b: -2, r: 1 }, 'Bạn rời công ty lúc trời tối. Chiếc ghế tạm biệt bằng tiếng cót két.')
-]);
-
-addCard('end_printer', 'finale', 'Trưởng phòng Máy In', '🖨️', '17:59 — Máy in ký lệnh đuổi việc', 'Máy in thông báo sẽ sa thải toàn bộ nhân viên không biết in hai mặt.', [
-  ch('Dạy máy in in đảo mặt', 'Khuất phục máy in bằng kỹ năng in ấn hai mặt', { e: -2, b: -2 }, 'Trưởng phòng Máy In rơi một giọt mực cảm động.'),
-  ch('Gọi HR hỏi ai ký quyết định này', 'Phản biện pháp lý về quyền hạn sa thải của máy in', { r: -1, b: -1 }, 'HR nhận ra máy in chưa có tư cách ký. Một chiến thắng pháp lý.')
-]);
-
-addCard('end_kpi', 'finale', 'Phòng KPI', '📈', '17:59 — Đánh giá hiệu suất phút cuối', 'Hệ thống hỏi: "Hôm nay bạn đã làm được bao nhiêu việc có thể chứng minh bằng 60 slide?"', [
-  ch('Nộp bảng kết quả ngắn, rõ ràng', 'Trình bày số liệu súc tích, thuyết phục hội đồng', { e: -1, b: -2 }, 'Thậm chí KPI cũng phải công nhận kết quả.'),
-  ch('Tạo một dashboard chớp nhoáng', 'Làm dashboard màu mè che mắt ban giám khảo', { r: 1, b: 2 }, 'Dashboard chạy rất đẹp. Không ai biết nó đo cái gì.')
-]);
-
-addCard('end_wfh', 'finale', 'Nhân sự', '🏢', '17:59 — Ngày mai họp toàn công ty', 'HR gửi lời mời họp 7:00 sáng mai với tiêu đề: "Cùng tạo một môi trường không có họp."', [
-  ch('Đề nghị khảo sát không đồng bộ', 'Đề xuất làm khảo sát online để cứu cả công ty khỏi cuộc họp', { e: -1, b: -1 }, 'Bạn tạm cứu cả công ty khỏi một cuộc họp vô nghĩa.'),
-  ch('Xung phong dẫn chương trình', 'Nhận trọng trách MC kết nối mọi người lúc sáng sớm', { r: 2, b: 2 }, 'Bạn được giao dẫn thêm một chương trình nữa. Vì bạn nói quá hay.')
+addCard('end_qc_seal', 'finale', 'Trưởng Phòng QA/QC', '🏷️🔒', '17:59 — Bấm chì niêm phong xuất xưởng', 'Chiếc kẹp chì (Seal) kim loại cuối cùng kêu cái "tách". Lô hàng 40.000 cái áo jacket chính thức hoàn tất thủ tục xuất xưởng!', [
+  ch('Ký biên bản bàn giao thành phẩm', 'Đặt dấu chấm hoàn hảo cho một ngày cày cuốc', { e: 1, b: -2, r: 1 }, 'Chiếc xe container từ từ lăn bánh ra cổng nhà máy trong hoàng hôn.'),
+  ch('Chụp tấm ảnh kỷ niệm cùng anh em tổ đóng gói', 'Ghi lại khoảnh khắc gắn kết của những người thầm lặng', { e: 2, r: 1 }, 'Bức ảnh ngập tràn nụ cười rạng rỡ của những người thợ may áo cho đời.')
 ]);
 
 export const REGULAR_CARD_IDS = Object.values(CARDS).filter(x => x.type === 'base').map(x => x.id);
