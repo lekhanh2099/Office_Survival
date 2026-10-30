@@ -149,7 +149,7 @@ export class OfficeStage {
     // ==================== ZONE 1: CORPORATE OFFICE (VĂN PHÒNG ĐIỀU HÀNH) ====================
     // Top-Left: [-26 to -2, -22 to -2]
     this.createZoneFloor(-14, -12, 24, 20, '#f8fafc', '#e2e8f0');
-    this.createZoneSign(-14, 3.2, -21.5, '🏢 VĂN PHÒNG ĐIỀU HÀNH & MERCHANDISER', '#4f46e5');
+    this.createZoneSign(-14, 3.8, -21.5, '🏢 VĂN PHÒNG ĐIỀU HÀNH & MERCHANDISER', '#4f46e5');
 
     // Desks, Office Partitions & Potted Plants
     for (let i = 0; i < 3; i++) {
@@ -547,10 +547,10 @@ export class OfficeStage {
     ctx.fillText(`${emoji} ${name}`, 170, 48);
 
     const tex = new THREE.CanvasTexture(canvas);
-    const spriteMat = new THREE.SpriteMaterial({ map: tex, depthTest: false });
+    const spriteMat = new THREE.SpriteMaterial({ map: tex, depthTest: true });
     const billboardSprite = new THREE.Sprite(spriteMat);
-    billboardSprite.scale.set(2.2, 0.52, 1);
-    billboardSprite.position.set(pos.x, 2.1, pos.z);
+    billboardSprite.scale.set(1.9, 0.45, 1);
+    billboardSprite.position.set(pos.x, 2.5, pos.z);
     this.scene.add(billboardSprite);
 
     this.stations.push({

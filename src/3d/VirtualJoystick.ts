@@ -196,7 +196,56 @@ export class VirtualJoystick {
         this.activePointerId = null;
         this.currentVector = { x: 0, y: 0, active: false };
         this.joyThumb.style.transform = 'translate(-50%, -50%)';
+        const tip = this.joyContainer.querySelector('.actionBtnTooltip') as HTMLElement;
+        if (tip) tip.style.display = 'none';
       }
+    }
+  }
+
+  updateActionState(prompt: string | null): void {
+    if (!this.actionBtn || !this.joyContainer) return;
+    const iconEl = this.actionBtn.querySelector('.actionBtnIcon') as HTMLElement;
+    const textEl = this.actionBtn.querySelector('.actionBtnText') as HTMLElement;
+    let tip = this.joyContainer.querySelector('.actionBtnTooltip') as HTMLElement;
+
+    if (prompt) {
+      this.actionBtn.classList.add('activeAction');
+
+      if (prompt.includes('Nhận Đơn')) {
+        if (iconEl) iconEl.textContent = '💻';
+        if (textEl) textEl.textContent = 'NHẬN ĐƠN';
+      } else if (prompt.includes('In Techpack')) {
+        if (iconEl) iconEl.textContent = '🖨️';
+        if (textEl) textEl.textContent = 'IN ĐƠN';
+      } else if (prompt.includes('Soi Mẫu') || prompt.includes('Lab')) {
+        if (iconEl) iconEl.textContent = '🔬';
+        if (textEl) textEl.textContent = 'SOI LAB';
+      } else if (prompt.includes('Bốc Cuộn') || prompt.includes('Kho Vải')) {
+        if (iconEl) iconEl.textContent = '🧵';
+        if (textEl) textEl.textContent = 'BỐC VẢI';
+      } else if (prompt.includes('Giao Cont') || prompt.includes('Cảng')) {
+        if (iconEl) iconEl.textContent = '🚢';
+        if (textEl) textEl.textContent = 'XUẤT CONT';
+      } else if (prompt.includes('Trà Sữa') || prompt.includes('Cà Phê')) {
+        if (iconEl) iconEl.textContent = '🧋';
+        if (textEl) textEl.textContent = 'UỐNG TRÀ';
+      } else {
+        if (iconEl) iconEl.textContent = '⚡';
+        if (textEl) textEl.textContent = 'LÀM VIỆC';
+      }
+
+      if (!tip) {
+        tip = document.createElement('div');
+        tip.className = 'actionBtnTooltip';
+        this.joyContainer.appendChild(tip);
+      }
+      tip.textContent = prompt.replace(/^⚡\s*/, '');
+      tip.style.display = 'block';
+    } else {
+      this.actionBtn.classList.remove('activeAction');
+      if (iconEl) iconEl.textContent = '⚡';
+      if (textEl) textEl.textContent = 'LÀM VIỆC';
+      if (tip) tip.style.display = 'none';
     }
   }
 

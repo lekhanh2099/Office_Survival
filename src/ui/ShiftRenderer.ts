@@ -16,7 +16,7 @@ export function renderShiftHUD(state: ShiftState, stage?: OfficeStage): string {
   if (state.energy < 30) energyColor = '#ef4444';
   else if (state.energy < 60) energyColor = '#f59e0b';
 
-  // Calculate Minimap Player Coordinates (Normalized to 0-100%)
+  // Calculate Minimap Coordinates (Normalized 0-100%)
   // Bounds: X [-30, 30], Z [-23, 23]
   let pX = 50;
   let pZ = 50;
@@ -25,102 +25,91 @@ export function renderShiftHUD(state: ShiftState, stage?: OfficeStage): string {
 
   if (stage) {
     const pPos = stage.player.getPosition();
-    pX = Math.max(5, Math.min(95, ((pPos.x + 30) / 60) * 100));
-    pZ = Math.max(5, Math.min(95, ((pPos.z + 23) / 46) * 100));
+    pX = Math.max(8, Math.min(92, ((pPos.x + 30) / 60) * 100));
+    pZ = Math.max(8, Math.min(92, ((pPos.z + 23) / 46) * 100));
 
     if (stage.bossNpc) {
       const bPos = stage.bossNpc.group.position;
-      bossX = Math.max(5, Math.min(95, ((bPos.x + 30) / 60) * 100));
-      bossZ = Math.max(5, Math.min(95, ((bPos.z + 23) / 46) * 100));
+      bossX = Math.max(8, Math.min(92, ((bPos.x + 30) / 60) * 100));
+      bossZ = Math.max(8, Math.min(92, ((bPos.z + 23) / 46) * 100));
     }
   }
 
+  // Calculate Target Station Beacon position for radar
+  const stationCoords: Record<string, [number, number]> = {
+    desk: [-10, -8],
+    printer: [-4, -12],
+    lab: [12, -10],
+    fabric: [-14, 10],
+    shipping: [14, 14],
+    coffee: [0, 0]
+  };
+  const targetC = stationCoords[state.currentTask.targetStation] || [-10, -8];
+  const tgtX = Math.max(10, Math.min(90, ((targetC[0] + 30) / 60) * 100));
+  const tgtZ = Math.max(10, Math.min(90, ((targetC[1] + 23) / 46) * 100));
+
   return `
-  <!-- Top 3D Shift Status Bar (2 Compact Responsive Rows) -->
-  <div class="shiftTopHUD">
-    <div class="shiftHudRow1">
-      <div class="shiftClockBadge">
-        <span class="clockIcon">⏰</span>
-        <span class="clockTime">${timeStr}</span>
-        <span class="shiftDayBadge">NGÀY ${state.day}</span>
+  <!-- Top Status Ribbon (Single sleek integrated row across top) -->
+  <header class="shiftTopRibbon">
+    <div class="ribbonClock">
+      <span class="clockIcon">⏰</span>
+      <span class="clockTime">${timeStr}</span>
+      <span class="ribbonDay">N${state.day}</span>
+    </div>
+
+    <div class="ribbonMeters">
+      <div class="meterGroup" title="Năng lượng">
+        <span class="meterIcon">⚡</span>
+        <span class="meterVal">${Math.round(state.energy)}%</span>
+        <div class="meterTrack">
+          <div class="meterFill" style="width:${energyPct}%;background:${energyColor}"></div>
+        </div>
       </div>
 
-      <!-- Live Zone Indicator -->
-      <div class="shiftZoneTag">
-        <span class="zonePin">📍</span>
-        <span class="zoneName">${esc(state.currentZone)}</span>
-      </div>
-
-      <!-- Orders Completed Target -->
-      <div class="shiftKpiBadge">
-        <span class="kpiIcon">📦</span>
-        <div>
-          <div class="kpiVal">${state.ordersCompleted}/${state.targetOrders}</div>
-          <div class="kpiLabel">XUẤT XƯỞNG</div>
+      <div class="meterGroup" title="Áp lực stress">
+        <span class="meterIcon">🔥</span>
+        <span class="meterVal">${Math.round(state.stress)}%</span>
+        <div class="meterTrack">
+          <div class="meterFill" style="width:${stressPct}%;background:${state.stress > 60 ? '#ef4444' : '#fb923c'}"></div>
         </div>
       </div>
     </div>
 
-    <div class="shiftHudRow2">
-      <div class="shiftBars">
-        <!-- Energy Bar -->
-        <div class="shiftStatItem" title="Năng Lượng Chibi">
-          <div class="statHeader">
-            <span>⚡ NĂNG LƯỢNG</span>
-            <span>${Math.round(state.energy)}%</span>
-          </div>
-          <div class="shiftMiniBar">
-            <div class="shiftMiniBarFill" style="width:${energyPct}%;background:${energyColor}"></div>
-          </div>
-        </div>
+    <div class="ribbonOrders" title="Đơn hàng đã xuất">
+      <span class="orderIcon">📦</span>
+      <span class="orderCount">${state.ordersCompleted}/${state.targetOrders}</span>
+    </div>
+  </header>
 
-        <!-- Stress Bar -->
-        <div class="shiftStatItem" title="Mức độ Stress / Sếp soi">
-          <div class="statHeader">
-            <span>🔥 STRESS</span>
-            <span>${Math.round(state.stress)}%</span>
-          </div>
-          <div class="shiftMiniBar">
-            <div class="shiftMiniBarFill" style="width:${stressPct}%;background:${state.stress > 60 ? '#ef4444' : '#fb923c'}"></div>
-          </div>
-        </div>
+  <!-- Quest Banner (Floats left beneath ribbon, ends before radar) -->
+  <div class="shiftQuestBanner">
+    <div class="questPulseIcon">🎯</div>
+    <div class="questContent">
+      <div class="questTagRow">
+        <span class="questZoneBadge">${esc(state.currentZone)}</span>
+        <span class="questOrderName">${esc(state.currentTask.orderName)}</span>
       </div>
+      <div class="questInstruction">${esc(state.currentTask.stepDescription)}</div>
     </div>
   </div>
 
-  <!-- Minimap Radar Widget at Top Right -->
-  <div class="shiftRadarWidget" title="Bản đồ khuôn viên dệt may 60x46">
-    <div class="radarLabel">BẢN ĐỒ TỔ HỢP</div>
-    <div class="radarGrid">
-      <div class="radarQuadrant q1">VP</div>
-      <div class="radarQuadrant q2">LAB</div>
-      <div class="radarQuadrant q3">KHO</div>
-      <div class="radarQuadrant q4">CẢNG</div>
-      <div class="radarCenter">🧋</div>
+  <!-- Circular Mini Radar (Floats right beneath ribbon, NO OVERLAP) -->
+  <div class="shiftMiniRadar" title="Radar khuôn viên dệt may">
+    <div class="radarQuadrant q1" title="Văn Phòng">VP</div>
+    <div class="radarQuadrant q2" title="Lab Màu">LAB</div>
+    <div class="radarQuadrant q3" title="Kho Vải">KHO</div>
+    <div class="radarQuadrant q4" title="Cảng Cont">CẢNG</div>
+    <div class="radarPantryIcon">🧋</div>
 
-      <!-- Player Blinking Dot -->
-      <div class="radarPlayerDot" style="left:${pX}%;top:${pZ}%"></div>
-      <!-- Boss Red Dot -->
-      <div class="radarBossDot" style="left:${bossX}%;top:${bossZ}%"></div>
-    </div>
+    <!-- Target Objective Blinking Gold Star -->
+    <div class="radarTargetDot" style="left:${tgtX}%;top:${tgtZ}%" title="Mục tiêu tiếp theo">⭐</div>
+
+    <!-- Player Dot (Cyan) -->
+    <div class="radarPlayerDot" style="left:${pX}%;top:${pZ}%"></div>
+
+    <!-- Boss Dot (Red) -->
+    <div class="radarBossDot" style="left:${bossX}%;top:${bossZ}%"></div>
   </div>
-
-  <!-- Mission Objective Card Floating at Top Left -->
-  <div class="shiftMissionBanner">
-    <div class="missionTargetTag">
-      <span class="pulseDot"></span>
-      <span>${esc(state.currentTask.orderName)}</span>
-      <span class="missionZoneHint">(${esc(state.currentTask.targetZone)})</span>
-    </div>
-    <div class="missionStepText">${esc(state.currentTask.stepDescription)}</div>
-  </div>
-
-  <!-- Floating Active Action Pill (When near workstation) -->
-  ${state.activePrompt ? `
-    <div class="shiftActionPill">
-      ${esc(state.activePrompt)}
-    </div>
-  ` : ''}
   `;
 }
 

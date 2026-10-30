@@ -1411,262 +1411,222 @@ p {
   display: block;
 }
 
-/* 3D Shift Top HUD (2 Compact Responsive Rows) */
-.shiftTopHUD {
+/* ==================== 3D SHIFT HUD: TOP RIBBON ==================== */
+.shiftTopRibbon {
   position: absolute;
   top: 8px;
   left: 8px;
   right: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  z-index: 10;
-  pointer-events: none;
-}
-
-.shiftHudRow1 {
+  height: 32px;
+  background: rgba(15, 23, 42, 0.90);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 5px;
-  width: 100%;
+  padding: 0 10px;
+  z-index: 10;
+  pointer-events: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  color: #ffffff;
 }
 
-.shiftHudRow2 {
-  display: flex;
-  align-items: center;
-  width: 100%;
-}
-
-.shiftClockBadge {
-  background: #ffffff;
-  border: 2px solid var(--ink);
-  border-radius: 10px;
-  padding: 4px 7px;
+.ribbonClock {
   display: flex;
   align-items: center;
   gap: 4px;
-  box-shadow: 2px 2px 0 var(--ink);
-  font-weight: 900;
   font-size: 12px;
-  pointer-events: auto;
-  flex-shrink: 0;
+  font-weight: 900;
+  color: #ffffff;
 }
 
-.shiftClockBadge .clockIcon {
+.ribbonClock .clockIcon {
   font-size: 14px;
 }
 
-.shiftClockBadge .clockTime {
-  font-size: 12px;
-  color: var(--ink);
-}
-
-.shiftDayBadge {
+.ribbonDay {
   background: #4f46e5;
   color: #fff;
   font-size: 9px;
   padding: 1px 5px;
   border-radius: 4px;
+  font-weight: 800;
   margin-left: 2px;
 }
 
-.shiftZoneTag {
-  background: #ffffff;
-  border: 2px solid var(--ink);
-  border-radius: 10px;
-  padding: 4px 8px;
-  font-size: 10.5px;
-  font-weight: 900;
-  color: #312e81;
-  box-shadow: 2px 2px 0 var(--ink);
+.ribbonMeters {
   display: flex;
   align-items: center;
-  gap: 4px;
-  pointer-events: auto;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 48%;
+  gap: 12px;
 }
 
-.shiftZoneTag .zoneName {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.shiftBars {
+.meterGroup {
   display: flex;
-  gap: 6px;
-  width: 100%;
-  pointer-events: auto;
-}
-
-.shiftStatItem {
-  flex: 1;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1.5px solid var(--ink);
-  border-radius: 8px;
-  padding: 3px 6px;
-  box-shadow: 1.5px 1.5px 0 var(--ink);
-}
-
-.shiftStatItem .statHeader {
-  display: flex;
-  justify-content: space-between;
-  font-size: 9px;
-  font-weight: 900;
-  margin-bottom: 2px;
-  color: var(--ink);
-}
-
-.shiftMiniBar {
-  height: 6px;
-  background: #e2e8f0;
-  border-radius: 4px;
-  overflow: hidden;
-  border: 1px solid var(--ink);
-}
-
-.shiftMiniBarFill {
-  height: 100%;
-  transition: width 0.2s ease;
-}
-
-.shiftKpiBadge {
-  background: #fef08a;
-  border: 2px solid var(--ink);
-  border-radius: 10px;
-  padding: 3px 6px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  box-shadow: 2px 2px 0 var(--ink);
-  pointer-events: auto;
-  flex-shrink: 0;
-}
-
-.shiftKpiBadge .kpiIcon {
-  font-size: 15px;
-}
-
-.shiftKpiBadge .kpiVal {
-  font-size: 11.5px;
-  font-weight: 900;
-  line-height: 1;
-  color: #854d0e;
-}
-
-.shiftKpiBadge .kpiLabel {
-  font-size: 7.5px;
-  font-weight: 900;
-  color: #a16207;
-  letter-spacing: 0.5px;
-}
-
-/* Mission Banner (Floating Left) */
-.shiftMissionBanner {
-  position: absolute;
-  top: 72px;
-  left: 8px;
-  right: 84px;
-  background: rgba(255, 255, 255, 0.96);
-  border: 2px solid var(--ink);
-  border-radius: 12px;
-  padding: 5px 9px;
-  box-shadow: 2.5px 2.5px 0 var(--ink);
-  z-index: 10;
-  text-align: left;
-  pointer-events: none;
-}
-
-.missionTargetTag {
-  display: inline-flex;
   align-items: center;
   gap: 4px;
   font-size: 9.5px;
   font-weight: 900;
-  color: #4f46e5;
-  text-transform: uppercase;
 }
 
-.missionZoneHint {
-  color: #7c3aed;
-  font-size: 9px;
-  font-weight: 800;
-  margin-left: 3px;
+.meterTrack {
+  width: 44px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
 }
 
-/* Minimap Radar (Floating Right) */
-.shiftRadarWidget {
+.meterFill {
+  height: 100%;
+  transition: width 0.2s ease;
+}
+
+.ribbonOrders {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 900;
+  color: #facc15;
+}
+
+/* ==================== QUEST BANNER & MINI RADAR ==================== */
+.shiftQuestBanner {
   position: absolute;
-  top: 72px;
-  right: 8px;
-  width: 70px;
-  background: rgba(255, 255, 255, 0.94);
-  border: 2px solid var(--ink);
+  top: 46px;
+  left: 8px;
+  right: 68px; /* stops before radar at right: 8px + 54px */
+  min-height: 44px;
+  background: rgba(15, 23, 42, 0.90);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  border-left: 3.5px solid #f59e0b;
   border-radius: 10px;
-  padding: 3px;
-  box-shadow: 2.5px 2.5px 0 var(--ink);
+  padding: 5px 8px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
   z-index: 10;
   pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
 }
 
-.radarLabel {
-  font-size: 7px;
-  font-weight: 900;
-  text-align: center;
-  color: #4f46e5;
+.questPulseIcon {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+  animation: bounceQuest 1.4s infinite alternate;
+}
+
+@keyframes bounceQuest {
+  0% { transform: scale(0.9); }
+  100% { transform: scale(1.15); }
+}
+
+.questContent {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.questTagRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   margin-bottom: 2px;
-  letter-spacing: 0.5px;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
-.radarGrid {
-  position: relative;
-  width: 62px;
-  height: 48px;
-  background: #f1f5f9;
-  border: 1.5px solid var(--ink);
-  border-radius: 6px;
+.questZoneBadge {
+  background: #3b82f6;
+  color: #ffffff;
+  font-size: 8.5px;
+  font-weight: 900;
+  padding: 1px 5px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.questOrderName {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #fde047;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.questInstruction {
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.25;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* ==================== CIRCULAR MINI RADAR ==================== */
+.shiftMiniRadar {
+  position: absolute;
+  top: 44px;
+  right: 8px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #0f172a;
+  border: 2px solid #6366f1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
   overflow: hidden;
+  z-index: 10;
+  pointer-events: none;
 }
 
 .radarQuadrant {
-  font-size: 7px;
+  font-size: 6.5px;
   font-weight: 900;
   display: grid;
   place-items: center;
-  color: #64748b;
-  border: 0.5px dashed #cbd5e1;
+  color: rgba(255, 255, 255, 0.45);
+  border: 0.5px dashed rgba(255, 255, 255, 0.2);
 }
 
-.radarQuadrant.q1 { background: #f8fafc; }
-.radarQuadrant.q2 { background: #ecfdf5; }
-.radarQuadrant.q3 { background: #fffbeb; }
-.radarQuadrant.q4 { background: #e2e8f0; }
+.radarQuadrant.q1 { background: rgba(255, 255, 255, 0.04); }
+.radarQuadrant.q2 { background: rgba(16, 185, 129, 0.06); }
+.radarQuadrant.q3 { background: rgba(245, 158, 11, 0.06); }
+.radarQuadrant.q4 { background: rgba(59, 130, 246, 0.06); }
 
-.radarCenter {
+.radarPantryIcon {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 8px;
+  font-size: 7.5px;
+  opacity: 0.8;
   pointer-events: none;
 }
 
 .radarPlayerDot {
   position: absolute;
-  width: 8px;
-  height: 8px;
-  background: #3b82f6;
+  width: 7px;
+  height: 7px;
+  background: #38bdf8;
   border: 1.5px solid #ffffff;
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  box-shadow: 0 0 4px #2563eb;
+  box-shadow: 0 0 6px #38bdf8;
+  z-index: 3;
   animation: radarBlink 0.8s infinite alternate;
 }
 
@@ -1683,54 +1643,22 @@ p {
   border: 1px solid #ffffff;
   border-radius: 50%;
   transform: translate(-50%, -50%);
+  box-shadow: 0 0 4px #ef4444;
+  z-index: 2;
 }
 
-.pulseDot {
-  width: 6px;
-  height: 6px;
-  background: #22c55e;
-  border-radius: 50%;
-  display: inline-block;
-  animation: pulse 1.2s infinite;
-}
-
-@keyframes pulse {
-  0% { transform: scale(0.9); opacity: 0.7; }
-  50% { transform: scale(1.3); opacity: 1; }
-  100% { transform: scale(0.9); opacity: 0.7; }
-}
-
-.missionStepText {
-  font-size: 11px;
-  font-weight: 900;
-  color: var(--ink);
-  margin-top: 2px;
-  line-height: 1.25;
-}
-
-/* Interaction Prompt Pill */
-.shiftActionPill {
+.radarTargetDot {
   position: absolute;
-  bottom: 104px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #facc15;
-  color: #1e1b4b;
-  border: 2px solid var(--ink);
-  border-radius: 999px;
-  padding: 6px 16px;
-  font-size: 11.5px;
-  font-weight: 900;
-  box-shadow: 3px 3px 0 var(--ink);
-  z-index: 10;
-  animation: bouncePill 0.6s infinite alternate;
-  pointer-events: none;
-  white-space: nowrap;
+  font-size: 9px;
+  line-height: 1;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  animation: targetPulse 0.9s infinite alternate;
 }
 
-@keyframes bouncePill {
-  0% { transform: translate(-50%, 0); }
-  100% { transform: translate(-50%, -4px); }
+@keyframes targetPulse {
+  0% { transform: translate(-50%, -50%) scale(0.85); opacity: 0.7; }
+  100% { transform: translate(-50%, -50%) scale(1.35); opacity: 1; }
 }
 
 #shiftUIHost {
@@ -1877,12 +1805,23 @@ p {
   pointer-events: auto;
   user-select: none;
   touch-action: manipulation;
-  transition: transform 0.1s, box-shadow 0.1s;
+  transition: transform 0.1s, box-shadow 0.1s, background 0.2s;
 }
 
 .virtualActionBtn:active {
   transform: scale(0.92);
   box-shadow: 1px 1px 0 var(--ink);
+}
+
+.virtualActionBtn.activeAction {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.8), 3.5px 3.5px 0 var(--ink);
+  animation: actionPulse 1.1s infinite alternate;
+}
+
+@keyframes actionPulse {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.07); }
 }
 
 .actionBtnIcon {
@@ -1895,6 +1834,42 @@ p {
   font-weight: 900;
   letter-spacing: 0.5px;
   margin-top: 2px;
+}
+
+/* Dynamic Tooltip Anchored DIRECTLY Above Action Button (Never collides with joystick!) */
+.actionBtnTooltip {
+  position: absolute;
+  right: 16px;
+  bottom: 98px;
+  background: #facc15;
+  color: #1e1b4b;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 900;
+  box-shadow: 2.5px 2.5px 0 var(--ink);
+  white-space: nowrap;
+  z-index: 25;
+  animation: tipFloat 1s infinite alternate;
+  pointer-events: none;
+}
+
+.actionBtnTooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  right: 28px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid var(--ink);
+}
+
+@keyframes tipFloat {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-4px); }
 }
 
 .desktopKeyHint {

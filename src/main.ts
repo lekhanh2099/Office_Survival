@@ -114,6 +114,7 @@ function renderShiftMode(): void {
         uiHost.classList.remove('shiftFinishedOverlay');
       }
       shiftJoystick?.setVisible(true);
+      shiftJoystick?.updateActionState(s.activePrompt);
       uiHost.innerHTML = renderShiftHUD(s, shiftStage);
     }
 

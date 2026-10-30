@@ -215,8 +215,10 @@ export class ChibiCharacter {
       this.group.add(shadowMesh);
     }
 
-    // 7. Floating 3D Nametag
-    this.createNametag(name, isNpc);
+    // 7. Floating 3D Nametag (Only for NPCs, player has glowing ground indicator)
+    if (isNpc) {
+      this.createNametag(name, isNpc);
+    }
   }
 
   private createNametag(name: string, isNpc: boolean): void {
