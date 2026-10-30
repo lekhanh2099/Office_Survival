@@ -196,7 +196,8 @@ function renderShiftMode(): void {
         uiHost.classList.remove('shiftFinishedOverlay');
         mountShiftHUD(uiHost);
       }
-      shiftJoystick?.setVisible(true);
+      const showJoy = localStorage.getItem('os_show_joystick') !== 'false';
+      shiftJoystick?.setVisible(showJoy);
       shiftJoystick?.updateActionState(s.activePrompt);
       updateShiftHUD(uiHost, s, shiftStage);
     }

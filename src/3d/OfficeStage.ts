@@ -138,6 +138,7 @@ export class OfficeStage {
     moved: boolean;
   }>();
   // Native Multi-Touch Tracking for Mobile (iOS Safari & Android)
+  private isTouchGestureActive = false;
   private touch1Start = { x: 0, y: 0, time: 0 };
   private touch1Last = { x: 0, y: 0 };
   private touch1Moved = false;
@@ -1872,6 +1873,7 @@ export class OfficeStage {
       return;
     }
 
+    this.isTouchGestureActive = true;
     if (e.touches.length === 1) {
       const t = e.touches[0];
       this.touch1Start = { x: t.clientX, y: t.clientY, time: performance.now() };
@@ -1953,6 +1955,7 @@ export class OfficeStage {
 
   private onTouchEnd = (e: TouchEvent): void => {
     if (e.touches.length === 0) {
+      this.isTouchGestureActive = false;
       const dt = performance.now() - this.touch1Start.time;
       const dist = Math.hypot(this.touch1Last.x - this.touch1Start.x, this.touch1Last.y - this.touch1Start.y);
 
@@ -1971,11 +1974,12 @@ export class OfficeStage {
   private onTouchCancel = (): void => {
     this.touchPinchDist = 0;
     this.touch1Moved = true;
+    this.isTouchGestureActive = false;
   };
 
-  // Desktop Pointer Handlers (Mouse Only)
+  // Pointer Handlers (Works seamlessly for Mouse, Trackpad, Pen, and Hybrid screens)
   private onPointerDownHandler = (e: PointerEvent): void => {
-    if (e.pointerType === 'touch') return;
+    if (this.isTouchGestureActive) return;
     if ((e.target as HTMLElement).closest('#joyPadArea, #joyActionBtn, .shiftTopRibbon, .shiftQuestBanner, .shiftMiniRadar, .shiftRightRail, #hudActionCard, #hudGestureTip, .dialog, .dialogShade')) {
       return;
     }
@@ -1996,7 +2000,7 @@ export class OfficeStage {
   };
 
   private onPointerMoveHandler = (e: PointerEvent): void => {
-    if (e.pointerType === 'touch') return;
+    if (this.isTouchGestureActive) return;
     if (!this.activePointers.has(e.pointerId)) return;
     const ptr = this.activePointers.get(e.pointerId)!;
 
@@ -2031,7 +2035,7 @@ export class OfficeStage {
   };
 
   private onPointerUpHandler = (e: PointerEvent): void => {
-    if (e.pointerType === 'touch') return;
+    if (this.isTouchGestureActive) return;
     if (!this.activePointers.has(e.pointerId)) return;
     const ptr = this.activePointers.get(e.pointerId)!;
     const dt = performance.now() - ptr.startTime;
