@@ -286,6 +286,8 @@ export class PickleballEngine {
   public aiPaddleAnim = 0;
   public bufferedShot: { shotType: ShotType; timestamp: number } | null = null;
   public manualInputTimer = 0; // seconds remaining where manual input overrides auto-assist
+  public isDiving = false;
+  public diveTimer = 0;
 
   // Ball 3D Physical State
   public ball = {
@@ -436,8 +438,22 @@ export class PickleballEngine {
     this.manualInputTimer = 1.0;
   }
 
+  public setPlayerPos(targetX: number, targetZ?: number): void {
+    this.playerPos.x = Math.max(-2.7, Math.min(2.7, targetX));
+    if (targetZ !== undefined) {
+      this.playerPos.z = Math.max(2.2, Math.min(5.8, targetZ));
+    }
+    this.manualInputTimer = 1.0;
+  }
+
   public stepPlayer(direction: -1 | 1, distance = 0.75): void {
     this.playerPos.x = Math.max(-2.7, Math.min(2.7, this.playerPos.x + direction * distance));
+    this.manualInputTimer = 1.0;
+  }
+
+  public stepPlayerZ(direction: -1 | 1, distance = 0.6): void {
+    // direction -1: advance forward to kitchen, +1: retreat to baseline
+    this.playerPos.z = Math.max(2.2, Math.min(5.8, this.playerPos.z + direction * distance));
     this.manualInputTimer = 1.0;
   }
 
@@ -911,12 +927,16 @@ export class PickleballEngine {
     }
   }
 
-  public update(delta: number, playerInputX = 0): void {
+  public update(delta: number, playerInputX = 0, playerInputZ = 0): void {
     if (this.isMatchOver) return;
 
-    // Update Paddle Swing Animation Timers
+    // Update Paddle Swing & Dive Animation Timers
     if (this.playerPaddleAnim > 0) this.playerPaddleAnim = Math.max(0, this.playerPaddleAnim - delta);
     if (this.aiPaddleAnim > 0) this.aiPaddleAnim = Math.max(0, this.aiPaddleAnim - delta);
+    if (this.diveTimer > 0) {
+      this.diveTimer -= delta;
+      if (this.diveTimer <= 0) this.isDiving = false;
+    }
 
     // Check buffered shot execution
     if (this.bufferedShot && this.ball.inPlay && this.ball.lastHitter !== 'player' && this.ball.vz > 0) {
@@ -934,17 +954,48 @@ export class PickleballEngine {
       }
     }
 
-    // Proximity Auto-Return: If ball enters player's hitting zone and player is in position, auto-return!
+    // Proximity Auto-Return: If ball enters player's hitting zone anywhere on player's half
     if (this.ball.inPlay && this.ball.lastHitter === 'ai' && this.ball.vz > 0) {
       const dx = Math.abs(this.ball.x - this.playerPos.x);
-      // In strike zone: within 1.4m horizontally, near player baseline z in [4.6, 5.8], and in playable air
-      if (dx <= 1.4 && this.ball.z >= 4.6 && this.ball.z <= 5.8 && this.ball.y >= 0.15 && this.ball.y <= 1.9) {
+      const dz = Math.abs(this.ball.z - (this.playerPos.z - 0.45));
+      if (dx <= 1.4 && dz <= 1.4 && this.ball.z >= 2.0 && this.ball.z <= 6.0 && this.ball.y >= 0.15 && this.ball.y <= 1.9) {
         const canHit = (this.rallyCount > 0) || (this.ball.bouncesSinceHit >= 1);
         if (canHit) {
           const shot = this.bufferedShot ? this.bufferedShot.shotType : 'drive';
           this.bufferedShot = null;
           this.playerHitBall(shot);
         }
+      }
+    }
+
+    // Clutch Slide Rescue (Pha trượt người cứu bóng ngoạn mục)
+    // If ball has bounced once on player side, is falling low (y <= 0.28m) and within 1.0m - 2.6m:
+    if (this.ball.inPlay && this.ball.lastHitter === 'ai' && this.ball.vz > 0 && this.ball.bouncesSinceHit === 1 && this.ball.y <= 0.28 && !this.isDiving) {
+      const distToBall = Math.hypot(this.ball.x - this.playerPos.x, this.ball.z - this.playerPos.z);
+      if (distToBall >= 0.8 && distToBall <= 2.6) {
+        this.isDiving = true;
+        this.diveTimer = 0.55;
+        this.playerPos.x = this.ball.x;
+        this.playerPos.z = Math.max(2.2, Math.min(5.8, this.ball.z + 0.3));
+        this.playerStamina = Math.max(0, this.playerStamina - 15);
+        this.bufferedShot = null;
+        this.playerPaddleAnim = 0.35;
+        this.ball.lastHitter = 'player';
+        this.ball.bouncesSinceHit = 0;
+        this.ball.hasClearedNet = false;
+        this.rallyCount++;
+        this.stats.longestRally = Math.max(this.stats.longestRally, this.rallyCount);
+
+        const targetX = (Math.random() - 0.5) * 2.0;
+        const targetZ = -4.5;
+        const flightTime = 1.05;
+        const traj = this.calculateTrajectory(this.ball.x, this.ball.y, this.ball.z, targetX, targetZ, flightTime, 0.65);
+        this.ball.vx = traj.vx;
+        this.ball.vy = traj.vy;
+        this.ball.vz = traj.vz;
+        this.targetLanding = { x: targetX, z: targetZ, hitter: 'player', type: 'drive' };
+        this.tacticalHint = '🔥 CỨU BÓNG XUẤT THẦN! Pha trượt người ngoạn mục!';
+        this.onBallHit?.('player', 'drive', 'perfect');
       }
     }
 
@@ -963,6 +1014,7 @@ export class PickleballEngine {
         } else {
           this.playerPos.x = Math.max(-2.5, Math.min(-0.3, this.playerPos.x));
         }
+        this.playerPos.z = 5.8; // Baseline for serve
         // Ball stays in hand/paddle ready to serve
         this.ball.x = this.playerPos.x + (this.serverQuadrant === 'right' ? 0.25 : -0.25);
         this.ball.y = 0.85;
@@ -975,23 +1027,59 @@ export class PickleballEngine {
       return;
     }
 
-    // 2. Player Movement (Manual or Assisted)
-    const playerSpeed = 6.2;
+    // 2. Player Movement (Manual or Assisted) - Full 2D (X and Z)
+    const playerSpeed = 6.4;
     if (this.manualInputTimer > 0) {
       this.manualInputTimer -= delta;
     }
 
+    let hasManualInput = false;
     if (Math.abs(playerInputX) > 0.05) {
       this.playerPos.x += playerInputX * playerSpeed * delta;
+      hasManualInput = true;
+    }
+    if (Math.abs(playerInputZ) > 0.05) {
+      this.playerPos.z += playerInputZ * playerSpeed * delta;
+      hasManualInput = true;
+    }
+
+    if (hasManualInput) {
       this.manualInputTimer = 0.8;
-    } else if (this.manualInputTimer <= 0 && this.settings.autoPositionAssist && this.ball.inPlay && this.ball.vz > 0) {
-      // Predict where ball will reach baseline z = 5.6
-      const timeToBaseline = Math.max(0.01, (5.6 - this.ball.z) / this.ball.vz);
-      const predictedX = Math.max(-2.6, Math.min(2.6, this.ball.x + this.ball.vx * timeToBaseline));
-      const diffX = predictedX - this.playerPos.x;
-      this.playerPos.x += Math.sign(diffX) * Math.min(Math.abs(diffX), playerSpeed * 0.85 * delta);
+    } else if (this.manualInputTimer <= 0 && this.settings.autoPositionAssist && this.ball.inPlay) {
+      if (this.ball.vz > 0) {
+        // Incoming ball to player side!
+        // Check if ball is a shallow drop shot / dink into kitchen:
+        const isDropShot = (this.targetLanding && this.targetLanding.z < 3.2) || (this.ball.z < 3.2 && this.ball.vz > 0);
+
+        if (isDropShot) {
+          // AUTO-RUSH SPRINT TO KITCHEN LINE (Z = 2.4)!
+          const targetZ = 2.4;
+          const sprintSpeed = 8.6; // High speed sprint to save drop shot!
+          this.playerPos.z += Math.sign(targetZ - this.playerPos.z) * Math.min(Math.abs(targetZ - this.playerPos.z), sprintSpeed * delta);
+
+          const timeToArrival = Math.max(0.01, (this.playerPos.z - this.ball.z) / this.ball.vz);
+          const predictedX = Math.max(-2.6, Math.min(2.6, this.ball.x + this.ball.vx * timeToArrival));
+          const diffX = predictedX - this.playerPos.x;
+          this.playerPos.x += Math.sign(diffX) * Math.min(Math.abs(diffX), sprintSpeed * delta);
+        } else {
+          // Deep ball towards baseline
+          const targetZ = 5.4;
+          this.playerPos.z += Math.sign(targetZ - this.playerPos.z) * Math.min(Math.abs(targetZ - this.playerPos.z), 4.5 * delta);
+
+          const timeToBaseline = Math.max(0.01, (this.playerPos.z - this.ball.z) / this.ball.vz);
+          const predictedX = Math.max(-2.6, Math.min(2.6, this.ball.x + this.ball.vx * timeToBaseline));
+          const diffX = predictedX - this.playerPos.x;
+          this.playerPos.x += Math.sign(diffX) * Math.min(Math.abs(diffX), playerSpeed * 0.95 * delta);
+        }
+      } else {
+        // Ball flying back to AI side: smoothly recover back towards baseline z = 5.2
+        const targetZ = 5.2;
+        this.playerPos.z += (targetZ - this.playerPos.z) * Math.min(1, 2.8 * delta);
+        this.playerPos.x += (0 - this.playerPos.x) * Math.min(1, 1.8 * delta);
+      }
     }
     this.playerPos.x = Math.max(-2.7, Math.min(2.7, this.playerPos.x));
+    this.playerPos.z = Math.max(2.2, Math.min(5.8, this.playerPos.z));
 
     // 3. AI Movement (Predictive & Adaptive with Stamina Factor)
     if (this.ball.inPlay) {

@@ -607,6 +607,15 @@ export class PickleballStage {
     this.playerGroup.position.x += (this.engine.playerPos.x - this.playerGroup.position.x) * lerpSpeed;
     this.playerGroup.position.z += (this.engine.playerPos.z - this.playerGroup.position.z) * lerpSpeed;
 
+    // Dive Slide Pose Animation
+    if (this.engine.isDiving) {
+      this.playerGroup.rotation.x = 0.75;
+      this.playerGroup.position.y = -0.18;
+    } else {
+      this.playerGroup.rotation.x = 0;
+      this.playerGroup.position.y = 0;
+    }
+
     this.opponentGroup.position.x += (this.engine.aiPos.x - this.opponentGroup.position.x) * lerpSpeed;
     this.opponentGroup.position.z += (this.engine.aiPos.z - this.opponentGroup.position.z) * lerpSpeed;
 
@@ -627,10 +636,12 @@ export class PickleballStage {
       }
     }
 
-    // 5. Dynamic Camera Smooth Tracking
+    // 5. Dynamic Camera Smooth Tracking (Adapts when rushing to net or baseline)
     const camTargetX = this.engine.playerPos.x * 0.4;
-    this.targetCameraPos.set(camTargetX, 4.3, 9.6);
+    const camTargetZ = 8.6 + (this.engine.playerPos.z - 5.0) * 0.35;
+    this.targetCameraPos.set(camTargetX, 4.3, camTargetZ);
     this.camera.position.x += (this.targetCameraPos.x - this.camera.position.x) * Math.min(1, 12 * delta);
+    this.camera.position.z += (this.targetCameraPos.z - this.camera.position.z) * Math.min(1, 8 * delta);
     this.cameraLookAt.x += (this.engine.ball.x * 0.2 - this.cameraLookAt.x) * Math.min(1, 10 * delta);
     this.camera.lookAt(this.cameraLookAt);
 

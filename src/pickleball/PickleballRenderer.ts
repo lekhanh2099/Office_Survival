@@ -115,13 +115,18 @@ export function mountPickleballHUD(host: HTMLElement, engine: PickleballEngine):
 
     <!-- Bottom Controls Rail (Desktop & Mobile Optimized) -->
     <footer class="pbBottomControlRail">
+      <!-- Mobile Swipe-to-Hit & Tap-to-Run Ergonomics Guide Pill -->
+      <div class="pbSwipeGuidePill">
+        👆 <b>Vuốt lên</b> để Smash/Dink · <b>Chạm sân</b> để chạy tới đón bóng!
+      </div>
+
       <!-- Horizontal Paddle Position Slider for Mobile Touch -->
       <div class="pbPositionControlArea">
-        <button class="pbMoveBtn pbMoveLeft" id="pbMoveLeftBtn" type="button">◀</button>
-        <div class="pbSliderTrack" id="pbSliderTrack">
-          <div class="pbSliderThumb" id="pbSliderThumb">🏓 KÉO VỊ TRÍ VỢT</div>
+        <button class="pbMoveBtn pbMoveLeft" id="pbMoveLeftBtn" type="button" title="Di chuyển sang trái">◀</button>
+        <div class="pbSliderTrack" id="pbSliderTrack" title="Kéo hoặc chạm để chỉnh vị trí vợt">
+          <div class="pbSliderThumb" id="pbSliderThumb">🏓 VỊ TRÍ VỢT</div>
         </div>
-        <button class="pbMoveBtn pbMoveRight" id="pbMoveRightBtn" type="button">▶</button>
+        <button class="pbMoveBtn pbMoveRight" id="pbMoveRightBtn" type="button" title="Di chuyển sang phải">▶</button>
       </div>
 
       <!-- 3 Primary Action Shot Buttons -->
@@ -159,7 +164,7 @@ export function mountPickleballHUD(host: HTMLElement, engine: PickleballEngine):
 
       <!-- Helper Keyboard Hint for PC Users -->
       <div class="pbKeyboardHint">
-        Phím <b>A / D</b> hoặc <b>Mũi tên</b>: Di chuyển · Phím <b>J</b>: Đập Smash · Phím <b>K</b>: Bỏ nhỏ Dink · Phím <b>L</b>: Xoáy góc
+        Phím <b>W / S</b>: Lên lưới / Lùi sân · Phím <b>A / D</b>: Trái / Phải · Phím <b>J</b>: Smash · Phím <b>K</b>: Dink · Phím <b>L</b>: Xoáy góc
       </div>
     </footer>
   `;

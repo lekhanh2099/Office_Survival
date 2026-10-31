@@ -74,6 +74,7 @@ let pbEngine: PickleballEngine | null = null;
 let pbStage: PickleballStage | null = null;
 let pbAnimFrameId: number | null = null;
 let pbPlayerDirX = 0;
+let pbPlayerDirZ = 0;
 let pbLastFrameTime = performance.now();
 
 // 3D Shift Mode Lifecycle
@@ -250,6 +251,7 @@ function cleanupPickleball(): void {
   pbStage = null;
   pbEngine = null;
   pbPlayerDirX = 0;
+  pbPlayerDirZ = 0;
 }
 
 function renderPickleballMode(): void {
@@ -277,16 +279,22 @@ function renderPickleballMode(): void {
 
   mountPickleballHUD(uiHost, pbEngine);
 
-  // Setup direct court touch / click steering & tap-to-serve
+  // Setup direct court touch / click steering & mobile swipe-to-hit
   const container = document.getElementById('pbContainer');
   if (container) {
     let isTouchingCourt = false;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
 
-    const handleCourtPointer = (clientX: number) => {
+    const handleCourtPointer = (clientX: number, clientY: number) => {
       if (!pbEngine) return;
       const rect = container.getBoundingClientRect();
-      const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-      pbEngine.setPlayerX((ratio - 0.5) * 5.4);
+      const ratioX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      const ratioY = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+      // Map Y to Z: top 28% of court = kitchen 2.2, bottom 85% of court = baseline 5.8
+      const targetZ = 2.2 + Math.max(0, Math.min(1, (ratioY - 0.28) / 0.58)) * 3.6;
+      pbEngine.setPlayerPos((ratioX - 0.5) * 5.4, targetZ);
     };
 
     container.addEventListener('pointerdown', (e) => {
@@ -299,7 +307,10 @@ function renderPickleballMode(): void {
         return;
       }
       isTouchingCourt = true;
-      handleCourtPointer(e.clientX);
+      touchStartX = e.clientX;
+      touchStartY = e.clientY;
+      touchStartTime = performance.now();
+      handleCourtPointer(e.clientX, e.clientY);
       try {
         container.setPointerCapture(e.pointerId);
       } catch (_) {}
@@ -307,7 +318,7 @@ function renderPickleballMode(): void {
 
     container.addEventListener('pointermove', (e) => {
       if (isTouchingCourt) {
-        handleCourtPointer(e.clientX);
+        handleCourtPointer(e.clientX, e.clientY);
       }
     });
 
@@ -317,6 +328,33 @@ function renderPickleballMode(): void {
         try {
           container.releasePointerCapture(e.pointerId);
         } catch (_) {}
+
+        // Swipe-to-Hit Flick Gesture Detection (Arcade Mobile Experience)
+        const dx = e.clientX - touchStartX;
+        const dy = e.clientY - touchStartY;
+        const dt = Math.max(1, performance.now() - touchStartTime);
+        const flickSpeed = Math.hypot(dx, dy) / dt; // px/ms
+
+        // If upward flick of at least 22px within 450ms:
+        if (dy < -22 && dt < 450) {
+          if (pbEngine && pbEngine.isServing && pbEngine.currentServer === 'player') {
+            pbEngine.executeServe();
+          } else if (pbEngine) {
+            if (dx > 36) {
+              // Upward flick angled right -> Curve slice right
+              pbEngine.triggerPlayerShot('curve', 1);
+            } else if (dx < -36) {
+              // Upward flick angled left -> Curve slice left
+              pbEngine.triggerPlayerShot('curve', -1);
+            } else if (flickSpeed > 0.65 || dy < -65) {
+              // Fast/high-power flick -> SMASH!
+              pbEngine.triggerPlayerShot('smash');
+            } else {
+              // Gentle soft flick -> DINK drop shot!
+              pbEngine.triggerPlayerShot('dink');
+            }
+          }
+        }
       }
     };
 
@@ -333,6 +371,22 @@ function renderPickleballMode(): void {
     pbStage?.onHit(hitter, shot, quality);
     sounds.pickleballPaddleHit(shot === 'smash');
     showPickleballTimingBadge(quality);
+
+    // Dynamic Juice: Screen Shake & Mobile Haptics Vibration
+    if (shot === 'smash' || quality === 'perfect' || pbEngine?.isDiving) {
+      const cont = document.getElementById('pbContainer');
+      if (cont) {
+        cont.classList.remove('screenShake');
+        void cont.offsetWidth; // trigger reflow
+        cont.classList.add('screenShake');
+        setTimeout(() => cont.classList.remove('screenShake'), 240);
+      }
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        try {
+          navigator.vibrate([25, 35, 45]);
+        } catch (_) {}
+      }
+    }
   };
 
   pbEngine.onBallBounce = (x, z, isFault) => {
@@ -360,7 +414,7 @@ function renderPickleballMode(): void {
     const delta = Math.min((now - pbLastFrameTime) / 1000, 0.05);
     pbLastFrameTime = now;
 
-    pbEngine.update(delta, pbPlayerDirX);
+    pbEngine.update(delta, pbPlayerDirX, pbPlayerDirZ);
     pbStage.update(delta);
     pbStage.render();
 
@@ -1290,6 +1344,12 @@ document.addEventListener('keydown', (e) => {
     } else if (key === 'arrowright' || key === 'd') {
       pbPlayerDirX = 1;
       pbEngine.stepPlayer(1, 0.4);
+    } else if (key === 'arrowup' || key === 'w') {
+      pbPlayerDirZ = -1;
+      pbEngine.stepPlayerZ(-1, 0.45);
+    } else if (key === 'arrowdown' || key === 's') {
+      pbPlayerDirZ = 1;
+      pbEngine.stepPlayerZ(1, 0.45);
     } else if (key === 'j') {
       pbEngine.triggerPlayerShot('smash');
     } else if (key === 'k') {
@@ -1341,6 +1401,11 @@ document.addEventListener('keyup', (e) => {
       pbPlayerDirX = 0;
     } else if ((key === 'arrowright' || key === 'd') && pbPlayerDirX > 0) {
       pbPlayerDirX = 0;
+    }
+    if ((key === 'arrowup' || key === 'w') && pbPlayerDirZ < 0) {
+      pbPlayerDirZ = 0;
+    } else if ((key === 'arrowdown' || key === 's') && pbPlayerDirZ > 0) {
+      pbPlayerDirZ = 0;
     }
   }
 });

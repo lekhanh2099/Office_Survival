@@ -2752,6 +2752,19 @@ body:has(#dialogHost:not(:empty)) .virtualControlsOverlay {
   -webkit-user-select: none;
 }
 
+@keyframes pbScreenShake {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-5px, 3px); }
+  40% { transform: translate(5px, -3px); }
+  60% { transform: translate(-3px, 3px); }
+  80% { transform: translate(3px, -2px); }
+  100% { transform: translate(0, 0); }
+}
+
+.pbContainer.screenShake {
+  animation: pbScreenShake 0.22s cubic-bezier(0.36, 0.07, 0.19, 0.97) !important;
+}
+
 @media (min-width: 900px) {
   .app:has(.pbContainer) {
     max-width: 1040px;
@@ -3120,6 +3133,28 @@ body:has(#dialogHost:not(:empty)) .virtualControlsOverlay {
   z-index: 14;
 }
 
+/* Dynamic Swipe Guide Pill for Mobile Ergonomics */
+.pbSwipeGuidePill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.92);
+  color: #38bdf8;
+  border: 1.5px solid rgba(56, 189, 248, 0.5);
+  border-radius: 100px;
+  padding: 5px 14px;
+  font-size: 11px;
+  font-weight: 800;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.pbSwipeGuidePill b {
+  color: #facc15;
+}
+
 /* Horizontal Paddle Position Slider */
 .pbPositionControlArea {
   width: 100%;
@@ -3418,15 +3453,15 @@ body:has(#dialogHost:not(:empty)) .virtualControlsOverlay {
     white-space: nowrap;
   }
   .pbTacticalHint {
-    top: 74px;
-    font-size: 9px;
-    padding: 2px 10px;
-    max-width: 90%;
+    top: 86px;
+    font-size: 9.5px;
+    padding: 3px 10px;
+    max-width: 92%;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .pbServeCue {
-    top: 96px;
+    top: 116px;
     bottom: auto;
     font-size: 10.5px;
     padding: 4px 10px;
@@ -3435,9 +3470,22 @@ body:has(#dialogHost:not(:empty)) .virtualControlsOverlay {
     text-overflow: ellipsis;
     overflow: hidden;
   }
+  /* On mobile: Hide redundant slider track so court is wide open for swipe & touch-to-run */
+  .pbPositionControlArea {
+    display: none;
+  }
+  .pbSwipeGuidePill {
+    font-size: 10px;
+    padding: 3px 10px;
+    max-width: 96%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .pbBottomControlRail {
-    bottom: 6px;
-    left: 6px;
-    right: 6px;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    gap: 6px;
   }
 }
