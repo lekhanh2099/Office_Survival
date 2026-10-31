@@ -421,6 +421,10 @@ export function showPickleballPointBanner(result: PointResult): void {
       title = result.winner === 'player' ? '⭐ GHI ĐIỂM ĐẸP MẮT!' : '⚠️ BÓNG NẢY 2 LẦN!';
       color = result.winner === 'player' ? '#22c55e' : '#ef4444';
       break;
+    case 'winner':
+      title = result.winner === 'player' ? '⚡ WINNER GHI ĐIỂM!' : '⚡ CÚ ĐÁNH HIỂM HÓC!';
+      color = result.winner === 'player' ? '#22c55e' : '#ef4444';
+      break;
   }
 
   if (titleEl) titleEl.textContent = title;

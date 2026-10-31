@@ -186,7 +186,7 @@ export interface MatchStats {
 
 export interface PointResult {
   winner: 'player' | 'ai';
-  reason: 'out' | 'net' | 'double_bounce' | 'ace' | 'kitchen_violation';
+  reason: 'out' | 'net' | 'double_bounce' | 'ace' | 'kitchen_violation' | 'winner';
   message: string;
   speech?: { speaker: string; text: string };
 }
@@ -281,6 +281,7 @@ export class PickleballEngine {
 
   // Positions
   public playerPos = { x: 1.2, z: 5.8 };
+  public targetPlayerPos = { x: 1.2, z: 5.8 };
   public aiPos = { x: -1.2, z: -5.8 };
   public playerPaddleAnim = 0; // 0: idle, >0: swinging
   public aiPaddleAnim = 0;
@@ -353,7 +354,7 @@ export class PickleballEngine {
       opponentId: settings?.opponentId || 'nga',
       targetScore: settings?.targetScore || 5,
       ballSpeedFactor: settings?.ballSpeedFactor || 1.0,
-      autoPositionAssist: settings?.autoPositionAssist ?? true,
+      autoPositionAssist: settings?.autoPositionAssist ?? false,
       selectedPaddleId: settings?.selectedPaddleId || 'carbon_genz',
       betAmount: settings?.betAmount || 0
     };
@@ -435,26 +436,32 @@ export class PickleballEngine {
   }
 
   public setPlayerX(targetX: number): void {
-    this.playerPos.x = Math.max(-2.7, Math.min(2.7, targetX));
+    this.targetPlayerPos.x = Math.max(-2.7, Math.min(2.7, targetX));
+    this.playerPos.x = this.targetPlayerPos.x;
     this.manualInputTimer = 1.0;
   }
 
-  public setPlayerPos(targetX: number, targetZ?: number): void {
-    this.playerPos.x = Math.max(-2.7, Math.min(2.7, targetX));
+  public setPlayerPos(targetX: number, targetZ?: number, instant = false): void {
+    this.targetPlayerPos.x = Math.max(-2.7, Math.min(2.7, targetX));
     if (targetZ !== undefined) {
-      this.playerPos.z = Math.max(2.2, Math.min(5.8, targetZ));
+      this.targetPlayerPos.z = Math.max(2.2, Math.min(5.8, targetZ));
+    }
+    if (instant) {
+      this.playerPos.x = this.targetPlayerPos.x;
+      this.playerPos.z = this.targetPlayerPos.z;
     }
     this.manualInputTimer = 1.0;
   }
 
   public stepPlayer(direction: -1 | 1, distance = 0.75): void {
-    this.playerPos.x = Math.max(-2.7, Math.min(2.7, this.playerPos.x + direction * distance));
+    this.targetPlayerPos.x = Math.max(-2.7, Math.min(2.7, this.playerPos.x + direction * distance));
+    this.playerPos.x = this.targetPlayerPos.x;
     this.manualInputTimer = 1.0;
   }
 
   public stepPlayerZ(direction: -1 | 1, distance = 0.6): void {
-    // direction -1: advance forward to kitchen, +1: retreat to baseline
-    this.playerPos.z = Math.max(2.2, Math.min(5.8, this.playerPos.z + direction * distance));
+    this.targetPlayerPos.z = Math.max(2.2, Math.min(5.8, this.playerPos.z + direction * distance));
+    this.playerPos.z = this.targetPlayerPos.z;
     this.manualInputTimer = 1.0;
   }
 
@@ -521,7 +528,7 @@ export class PickleballEngine {
   public setupServe(server: 'player' | 'ai'): void {
     this.currentServer = server;
     this.isServing = true;
-    this.serveTimer = server === 'player' ? 6.0 : 1.8;
+    this.serveTimer = server === 'player' ? 999999 : 1.4; // AI serves after 1.4s, player waits indefinitely!
     this.rallyCount = 0;
     this.bufferedShot = null;
 
@@ -533,6 +540,8 @@ export class PickleballEngine {
     if (server === 'player') {
       this.playerPos.x = serveX;
       this.playerPos.z = 5.8;
+      this.targetPlayerPos.x = serveX;
+      this.targetPlayerPos.z = 5.8;
       this.aiPos.x = -serveX; // AI waits diagonally opposite
       this.aiPos.z = -5.8;
 
@@ -1036,133 +1045,56 @@ export class PickleballEngine {
       }
     }
 
-    // Proximity Auto-Return (Fallback safety net only):
-    // Only triggers if player is using autoPositionAssist, and within intimate paddle reach (0.85m),
-    // so active player inputs (Swipe/Tap) feel distinctly superior and necessary!
-    if (this.ball.inPlay && this.ball.lastHitter === 'ai' && this.ball.vz > 0 && this.settings.autoPositionAssist) {
-      const dx = Math.abs(this.ball.x - this.playerPos.x);
-      const dz = Math.abs(this.ball.z - (this.playerPos.z - 0.45));
-      if (dx <= 0.85 && dz <= 0.85 && this.ball.z >= 2.0 && this.ball.z <= 6.0 && this.ball.y >= 0.15 && this.ball.y <= 1.9) {
-        const canHit = (this.rallyCount > 0) || (this.ball.bouncesSinceHit >= 1);
-        if (canHit) {
-          const shot = this.bufferedShot ? this.bufferedShot.shotType : 'drive';
-          const aim = this.bufferedShot ? (this.bufferedShot.aimOffset || 0) : 0;
-          this.bufferedShot = null;
-          this.playerHitBall(shot, aim);
-        }
-      }
-    }
-
-    // Clutch Slide Rescue (Pha trượt người cứu bóng ngoạn mục)
-    // If ball has bounced once on player side, is falling low (y <= 0.28m) and within 1.0m - 2.6m:
-    if (this.ball.inPlay && this.ball.lastHitter === 'ai' && this.ball.vz > 0 && this.ball.bouncesSinceHit === 1 && this.ball.y <= 0.28 && !this.isDiving) {
-      const distToBall = Math.hypot(this.ball.x - this.playerPos.x, this.ball.z - this.playerPos.z);
-      if (distToBall >= 0.8 && distToBall <= 2.6) {
-        this.isDiving = true;
-        this.diveTimer = 0.55;
-        this.playerPos.x = this.ball.x;
-        this.playerPos.z = Math.max(2.2, Math.min(5.8, this.ball.z + 0.3));
-        this.playerStamina = Math.max(0, this.playerStamina - 15);
-        this.bufferedShot = null;
-        this.playerPaddleAnim = 0.35;
-        this.ball.lastHitter = 'player';
-        this.ball.bouncesSinceHit = 0;
-        this.ball.hasClearedNet = false;
-        this.rallyCount++;
-        this.stats.longestRally = Math.max(this.stats.longestRally, this.rallyCount);
-
-        const targetX = (Math.random() - 0.5) * 2.0;
-        const targetZ = -4.5;
-        const flightTime = 1.05;
-        const traj = this.calculateTrajectory(this.ball.x, this.ball.y, this.ball.z, targetX, targetZ, flightTime, 0.65);
-        this.ball.vx = traj.vx;
-        this.ball.vy = traj.vy;
-        this.ball.vz = traj.vz;
-        this.targetLanding = { x: targetX, z: targetZ, hitter: 'player', type: 'drive' };
-        this.tacticalHint = '🔥 CỨU BÓNG XUẤT THẦN! Pha trượt người ngoạn mục!';
-        this.onBallHit?.('player', 'drive', 'perfect');
-      }
-    }
-
     // 1. Serving countdown & positioning
     if (this.isServing) {
-      this.serveTimer -= delta;
-
-      if (this.currentServer === 'player') {
+      if (this.currentServer === 'ai') {
+        this.serveTimer -= delta;
+        if (this.serveTimer <= 0) {
+          this.executeServe();
+        }
+      } else {
+        // Player serve: NEVER AUTO-SERVE! The game waits indefinitely for the player to serve!
         const playerSpeed = 5.8;
         if (Math.abs(playerInputX) > 0.05) {
-          this.playerPos.x += playerInputX * playerSpeed * delta;
+          this.targetPlayerPos.x += playerInputX * playerSpeed * delta;
+          this.playerPos.x = this.targetPlayerPos.x;
         }
-        // Keep within serve side boundary
         if (this.serverQuadrant === 'right') {
           this.playerPos.x = Math.max(0.3, Math.min(2.5, this.playerPos.x));
         } else {
           this.playerPos.x = Math.max(-2.5, Math.min(-0.3, this.playerPos.x));
         }
-        this.playerPos.z = 5.8; // Baseline for serve
+        this.playerPos.z = 5.8;
+        this.targetPlayerPos.z = 5.8;
         // Ball stays in hand/paddle ready to serve
         this.ball.x = this.playerPos.x + (this.serverQuadrant === 'right' ? 0.25 : -0.25);
         this.ball.y = 0.85;
         this.ball.z = this.playerPos.z - 0.45;
       }
-
-      if (this.serveTimer <= 0) {
-        this.executeServe();
-      }
       return;
     }
 
-    // 2. Player Movement (Manual or Assisted) - Full 2D (X and Z)
-    const playerSpeed = 6.4;
-    if (this.manualInputTimer > 0) {
-      this.manualInputTimer -= delta;
+    // 2. Player Movement - 100% Player Controlled with smooth agile interpolation
+    const runSpeed = 7.5;
+    const dx = this.targetPlayerPos.x - this.playerPos.x;
+    const dz = this.targetPlayerPos.z - this.playerPos.z;
+    const distToTarget = Math.hypot(dx, dz);
+
+    if (distToTarget > 0.03) {
+      const step = Math.min(distToTarget, runSpeed * delta);
+      this.playerPos.x += (dx / distToTarget) * step;
+      this.playerPos.z += (dz / distToTarget) * step;
     }
 
-    let hasManualInput = false;
     if (Math.abs(playerInputX) > 0.05) {
-      this.playerPos.x += playerInputX * playerSpeed * delta;
-      hasManualInput = true;
+      this.playerPos.x += playerInputX * runSpeed * delta;
+      this.targetPlayerPos.x = this.playerPos.x;
     }
     if (Math.abs(playerInputZ) > 0.05) {
-      this.playerPos.z += playerInputZ * playerSpeed * delta;
-      hasManualInput = true;
+      this.playerPos.z += playerInputZ * runSpeed * delta;
+      this.targetPlayerPos.z = this.playerPos.z;
     }
 
-    if (hasManualInput) {
-      this.manualInputTimer = 0.25;
-    } else if (this.manualInputTimer <= 0 && this.settings.autoPositionAssist && this.ball.inPlay) {
-      if (this.ball.vz > 0) {
-        // Incoming ball to player side!
-        // Check if ball is a shallow drop shot / dink into kitchen:
-        const isDropShot = (this.targetLanding && this.targetLanding.z < 3.2) || (this.ball.z < 3.2 && this.ball.vz > 0);
-
-        if (isDropShot) {
-          // AUTO-RUSH SPRINT TO KITCHEN LINE (Z = 2.4)!
-          const targetZ = 2.4;
-          const sprintSpeed = 8.6; // High speed sprint to save drop shot!
-          this.playerPos.z += Math.sign(targetZ - this.playerPos.z) * Math.min(Math.abs(targetZ - this.playerPos.z), sprintSpeed * delta);
-
-          const timeToArrival = Math.max(0.01, (this.playerPos.z - this.ball.z) / this.ball.vz);
-          const predictedX = Math.max(-2.6, Math.min(2.6, this.ball.x + this.ball.vx * timeToArrival));
-          const diffX = predictedX - this.playerPos.x;
-          this.playerPos.x += Math.sign(diffX) * Math.min(Math.abs(diffX), sprintSpeed * delta);
-        } else {
-          // Deep ball towards baseline
-          const targetZ = 5.4;
-          this.playerPos.z += Math.sign(targetZ - this.playerPos.z) * Math.min(Math.abs(targetZ - this.playerPos.z), 4.5 * delta);
-
-          const timeToBaseline = Math.max(0.01, (this.playerPos.z - this.ball.z) / this.ball.vz);
-          const predictedX = Math.max(-2.6, Math.min(2.6, this.ball.x + this.ball.vx * timeToBaseline));
-          const diffX = predictedX - this.playerPos.x;
-          this.playerPos.x += Math.sign(diffX) * Math.min(Math.abs(diffX), playerSpeed * 0.95 * delta);
-        }
-      } else {
-        // Ball flying back to AI side: smoothly recover back towards baseline z = 5.2
-        const targetZ = 5.2;
-        this.playerPos.z += (targetZ - this.playerPos.z) * Math.min(1, 2.8 * delta);
-        this.playerPos.x += (0 - this.playerPos.x) * Math.min(1, 1.8 * delta);
-      }
-    }
     this.playerPos.x = Math.max(-2.7, Math.min(2.7, this.playerPos.x));
     this.playerPos.z = Math.max(2.2, Math.min(5.8, this.playerPos.z));
 
@@ -1291,40 +1223,65 @@ export class PickleballEngine {
         this.ball.bouncesSinceHit++;
         this.ball.squashY = 0.65; // Elastic squash deformation on impact
 
-        // Check if bounce was out of bounds
+        // Check court boundary
         const isOutOfBounds = Math.abs(this.ball.x) > this.courtWidth / 2 || Math.abs(this.ball.z) > this.courtLength / 2;
 
-        if (isOutOfBounds) {
-          this.onBallBounce?.(this.ball.x, this.ball.z, true);
-          const winner = this.ball.lastHitter === 'player' ? 'ai' : 'player';
-          this.awardPoint(
-            winner,
-            'out',
-            this.ball.lastHitter === 'player' ? '❌ Banh ra ngoài sân (Out)!' : `❌ Banh của ${this.opponent.name} ra ngoài!`
-          );
-          return;
-        }
+        if (this.ball.bouncesSinceHit === 1) {
+          // FIRST BOUNCE: Must be inside the receiver's court!
+          if (isOutOfBounds) {
+            this.onBallBounce?.(this.ball.x, this.ball.z, true);
+            const winner = this.ball.lastHitter === 'player' ? 'ai' : 'player';
+            this.awardPoint(
+              winner,
+              'out',
+              this.ball.lastHitter === 'player' ? '❌ Banh ra ngoài sân (Out)!' : `❌ Banh của ${this.opponent.name} ra ngoài sân!`
+            );
+            return;
+          }
 
-        // Valid court bounce
-        this.onBallBounce?.(this.ball.x, this.ball.z, false);
-        this.targetLanding = null;
+          // Valid first bounce inside the court!
+          this.onBallBounce?.(this.ball.x, this.ball.z, false);
+          this.targetLanding = null;
 
-        if (this.ball.bouncesSinceHit >= 2) {
-          // Double bounce: person on this side failed to return
-          const sideWithDoubleBounce = this.ball.z > 0 ? 'player' : 'ai';
-          const winner = sideWithDoubleBounce === 'player' ? 'ai' : 'player';
+          // Rebound velocity with authentic wiffle ball elasticity
+          this.ball.vy = Math.max(3.2, -this.ball.vy * 0.76);
+          this.ball.vx *= 0.78;
+          this.ball.vz *= 0.78;
+        } else {
+          // SECOND OR SUBSEQUENT BOUNCE:
+          // The ball already bounced legally once! The receiver failed to return it before the 2nd bounce!
+          // The hitter wins the point!
+          this.onBallBounce?.(this.ball.x, this.ball.z, isOutOfBounds);
+          const winner: 'player' | 'ai' = this.ball.lastHitter === 'player' ? 'player' : 'ai';
           this.awardPoint(
             winner,
             'double_bounce',
-            sideWithDoubleBounce === 'player' ? '⚠️ Bóng nảy 2 lần!' : `⭐ Bóng nảy 2 lần trên sân ${this.opponent.name}!`
+            winner === 'player' ? '⭐ Bóng nảy 2 lần! Bạn ghi điểm!' : `⚠️ Bóng nảy 2 lần! ${this.opponent.name} ghi điểm!`
           );
           return;
         }
+      }
 
-        // Rebound velocity with authentic wiffle ball elasticity
-        this.ball.vy = Math.max(3.2, -this.ball.vy * 0.76);
-        this.ball.vx *= 0.78;
-        this.ball.vz *= 0.78;
+      // Ball flying past baseline after bounce #1 without touching ground again
+      if (this.ball.bouncesSinceHit >= 1) {
+        if (this.ball.z > 7.0) {
+          this.awardPoint('ai', 'winner', `⚡ Cú đánh hiểm hóc của ${this.opponent.name}!`);
+          return;
+        } else if (this.ball.z < -7.0) {
+          this.awardPoint('player', 'winner', '⚡ Bạn tung cú đánh cắm sâu ghi điểm!');
+          return;
+        }
+      }
+
+      // Ball flying completely out of the arena on bounce #0 (never touched court)
+      if (this.ball.bouncesSinceHit === 0 && (Math.abs(this.ball.z) > 7.5 || Math.abs(this.ball.x) > 4.2)) {
+        const winner = this.ball.lastHitter === 'player' ? 'ai' : 'player';
+        this.awardPoint(
+          winner,
+          'out',
+          this.ball.lastHitter === 'player' ? '❌ Banh bay ra ngoài sân!' : `❌ Banh của ${this.opponent.name} bay ra ngoài sân!`
+        );
+        return;
       }
 
       // Check AI hit opportunity

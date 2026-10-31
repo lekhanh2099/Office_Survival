@@ -278,7 +278,7 @@ function renderPickleballMode(): void {
     opponentId: 'nga',
     targetScore: 5,
     ballSpeedFactor: 1.0,
-    autoPositionAssist: true
+    autoPositionAssist: false
   });
 
   pbStage = new PickleballStage(canvasHost, pbEngine);
@@ -350,6 +350,16 @@ function renderPickleballMode(): void {
       touchStartTime = performance.now();
       swipePoints = [{ x: e.offsetX, y: e.offsetY }];
       try { container.setPointerCapture(e.pointerId); } catch (_) {}
+
+      // Direct, instantaneous touch steering (No lag, 100% responsive!):
+      if (pbEngine) {
+        const rect = container.getBoundingClientRect();
+        const ratioX = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        const ratioY = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+        const targetX = (ratioX - 0.5) * 5.4;
+        const targetZ = 2.2 + Math.max(0, Math.min(1, (ratioY - 0.28) / 0.58)) * 3.6;
+        pbEngine.setPlayerPos(targetX, targetZ);
+      }
     });
 
     container.addEventListener('pointermove', (e) => {
@@ -358,14 +368,14 @@ function renderPickleballMode(): void {
       if (swipePoints.length > 10) swipePoints.shift();
       drawSwipeTrail();
 
-      // Only if touch is held (>240ms) do we consider it manual positioning:
-      const dt = performance.now() - touchStartTime;
-      if (dt > 240 && pbEngine) {
+      // Fluid continuous drag-steering across the court
+      if (pbEngine) {
         const rect = container.getBoundingClientRect();
         const ratioX = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
         const ratioY = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
-        const targetZ = 2.4 + Math.max(0, Math.min(1, (ratioY - 0.25) / 0.6)) * 3.4;
-        pbEngine.setPlayerPos((ratioX - 0.5) * 5.4, targetZ);
+        const targetX = (ratioX - 0.5) * 5.4;
+        const targetZ = 2.2 + Math.max(0, Math.min(1, (ratioY - 0.28) / 0.58)) * 3.6;
+        pbEngine.setPlayerPos(targetX, targetZ);
       }
     });
 
@@ -390,8 +400,9 @@ function renderPickleballMode(): void {
           return;
         }
 
-        // SWIPE-TO-HIT GESTURE (Tennis Clash Style)
-        if (Math.hypot(dx, dy) > 20 || dy < -16) {
+        // SWIPE-TO-HIT GESTURE (Tennis Clash Style: rapid directional flick)
+        const isFlick = (Math.hypot(dx, dy) > 28 && speed > 0.32) || (dy < -22 && speed > 0.28);
+        if (isFlick) {
           const res = pbEngine.triggerPlayerShotWithGesture(dx, dy, dt, speed);
           if (res.success) {
             if (res.shotType === 'smash') {
@@ -407,12 +418,19 @@ function renderPickleballMode(): void {
               }
             }
           }
-        } else if (dt < 240) {
-          // Quick Tap on screen: smart adaptive shot!
-          const chosen = pbEngine.ball.y > 1.05 ? 'smash' : (pbEngine.ball.y < 0.62 ? 'dink' : 'curve');
-          const res = pbEngine.triggerPlayerShot(chosen);
-          if (res.success && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-            try { navigator.vibrate(18); } catch (_) {}
+        } else if (dt < 220 && Math.hypot(dx, dy) < 18) {
+          // Stationary tap: only strikes if ball is already right in front of the player's paddle!
+          const bDx = Math.abs(pbEngine.ball.x - pbEngine.playerPos.x);
+          const bDz = Math.abs(pbEngine.ball.z - (pbEngine.playerPos.z - 0.45));
+          if (pbEngine.ball.inPlay && pbEngine.ball.vz > 0 && bDx <= 1.8 && bDz <= 1.8) {
+            const chosen = pbEngine.ball.y > 1.05 ? 'smash' : (pbEngine.ball.y < 0.62 ? 'dink' : 'curve');
+            const res = pbEngine.triggerPlayerShot(chosen);
+            if (res.success) {
+              sounds.pickleballPaddleHit(chosen === 'smash');
+              if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+                try { navigator.vibrate(18); } catch (_) {}
+              }
+            }
           }
         }
       }
