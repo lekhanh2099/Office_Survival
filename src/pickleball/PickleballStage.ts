@@ -23,6 +23,7 @@ export class PickleballStage {
   // Ball & Visuals
   private ballMesh!: THREE.Mesh;
   private ballShadowMesh!: THREE.Mesh;
+  private landingTargetMesh!: THREE.Mesh;
   private ballTrailPoints: THREE.Vector3[] = [];
   private ballTrailMesh!: THREE.Line;
   private hitParticles: { mesh: THREE.Mesh; vel: THREE.Vector3; life: number }[] = [];
@@ -373,6 +374,21 @@ export class PickleballStage {
     });
     this.ballTrailMesh = new THREE.Line(trailGeo, trailMat);
     this.scene.add(this.ballTrailMesh);
+
+    // 4. Tactical Landing Target Marker (Shows where ball is projected to land)
+    const targetGeo = new THREE.RingGeometry(0.24, 0.32, 24);
+    const targetMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.85,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+    this.landingTargetMesh = new THREE.Mesh(targetGeo, targetMat);
+    this.landingTargetMesh.rotation.x = -Math.PI / 2;
+    this.landingTargetMesh.position.y = 0.025;
+    this.landingTargetMesh.visible = false;
+    this.scene.add(this.landingTargetMesh);
   }
 
   private createChibiAvatars(): void {
@@ -567,6 +583,24 @@ export class PickleballStage {
     this.ballTrailPoints.pop();
     this.ballTrailPoints.unshift(this.ballMesh.position.clone());
     this.ballTrailMesh.geometry.setFromPoints(this.ballTrailPoints);
+
+    // 3b. Tactical Landing Target Marker Update
+    if (this.engine.targetLanding && this.engine.ball.inPlay) {
+      this.landingTargetMesh.visible = true;
+      this.landingTargetMesh.position.x = this.engine.targetLanding.x;
+      this.landingTargetMesh.position.z = this.engine.targetLanding.z;
+      this.landingTargetMesh.rotation.z += delta * 3.5;
+      const targetMat = this.landingTargetMesh.material as THREE.MeshBasicMaterial;
+      if (this.engine.targetLanding.type === 'smash') {
+        targetMat.color.setHex(0xef4444); // Red for Smash
+      } else if (this.engine.targetLanding.type === 'dink') {
+        targetMat.color.setHex(0x10b981); // Emerald green for Dink
+      } else {
+        targetMat.color.setHex(0x38bdf8); // Cyan for Curve/Drive
+      }
+    } else {
+      this.landingTargetMesh.visible = false;
+    }
 
     // 4. Update Chibi Avatar Positions
     const lerpSpeed = 1 - Math.exp(-24 * delta);

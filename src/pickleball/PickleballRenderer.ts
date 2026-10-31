@@ -52,6 +52,9 @@ export function mountPickleballHUD(host: HTMLElement, engine: PickleballEngine):
         <div class="pbInfo">
           <div class="pbName">Bạn</div>
           <div class="pbPaddleTag">${engine.paddle.emoji} ${engine.paddle.name.slice(0, 10)}</div>
+          <div class="pbStaminaBar" title="Thể lực: 100%">
+            <div class="pbStaminaFill" id="pbPlayerStamina" style="width:${engine.playerStamina}%"></div>
+          </div>
         </div>
         <div class="pbScoreDigit" id="pbPlayerScore">0</div>
       </div>
@@ -72,10 +75,18 @@ export function mountPickleballHUD(host: HTMLElement, engine: PickleballEngine):
         <div class="pbInfo" style="text-align:right">
           <div class="pbName" id="pbAiName">${opp.name}</div>
           <div class="pbRoleTag">${opp.role}</div>
+          <div class="pbStaminaBar" title="Thể lực đối thủ">
+            <div class="pbStaminaFill ai" id="pbAiStamina" style="width:${engine.aiStamina}%"></div>
+          </div>
         </div>
         <span class="pbAvatar" id="pbAiEmoji" style="background:${opp.avatarBg}">${opp.emoji}</span>
       </div>
     </header>
+
+    <!-- Real-Time Tactical Hint Banner -->
+    <div class="pbTacticalHint" id="pbTacticalHint">
+      💡 <span id="pbTacticalText">${engine.tacticalHint}</span>
+    </div>
 
     <!-- Floating Point / Fault Banner -->
     <div class="pbCenterBanner" id="pbPointBanner" style="display:none">
@@ -116,30 +127,33 @@ export function mountPickleballHUD(host: HTMLElement, engine: PickleballEngine):
       <!-- 3 Primary Action Shot Buttons -->
       <div class="pbShotButtonsGroup">
         <!-- Smash / Drive Button -->
-        <button class="pbShotBtn btnSmash" data-pb-shot="smash" type="button">
+        <button class="pbShotBtn btnSmash" data-pb-shot="smash" id="pbBtnSmash" type="button">
           <span class="shotIcon">🚀</span>
           <div class="shotMeta">
             <span class="shotTitle">ĐẬP SMASH</span>
-            <span class="shotDesc">Lực mạnh cuối sân</span>
+            <span class="shotDesc">Khi bóng bổng · -25% Thể lực</span>
           </div>
+          <span class="pbShotStatusBadge" id="pbSmashBadge"></span>
         </button>
 
         <!-- Dink Drop Button -->
-        <button class="pbShotBtn btnDink" data-pb-shot="dink" type="button">
+        <button class="pbShotBtn btnDink" data-pb-shot="dink" id="pbBtnDink" type="button">
           <span class="shotIcon">🏓</span>
           <div class="shotMeta">
             <span class="shotTitle">BỎ NHỎ DINK</span>
-            <span class="shotDesc">Rơi êm vùng Kitchen</span>
+            <span class="shotDesc">Vào Kitchen · +20% Thể lực</span>
           </div>
+          <span class="pbShotStatusBadge" id="pbDinkBadge"></span>
         </button>
 
         <!-- Curve Spin Button -->
-        <button class="pbShotBtn btnCurve" data-pb-shot="curve" type="button">
+        <button class="pbShotBtn btnCurve" data-pb-shot="curve" id="pbBtnCurve" type="button">
           <span class="shotIcon">🌀</span>
           <div class="shotMeta">
-            <span class="shotTitle">XOÁY GÓC</span>
-            <span class="shotDesc">Lượn bóng hiểm</span>
+            <span class="shotTitle">ĐỔI GÓC HIỂM</span>
+            <span class="shotDesc">Xoáy vào sân trống</span>
           </div>
+          <span class="pbShotStatusBadge" id="pbCurveBadge">🎯 SÂN TRỐNG</span>
         </button>
       </div>
 
@@ -295,9 +309,76 @@ export function updatePickleballHUD(host: HTMLElement, engine: PickleballEngine)
         <span class="shotIcon">🚀</span>
         <div class="shotMeta">
           <span class="shotTitle">ĐẬP SMASH</span>
-          <span class="shotDesc">Lực mạnh cuối sân</span>
+          <span class="shotDesc">Khi bóng bổng · -25% Thể lực</span>
         </div>
+        <span class="pbShotStatusBadge" id="pbSmashBadge"></span>
       `;
+    }
+  }
+
+  // 6. Update Stamina Bars
+  const playerStaminaEl = host.querySelector('#pbPlayerStamina') as HTMLElement | null;
+  if (playerStaminaEl) {
+    playerStaminaEl.style.width = `${Math.max(0, Math.min(100, engine.playerStamina))}%`;
+    if (engine.playerStamina < 30) {
+      playerStaminaEl.classList.add('low');
+    } else {
+      playerStaminaEl.classList.remove('low');
+    }
+  }
+
+  const aiStaminaEl = host.querySelector('#pbAiStamina') as HTMLElement | null;
+  if (aiStaminaEl) {
+    aiStaminaEl.style.width = `${Math.max(0, Math.min(100, engine.aiStamina))}%`;
+    if (engine.aiStamina < 30) {
+      aiStaminaEl.classList.add('low');
+    } else {
+      aiStaminaEl.classList.remove('low');
+    }
+  }
+
+  // 7. Update Tactical Hint Text
+  const tacticalTextEl = host.querySelector('#pbTacticalText') as HTMLElement | null;
+  if (tacticalTextEl && tacticalTextEl.textContent !== engine.tacticalHint) {
+    tacticalTextEl.textContent = engine.tacticalHint;
+  }
+
+  // 8. Dynamic Tactical Button Badges & Highlights
+  const btnSmash = host.querySelector('#pbBtnSmash') as HTMLElement | null;
+  const smashBadge = host.querySelector('#pbSmashBadge') as HTMLElement | null;
+  if (btnSmash && !engine.isServing) {
+    if (engine.shotOpportunity.smashReady) {
+      btnSmash.classList.add('readyToSmash');
+      btnSmash.classList.remove('lowBallRisk');
+      if (smashBadge) {
+        smashBadge.className = 'pbShotStatusBadge visible badgeReady';
+        smashBadge.textContent = '🔥 CƠ HỘI!';
+      }
+    } else if (engine.shotOpportunity.lowBallRisk) {
+      btnSmash.classList.add('lowBallRisk');
+      btnSmash.classList.remove('readyToSmash');
+      if (smashBadge) {
+        smashBadge.className = 'pbShotStatusBadge visible badgeWarn';
+        smashBadge.textContent = '⚠️ BÓNG THẤP';
+      }
+    } else {
+      btnSmash.classList.remove('readyToSmash', 'lowBallRisk');
+      if (smashBadge) smashBadge.className = 'pbShotStatusBadge';
+    }
+  }
+
+  const btnDink = host.querySelector('#pbBtnDink') as HTMLElement | null;
+  const dinkBadge = host.querySelector('#pbDinkBadge') as HTMLElement | null;
+  if (btnDink && !engine.isServing) {
+    if (engine.shotOpportunity.dinkFavorable) {
+      btnDink.classList.add('dinkFavorable');
+      if (dinkBadge) {
+        dinkBadge.className = 'pbShotStatusBadge visible badgeReady';
+        dinkBadge.textContent = '🎯 BỎ NHỎ ĂN!';
+      }
+    } else {
+      btnDink.classList.remove('dinkFavorable');
+      if (dinkBadge) dinkBadge.className = 'pbShotStatusBadge';
     }
   }
 }
