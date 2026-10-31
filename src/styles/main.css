@@ -2792,10 +2792,38 @@ body:has(#dialogHost:not(:empty)) .virtualControlsOverlay {
   pointer-events: none;
 }
 
+/* Top Utility Bar: Tournament Stage Pill + Quick Actions */
+.pbTopUtilityBar {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  pointer-events: auto;
+  z-index: 14;
+}
+
+.pbMatchModeBadge {
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 4px 12px;
+  border-radius: 100px;
+  border: 1.5px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 /* Top Match Scoreboard Ribbon */
 .pbScoreboardRibbon {
   position: absolute;
-  top: 12px;
+  top: 48px;
   left: 12px;
   right: 12px;
   display: flex;
@@ -3182,21 +3210,44 @@ body:has(#dialogHost:not(:empty)) .virtualControlsOverlay {
 
 .pbServeCue {
   position: absolute;
-  bottom: 128px;
+  top: 112px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(15, 23, 42, 0.92);
+  background: rgba(15, 23, 42, 0.94);
   color: #fef08a;
   border: 2px solid #f59e0b;
   border-radius: 100px;
   padding: 6px 18px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(245, 158, 11, 0.5);
   pointer-events: none;
   z-index: 40;
   animation: serveCueBob 1.5s infinite ease-in-out;
   white-space: nowrap;
+}
+
+.pbHeadBtn.btnTourney {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  border: 1.5px solid #fef08a;
+  font-weight: 900;
+  font-size: 11px;
+  width: auto !important;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+}
+
+.pbHeadBtn.btnTourney:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
 }
 
 @keyframes serveCueBob {
@@ -3217,33 +3268,68 @@ body:has(#dialogHost:not(:empty)) .virtualControlsOverlay {
   .pbKeyboardHint {
     display: none;
   }
-  .pbServeCue {
-    bottom: 115px;
-    font-size: 11px;
-    padding: 5px 14px;
-    max-width: 90%;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
+  .pbTopUtilityBar {
+    top: 6px;
+    left: 8px;
+    right: 8px;
+  }
+  .pbMatchModeBadge {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+  .pbHeadBtn {
+    width: 30px;
+    height: 30px;
+    font-size: 13px;
+  }
+  .pbHeadBtn.btnTourney {
+    font-size: 10px;
+    padding: 0 8px;
+    height: 30px;
+    width: auto !important;
   }
   .pbScoreboardRibbon {
-    top: 6px;
-    left: 6px;
-    right: 6px;
+    top: 42px;
+    left: 8px;
+    right: 8px;
+    gap: 4px;
   }
   .pbPlayerScoreCard,
   .pbOpponentScoreCard {
-    padding: 4px 8px;
-    gap: 6px;
+    padding: 4px 7px;
+    gap: 5px;
+    border-radius: 10px;
+  }
+  .pbPaddleTag,
+  .pbRoleTag {
+    display: none;
   }
   .pbAvatar {
-    width: 32px;
-    height: 32px;
-    font-size: 18px;
+    width: 28px;
+    height: 28px;
+    font-size: 15px;
+  }
+  .pbName {
+    font-size: 11px;
   }
   .pbScoreDigit {
-    font-size: 18px;
+    font-size: 16px;
     padding: 2px 6px;
+  }
+  .pbServerBadge {
+    font-size: 10px;
+    padding: 2px 6px;
+    white-space: nowrap;
+  }
+  .pbServeCue {
+    top: 96px;
+    bottom: auto;
+    font-size: 10.5px;
+    padding: 4px 10px;
+    max-width: 92%;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
   .pbBottomControlRail {
     bottom: 6px;

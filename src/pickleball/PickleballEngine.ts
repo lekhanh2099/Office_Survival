@@ -191,6 +191,70 @@ export interface PointResult {
   speech?: { speaker: string; text: string };
 }
 
+export interface TournamentRound {
+  index: number;
+  stageName: string;
+  title: string;
+  desc: string;
+  opponentId: ColleagueId;
+  targetScore: 5 | 7;
+  unlocked: boolean;
+  completed: boolean;
+  winner?: 'player' | 'ai';
+  playerScore?: number;
+  aiScore?: number;
+}
+
+export interface TournamentState {
+  active: boolean;
+  currentRound: number; // 0..3
+  rounds: TournamentRound[];
+  isChampion: boolean;
+}
+
+export const DEFAULT_TOURNAMENT_ROUNDS: TournamentRound[] = [
+  {
+    index: 0,
+    stageName: 'Tứ Kết',
+    title: 'Vòng 1: Thử Thách Tân Binh',
+    desc: 'Đối đầu Em Linh (Thực Tập Sinh GenZ) - Tốc độ nhanh, thích xoáy góc hiểm!',
+    opponentId: 'linh',
+    targetScore: 5,
+    unlocked: true,
+    completed: false
+  },
+  {
+    index: 1,
+    stageName: 'Bán Kết',
+    title: 'Vòng 2: Bức Tường Kitchen',
+    desc: 'Đối đầu Chị Nga (Kế Toán Kho) - Bậc thầy Bỏ Nhỏ Kitchen kiên nhẫn số 1!',
+    opponentId: 'nga',
+    targetScore: 5,
+    unlocked: false,
+    completed: false
+  },
+  {
+    index: 2,
+    stageName: 'Chung Kết Nhánh',
+    title: 'Vòng 3: Bão Lửa Cát Lái',
+    desc: 'Đối đầu Anh Tuấn (Tài Xế Cont Cát Lái) - Những cú đập sấm sét cắm sâu sàn!',
+    opponentId: 'tuan',
+    targetScore: 7,
+    unlocked: false,
+    completed: false
+  },
+  {
+    index: 3,
+    stageName: 'Chung Kết Cúp',
+    title: 'Đại Chiến Tranh Cúp Vô Địch',
+    desc: 'Đối đầu Sếp Hùng (Tổng Giám Đốc) - Chiến Thần Pickleball toàn diện không góc chết!',
+    opponentId: 'boss',
+    targetScore: 7,
+    unlocked: false,
+    completed: false
+  }
+];
+
 export class PickleballEngine {
   // Court Dimensions
   public readonly courtWidth = 6.0;      // X: [-3.0, 3.0]
@@ -255,6 +319,14 @@ export class PickleballEngine {
     perfectHits: 0
   };
 
+  // Tournament Cup Mode State
+  public tournament: TournamentState = {
+    active: false,
+    currentRound: 0,
+    rounds: JSON.parse(JSON.stringify(DEFAULT_TOURNAMENT_ROUNDS)),
+    isChampion: false
+  };
+
   // Events & Callbacks
   public onPointScored?: (result: PointResult) => void;
   public onMatchFinished?: (winner: 'player' | 'ai', stats: MatchStats) => void;
@@ -275,6 +347,55 @@ export class PickleballEngine {
     this.opponent = PICKLEBALL_COLLEAGUES[this.settings.opponentId] || PICKLEBALL_COLLEAGUES.nga;
     this.paddle = PICKLEBALL_PADDLES.find(p => p.id === this.settings.selectedPaddleId) || PICKLEBALL_PADDLES[0];
     this.resetMatch();
+  }
+
+  public startTournament(roundIndex = 0): void {
+    this.tournament.active = true;
+    this.tournament.currentRound = Math.max(0, Math.min(3, roundIndex));
+    const round = this.tournament.rounds[this.tournament.currentRound];
+    round.unlocked = true;
+    this.settings.opponentId = round.opponentId;
+    this.settings.targetScore = round.targetScore;
+    this.opponent = PICKLEBALL_COLLEAGUES[round.opponentId];
+    this.resetMatch();
+  }
+
+  public advanceTournament(): boolean {
+    if (!this.tournament.active) return false;
+    const curRound = this.tournament.rounds[this.tournament.currentRound];
+    curRound.completed = true;
+    curRound.winner = 'player';
+    curRound.playerScore = this.playerScore;
+    curRound.aiScore = this.aiScore;
+
+    if (this.tournament.currentRound >= 3) {
+      this.tournament.isChampion = true;
+      const goldPaddle = PICKLEBALL_PADDLES.find(p => p.id === 'gold_boss');
+      if (goldPaddle) goldPaddle.unlocked = true;
+      return true; // Won Grand Final!
+    }
+
+    this.tournament.currentRound++;
+    const nextRound = this.tournament.rounds[this.tournament.currentRound];
+    nextRound.unlocked = true;
+    this.settings.opponentId = nextRound.opponentId;
+    this.settings.targetScore = nextRound.targetScore;
+    this.opponent = PICKLEBALL_COLLEAGUES[nextRound.opponentId];
+    this.resetMatch();
+    return false;
+  }
+
+  public retryTournamentRound(): void {
+    if (!this.tournament.active) return;
+    const curRound = this.tournament.rounds[this.tournament.currentRound];
+    this.settings.opponentId = curRound.opponentId;
+    this.settings.targetScore = curRound.targetScore;
+    this.opponent = PICKLEBALL_COLLEAGUES[curRound.opponentId];
+    this.resetMatch();
+  }
+
+  public exitTournament(): void {
+    this.tournament.active = false;
   }
 
   public setOpponent(colleagueId: ColleagueId): void {
@@ -622,45 +743,65 @@ export class PickleballEngine {
     this.ball.bouncesSinceHit = 0;
     this.ball.hasClearedNet = false;
 
-    // AI Targeting logic based on rally progression:
+    // SMART TACTICAL AI DECISION MATRIX
     let chosenShot: ShotType = 'drive';
     let targetX: number;
     let targetZ = 4.8;
     let flightTime = 0.82 / (this.opponent.power * this.settings.ballSpeedFactor);
     let desiredClearance = 0.35;
 
-    if (this.rallyCount <= 3) {
-      // Warmup rally: keep shots accessible to player to build momentum
-      targetX = this.playerPos.x * 0.4 + (Math.random() - 0.5) * 1.0;
+    const playerX = this.playerPos.x;
+    const playerZ = this.playerPos.z;
+    const isPlayerDeep = playerZ > 5.4;
+    const isPlayerNearKitchen = playerZ < 3.4;
+    const isPlayerRight = playerX > 0.5;
+    const isPlayerLeft = playerX < -0.5;
+
+    if (this.rallyCount <= 2) {
+      // Warmup phase: friendly return to establish rally
+      targetX = playerX * 0.35 + (Math.random() - 0.5) * 0.8;
       targetZ = 4.6;
       flightTime = 0.86;
       desiredClearance = 0.38;
     } else {
-      // Competitive rally: AI starts testing player with placement
-      const openX = this.playerPos.x > 0 ? -1.6 : 1.6;
-      targetX = openX + (Math.random() - 0.5) * (1.0 - this.opponent.accuracy * 0.5);
-
       const rand = Math.random();
-      if (this.ball.y > 1.2 && rand < this.opponent.smashTendency) {
-        chosenShot = 'smash';
-        targetZ = 5.2;
-        flightTime = 0.64 / (this.opponent.power * this.settings.ballSpeedFactor);
-        desiredClearance = 0.32;
-      } else if (rand < this.opponent.dinkTendency && Math.abs(this.aiPos.z) < 3.2) {
+
+      // TACTIC 1: Drop Shot (Dink) Punish if player is camping deep at baseline
+      if (isPlayerDeep && rand < (this.opponent.dinkTendency * 1.3)) {
         chosenShot = 'dink';
-        targetZ = 1.4 + Math.random() * 0.6;
+        targetX = isPlayerRight ? -1.3 : (isPlayerLeft ? 1.3 : (Math.random() > 0.5 ? 1.3 : -1.3));
+        targetZ = 1.3 + Math.random() * 0.5; // drops just over net into kitchen
         flightTime = 0.88;
-        desiredClearance = 0.46;
-      } else if (rand < this.opponent.dinkTendency + this.opponent.spinTendency) {
+        desiredClearance = 0.45;
+      }
+      // TACTIC 2: Smash Punish if player rushed to kitchen or incoming ball is high floater
+      else if ((isPlayerNearKitchen || this.ball.y > 1.15) && rand < (this.opponent.smashTendency * 1.35)) {
+        chosenShot = 'smash';
+        targetX = isPlayerRight ? -2.2 : (isPlayerLeft ? 2.2 : (Math.random() > 0.5 ? 2.2 : -2.2));
+        targetZ = 5.3;
+        flightTime = 0.56 / (this.opponent.power * this.settings.ballSpeedFactor);
+        desiredClearance = 0.32;
+      }
+      // TACTIC 3: Curve Spin outward away from player
+      else if (rand < this.opponent.spinTendency) {
         chosenShot = 'curve';
-        targetX = (targetX > 0 ? 2.1 : -2.1);
-        flightTime = 0.78 / (this.opponent.power * this.settings.ballSpeedFactor);
+        targetX = isPlayerRight ? -2.2 : 2.2;
+        targetZ = 4.6;
+        flightTime = 0.76 / (this.opponent.power * this.settings.ballSpeedFactor);
         desiredClearance = 0.36;
-        this.ball.spinX = targetX > 0 ? -3.0 : 3.0;
+        this.ball.spinX = targetX > 0 ? -3.5 : 3.5;
+      }
+      // TACTIC 4: Crosscourt drive into open corner
+      else {
+        chosenShot = 'drive';
+        targetX = isPlayerRight ? -2.0 - Math.random() * 0.3 : (isPlayerLeft ? 2.0 + Math.random() * 0.3 : (Math.random() > 0.5 ? 1.8 : -1.8));
+        targetZ = 4.8;
+        flightTime = 0.78;
+        desiredClearance = 0.36;
       }
     }
 
-    targetX = Math.max(-2.4, Math.min(2.4, targetX));
+    targetX = Math.max(-2.5, Math.min(2.5, targetX));
 
     const traj = this.calculateTrajectory(
       this.ball.x,

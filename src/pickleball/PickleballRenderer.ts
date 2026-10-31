@@ -32,6 +32,19 @@ export function mountPickleballHUD(host: HTMLElement, engine: PickleballEngine):
 
   host.innerHTML = `
     <!-- Top Match Scoreboard Ribbon -->
+    <!-- Top Utility Bar: Tournament Stage Pill + Quick Actions -->
+    <div class="pbTopUtilityBar">
+      <div class="pbMatchModeBadge" id="pbMatchModeBadge">
+        ${engine.tournament.active ? `🏆 ${engine.tournament.rounds[engine.tournament.currentRound].stageName} · ĐẤU ${engine.settings.targetScore} ĐIỂM` : `🎯 ĐẤU ${engine.settings.targetScore} ĐIỂM`}
+      </div>
+      <div class="pbHeadActions">
+        <button class="pbHeadBtn btnTourney" data-act="open_pb_tournament" type="button" title="Giải Đấu Cúp Doanh Nghiệp">🏆 Giải Đấu</button>
+        <button class="pbHeadBtn" data-act="open_pb_settings" type="button" title="Cài đặt trận đấu">⚙️</button>
+        <button class="pbHeadBtn" data-act="exit_pb" type="button" title="Rời sân về ca trực">🚪</button>
+      </div>
+    </div>
+
+    <!-- Match Scoreboard Ribbon -->
     <header class="pbScoreboardRibbon">
       <!-- Player Badge (Left) -->
       <div class="pbPlayerScoreCard">
@@ -43,11 +56,10 @@ export function mountPickleballHUD(host: HTMLElement, engine: PickleballEngine):
         <div class="pbScoreDigit" id="pbPlayerScore">0</div>
       </div>
 
-      <!-- Center Match Status -->
+      <!-- Center Server / Rally Status -->
       <div class="pbCenterMatchInfo">
-        <div class="pbTargetBadge">ĐẤU ${engine.settings.targetScore} ĐIỂM</div>
         <div class="pbServerBadge" id="pbServerIndicator">
-          🎾 Giao bóng: <b id="pbServerText">Bạn</b>
+          🎾 Giao: <b id="pbServerText">Bạn</b>
         </div>
         <div class="pbRallyCounter" id="pbRallyCounter" style="display:none">
           🔥 Rally: <span id="pbRallyVal">0</span>
@@ -62,12 +74,6 @@ export function mountPickleballHUD(host: HTMLElement, engine: PickleballEngine):
           <div class="pbRoleTag">${opp.role}</div>
         </div>
         <span class="pbAvatar" id="pbAiEmoji" style="background:${opp.avatarBg}">${opp.emoji}</span>
-      </div>
-
-      <!-- Quick Action Header Buttons -->
-      <div class="pbHeadActions">
-        <button class="pbHeadBtn" data-act="open_pb_settings" type="button" title="Cài đặt trận đấu">⚙️</button>
-        <button class="pbHeadBtn" data-act="exit_pb" type="button" title="Rời sân về ca trực">🚪</button>
       </div>
     </header>
 
@@ -244,6 +250,17 @@ export function updatePickleballHUD(host: HTMLElement, engine: PickleballEngine)
       } else {
         pbCache.rallyCountEl.style.display = 'none';
       }
+    }
+  }
+
+  // 3b. Update Match Mode / Tournament Badge
+  const modeBadge = host.querySelector('#pbMatchModeBadge');
+  if (modeBadge) {
+    const tourneyText = engine.tournament.active
+      ? `🏆 ${engine.tournament.rounds[engine.tournament.currentRound].stageName} · ĐẤU ${engine.settings.targetScore} ĐIỂM`
+      : `🎯 ĐẤU ${engine.settings.targetScore} ĐIỂM`;
+    if (modeBadge.textContent !== tourneyText) {
+      modeBadge.textContent = tourneyText;
     }
   }
 

@@ -53,7 +53,8 @@ import {
 } from './pickleball/PickleballRenderer';
 import {
   renderPickleballSettingsModal,
-  renderPickleballMatchOverModal
+  renderPickleballMatchOverModal,
+  renderPickleballTournamentModal
 } from './pickleball/PickleballModals';
 
 const ROOT = document.getElementById('root') as HTMLElement;
@@ -718,12 +719,66 @@ document.addEventListener('click', (ev) => {
   }
 
   switch (btn.dataset.act) {
+    case 'open_pb_tournament': {
+      if (pbEngine) {
+        sounds.click();
+        HOST.innerHTML = renderPickleballTournamentModal(pbEngine);
+      }
+      break;
+    }
+    case 'pb_start_tourney_match': {
+      if (pbEngine) {
+        sounds.success();
+        HOST.innerHTML = '';
+        if (!pbEngine.tournament.active) {
+          pbEngine.startTournament(0);
+        } else {
+          pbEngine.startTournament(pbEngine.tournament.currentRound);
+        }
+        pbStage?.updateOpponentVisuals();
+        const uiHostEl = document.getElementById('pbUIHost');
+        if (uiHostEl) mountPickleballHUD(uiHostEl, pbEngine);
+        const cur = pbEngine.tournament.rounds[pbEngine.tournament.currentRound];
+        showToast(`🏆 Khởi tranh ${cur.stageName}: Đấu với ${pbEngine.opponent.name}!`);
+      }
+      break;
+    }
+    case 'pb_tourney_next_round': {
+      if (pbEngine) {
+        sounds.perk();
+        HOST.innerHTML = '';
+        const wonGrandFinal = pbEngine.advanceTournament();
+        if (wonGrandFinal) {
+          showToast('👑 Chúc mừng BẠN đã VÔ ĐỊCH CÚP DOANH NGHIỆP 2026! Đã mở khóa Vợt Mạ Vàng Sếp Hùng!');
+        } else {
+          const cur = pbEngine.tournament.rounds[pbEngine.tournament.currentRound];
+          showToast(`⚔️ Bước vào ${cur.stageName}: Gặp đối thủ ${pbEngine.opponent.name}!`);
+        }
+        pbStage?.updateOpponentVisuals();
+        const uiHostEl = document.getElementById('pbUIHost');
+        if (uiHostEl) mountPickleballHUD(uiHostEl, pbEngine);
+      }
+      break;
+    }
+    case 'pb_tourney_retry': {
+      if (pbEngine) {
+        sounds.click();
+        HOST.innerHTML = '';
+        pbEngine.retryTournamentRound();
+        const cur = pbEngine.tournament.rounds[pbEngine.tournament.currentRound];
+        showToast(`🔄 Thử lại ${cur.stageName} cùng ${pbEngine.opponent.name}! Cố lên!`);
+        const uiHostEl = document.getElementById('pbUIHost');
+        if (uiHostEl) mountPickleballHUD(uiHostEl, pbEngine);
+      }
+      break;
+    }
     case 'open_pb_settings':
       if (pbEngine) {
         sounds.click();
         HOST.innerHTML = renderPickleballSettingsModal(pbEngine);
       }
       break;
+    case 'close_dialog':
     case 'close_pb_settings':
       sounds.click();
       HOST.innerHTML = '';
@@ -770,12 +825,19 @@ document.addEventListener('click', (ev) => {
       HOST.innerHTML = '';
       if (shiftEngine) {
         const s = shiftEngine.getState();
-        s.stress = Math.max(0, s.stress - 35);
+        const isChamp = pbEngine?.tournament?.isChampion;
+        s.stress = Math.max(0, s.stress - (isChamp ? 50 : 35));
+        s.energy = Math.min(100, s.energy + (isChamp ? 30 : 15));
+        s.score += isChamp ? 500 : 150;
         const oppId = pbEngine?.opponent.id;
         if (oppId && s.colleagueFavors[oppId] !== undefined) {
-          s.colleagueFavors[oppId] = Math.min(100, s.colleagueFavors[oppId] + 20);
+          s.colleagueFavors[oppId] = Math.min(100, s.colleagueFavors[oppId] + (isChamp ? 40 : 20));
         }
-        showToast('🧘 Tinh thần sảng khoái: -35% Stress 🔥 và +20% Thân thiết đồng nghiệp!');
+        if (isChamp) {
+          showToast('👑 VÔ ĐỊCH CÚP PICKLEBALL: +500 Điểm cống hiến, +30% Năng lượng & -50% Stress!');
+        } else {
+          showToast('🧘 Tinh thần sảng khoái: -35% Stress 🔥 và +20% Thân thiết đồng nghiệp!');
+        }
       }
       currentMode = 'shift';
       render();
