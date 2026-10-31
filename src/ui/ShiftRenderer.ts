@@ -41,6 +41,7 @@ interface HUDElementCache {
   orderName: HTMLElement | null;
   questText: HTMLElement | null;
   questStepper: HTMLElement | null;
+  questBanner: HTMLElement | null;
   playerDot: HTMLElement | null;
   bossDot: HTMLElement | null;
   targetDot: HTMLElement | null;
@@ -52,6 +53,11 @@ interface HUDElementCache {
   speechSpeaker: HTMLElement | null;
   speechRole: HTMLElement | null;
   speechText: HTMLElement | null;
+  favorEls: Record<string, HTMLElement | null>;
+  profName: HTMLElement | null;
+  profRibbon: HTMLElement | null;
+  profTrait: HTMLElement | null;
+  profEmoji: HTMLElement | null;
 }
 
 let hudCache: HUDElementCache | null = null;
@@ -63,6 +69,12 @@ let lastOrdersStr = '';
 let lastZone = '';
 let lastOrderName = '';
 let lastQuestText = '';
+let lastSpeechX = -9999;
+let lastSpeechY = -9999;
+let lastProfName = '';
+let lastProfTrait = '';
+let lastProfEmoji = '';
+let lastFavors: Record<string, number> = {};
 let lastTaskStep = '';
 let lastOrderArchetypeId = '';
 let lastOrderStepIndex = -1;
@@ -347,6 +359,7 @@ export function mountShiftHUD(host: HTMLElement): void {
     orderName: host.querySelector('#hudOrderName'),
     questText: host.querySelector('#hudQuestText'),
     questStepper: host.querySelector('#hudQuestStepper'),
+    questBanner: host.querySelector('#hudQuestBanner'),
     playerDot: host.querySelector('#hudPlayerDot'),
     bossDot: host.querySelector('#hudBossDot'),
     targetDot: host.querySelector('#hudTargetDot'),
@@ -357,7 +370,18 @@ export function mountShiftHUD(host: HTMLElement): void {
     speechAvatar: host.querySelector('#speechAvatar'),
     speechSpeaker: host.querySelector('#speechSpeaker'),
     speechRole: host.querySelector('#speechRole'),
-    speechText: host.querySelector('#speechText')
+    speechText: host.querySelector('#speechText'),
+    favorEls: {
+      boss: host.querySelector('#chipFavor_boss'),
+      nga: host.querySelector('#chipFavor_nga'),
+      tuan: host.querySelector('#chipFavor_tuan'),
+      linh: host.querySelector('#chipFavor_linh'),
+      hoang: host.querySelector('#chipFavor_hoang')
+    },
+    profName: host.querySelector('#hudPlayerProfName'),
+    profRibbon: host.querySelector('#hudRibbonPlayerName'),
+    profTrait: host.querySelector('#hudPlayerProfTrait'),
+    profEmoji: host.querySelector('#hudPlayerProfEmoji')
   };
 }
 
@@ -439,7 +463,7 @@ export function updateShiftHUD(host: HTMLElement, state: ShiftState, stage?: Off
     lastOrderStepIndex = curStepIdx;
     lastOrderArchetypeId = archetypeId;
 
-    const bannerEl = host.querySelector('#hudQuestBanner');
+    const bannerEl = hudCache.questBanner;
     if (bannerEl) {
       if (isCrisis) {
         bannerEl.classList.add('isCrisis');
@@ -483,45 +507,46 @@ export function updateShiftHUD(host: HTMLElement, state: ShiftState, stage?: Off
     }
   }
 
-  // Update Colleague Favors in HUD quick bar
+  // Update Colleague Favors in HUD quick bar (Zero-Query Cached)
   if (state.colleagueFavors) {
     const cidList: Array<'boss' | 'nga' | 'tuan' | 'linh' | 'hoang'> = ['boss', 'nga', 'tuan', 'linh', 'hoang'];
     for (const cid of cidList) {
-      const el = host.querySelector(`#chipFavor_${cid}`);
+      const el = hudCache.favorEls[cid];
       if (el) {
         const favor = Math.round(state.colleagueFavors[cid] ?? 20);
-        el.textContent = `${favor}%`;
-        if (favor >= 50) {
-          (el as HTMLElement).style.color = '#4ade80';
-          (el as HTMLElement).style.fontWeight = '900';
-        } else {
-          (el as HTMLElement).style.color = '#cbd5e1';
-          (el as HTMLElement).style.fontWeight = '700';
+        if (lastFavors[cid] !== favor) {
+          lastFavors[cid] = favor;
+          el.textContent = `${favor}%`;
+          if (favor >= 50) {
+            el.style.color = '#4ade80';
+            el.style.fontWeight = '900';
+          } else {
+            el.style.color = '#cbd5e1';
+            el.style.fontWeight = '700';
+          }
         }
       }
     }
   }
 
-  // Update Player Profile in HUD
+  // Update Player Profile in HUD (Zero-Query Cached)
   if (state.playerProfile) {
     const profName = state.playerProfile.name || 'Bạn';
-    const profNameEl = host.querySelector('#hudPlayerProfName');
-    if (profNameEl && profNameEl.textContent !== profName) {
-      profNameEl.textContent = profName;
-    }
-    const profRibbonEl = host.querySelector('#hudRibbonPlayerName');
-    if (profRibbonEl && profRibbonEl.textContent !== profName) {
-      profRibbonEl.textContent = profName;
+    if (profName !== lastProfName) {
+      lastProfName = profName;
+      if (hudCache.profName) hudCache.profName.textContent = profName;
+      if (hudCache.profRibbon) hudCache.profRibbon.textContent = profName;
     }
     const pers = PLAYER_PERSONALITIES.find(p => p.id === state.playerProfile.personality);
     if (pers) {
-      const profTraitEl = host.querySelector('#hudPlayerProfTrait');
-      if (profTraitEl) {
-        profTraitEl.textContent = pers.name.slice(0, 10).toUpperCase();
+      const trait = pers.name.slice(0, 10).toUpperCase();
+      if (trait !== lastProfTrait) {
+        lastProfTrait = trait;
+        if (hudCache.profTrait) hudCache.profTrait.textContent = trait;
       }
-      const emojiEl = host.querySelector('#hudPlayerProfEmoji');
-      if (emojiEl && emojiEl.textContent !== pers.emoji) {
-        emojiEl.textContent = pers.emoji;
+      if (pers.emoji !== lastProfEmoji) {
+        lastProfEmoji = pers.emoji;
+        if (hudCache.profEmoji) hudCache.profEmoji.textContent = pers.emoji;
       }
     }
   }
@@ -601,13 +626,19 @@ export function updateShiftHUD(host: HTMLElement, state: ShiftState, stage?: Off
     }
   }
 
-  // Speech Bubble
+  // Speech Bubble (Throttled sub-pixel layout caching)
   if (hudCache.speechBubble && stage) {
     const speech = stage.getActiveSpeechScreenData();
     if (speech) {
+      const curX = Math.round(speech.x);
+      const curY = Math.round(speech.y);
+      if (curX !== lastSpeechX || curY !== lastSpeechY) {
+        lastSpeechX = curX;
+        lastSpeechY = curY;
+        hudCache.speechBubble.style.left = `${curX}px`;
+        hudCache.speechBubble.style.top = `${curY}px`;
+      }
       hudCache.speechBubble.style.display = 'block';
-      hudCache.speechBubble.style.left = `${speech.x}px`;
-      hudCache.speechBubble.style.top = `${speech.y}px`;
 
       if (hudCache.speechAvatar) {
         hudCache.speechAvatar.textContent = speech.emoji;
@@ -617,7 +648,11 @@ export function updateShiftHUD(host: HTMLElement, state: ShiftState, stage?: Off
       if (hudCache.speechRole) hudCache.speechRole.textContent = `· ${speech.role}`;
       if (hudCache.speechText) hudCache.speechText.textContent = speech.text;
     } else {
-      hudCache.speechBubble.style.display = 'none';
+      if (hudCache.speechBubble.style.display !== 'none') {
+        hudCache.speechBubble.style.display = 'none';
+        lastSpeechX = -9999;
+        lastSpeechY = -9999;
+      }
     }
   }
 }

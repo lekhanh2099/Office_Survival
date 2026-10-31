@@ -101,6 +101,10 @@ export class OfficeStage {
   public floorLampLight!: THREE.PointLight;
   public isFloorLampOn = true;
 
+  // Cached viewport dimensions for Zero-Layout-Thrashing Screen Projections
+  private cachedWidth = 800;
+  private cachedHeight = 600;
+
   // NPC Patrol Waypoints
   private bossWaypoints: THREE.Vector3[] = [];
   private currentBossWpIdx = 0;
@@ -241,11 +245,12 @@ export class OfficeStage {
     this.camera.position.set(0, 14, 13);
     this.camera.lookAt(0, 0.8, 0);
 
-    // 2. WebGL Renderer with High-Fidelity Tone Mapping & Mobile Performance Balancing
-    const isMobile = width < 600;
+    // 2. WebGL Renderer with High-Fidelity Tone Mapping & Performance Balancing
+    this.cachedWidth = width;
+    this.cachedHeight = height;
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     this.renderer.setSize(width, height);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -319,16 +324,14 @@ export class OfficeStage {
   }
 
   private setupLighting(): void {
-    const hemi = new THREE.HemisphereLight(0xfff5eb, 0x0f172a, 1.25);
+    const hemi = new THREE.HemisphereLight(0xfff5eb, 0x0f172a, 1.45);
     this.scene.add(hemi);
 
-    const sun = new THREE.DirectionalLight(0xffeedb, 1.6);
+    const sun = new THREE.DirectionalLight(0xffeedb, 1.5);
     sun.position.set(22, 34, 18);
     sun.castShadow = true;
-    const isMobile = window.innerWidth < 640;
-    const shadowRes = isMobile ? 1024 : 2048;
-    sun.shadow.mapSize.width = shadowRes;
-    sun.shadow.mapSize.height = shadowRes;
+    sun.shadow.mapSize.width = 1024;
+    sun.shadow.mapSize.height = 1024;
     sun.shadow.camera.near = 1;
     sun.shadow.camera.far = 80;
     const sD = 35;
@@ -336,30 +339,18 @@ export class OfficeStage {
     sun.shadow.camera.right = sD;
     sun.shadow.camera.top = sD;
     sun.shadow.camera.bottom = -sD;
-    sun.shadow.bias = -0.0006;
-    sun.shadow.radius = 2.0;
+    sun.shadow.bias = -0.0005;
+    sun.shadow.normalBias = 0.02;
     this.scene.add(sun);
 
-    // Warm Ambient Department Pools of Light
-    const lOffice = new THREE.PointLight(0xfbbf24, 2.2, 24);
-    lOffice.position.set(-14, 5.5, -12);
+    // Consolidated Department Accent Lights (Warm Golden Office & Cool Cyan Industrial)
+    const lOffice = new THREE.PointLight(0xfbbf24, 1.5, 35);
+    lOffice.position.set(-10, 6.0, -10);
     this.scene.add(lOffice);
 
-    const lLounge = new THREE.PointLight(0xfef08a, 2.0, 20);
-    lLounge.position.set(0, 5.0, 2);
-    this.scene.add(lLounge);
-
-    const lLab = new THREE.PointLight(0x38bdf8, 2.2, 22);
-    lLab.position.set(14, 5.5, -10);
-    this.scene.add(lLab);
-
-    const lWarehouse = new THREE.PointLight(0xf59e0b, 2.0, 24);
-    lWarehouse.position.set(-14, 5.5, 12);
-    this.scene.add(lWarehouse);
-
-    const lPort = new THREE.PointLight(0x60a5fa, 2.2, 26);
-    lPort.position.set(14, 5.5, 14);
-    this.scene.add(lPort);
+    const lIndustrial = new THREE.PointLight(0x38bdf8, 1.5, 38);
+    lIndustrial.position.set(10, 6.0, 10);
+    this.scene.add(lIndustrial);
   }
 
   private setupGrandCampus(): void {
@@ -368,34 +359,31 @@ export class OfficeStage {
     const baseMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.95 });
     const base = new THREE.Mesh(baseGeo, baseMat);
     base.rotation.x = -Math.PI / 2;
+    base.position.y = 0.0;
     base.receiveShadow = true;
     this.scene.add(base);
 
-    // 2. Department-specific Architectural Floorings:
-    // Zone 1 (Corporate Office): Warm Scandinavian Natural Oak Parquet
-    this.createWoodParquetFloor(-14, -12, 26, 22);
+    // 2. Department-specific Non-overlapping Quadrant Floorings (at Y = 0.01):
+    // Zone 1: NW (-28 to 0, -22 to 0) -> center (-14, -11), width 28, depth 22
+    this.createWoodParquetFloor(-14, -11, 28, 22);
 
-    // Zone 2 (Color Lab & Cutting Workshop): Sterile Medical-Grade ESD Cleanroom Vinyl Tiles
-    this.createCleanroomFloor(14, -12, 26, 22);
+    // Zone 2: NE (0 to 28, -22 to 0) -> center (14, -11), width 28, depth 22
+    this.createCleanroomFloor(14, -11, 28, 22);
 
-    // Zone 3 (Mega Fabric Warehouse): Industrial Emerald Green Epoxy with Forklift Traffic Lanes & Pallet Bays
-    this.createEpoxyWarehouseFloor(-14, 12, 26, 22);
+    // Zone 3: SW (-28 to 0, 0 to 22) -> center (-14, 11), width 28, depth 22
+    this.createEpoxyWarehouseFloor(-14, 11, 28, 22);
 
-    // Zone 4 (Logistics Port & Container Dock): Reinforced Industrial Concrete Slabs with Crane Rail Tracks
-    this.createPortDockFloor(14, 12, 26, 22);
+    // Zone 4: SE (0 to 28, 0 to 22) -> center (14, 11), width 28, depth 22
+    this.createPortDockFloor(14, 11, 28, 22);
 
-    // Central Walkways & Corridor Transit Hallways (Polished Dark Slate Terrazzo)
-    this.createTileFloor(0, 0, 56, 3.2, '#1e293b', '#334155');
-    this.createTileFloor(0, 0, 3.2, 44, '#1e293b', '#334155');
+    // Zone 5 (Pantry & Executive Lounge): Raised White Marble Hexagon Mat at Y = 0.02
+    this.createTileFloor(0, 1.5, 12, 10, '#f8fafc', '#cbd5e1', 0.02);
 
-    // Zone 5 (Pantry & Executive Lounge): Designer White Marble Hexagon Tiles
-    this.createTileFloor(0, 1.5, 12, 10, '#f8fafc', '#cbd5e1');
-
-    // Boardroom & Boss Office Acoustic Carpet
+    // Boardroom & Boss Office Acoustic Carpet: Raised Carpet at Y = 0.02
     this.createCarpetFloor(-17, -14, 16, 16, '#1e1b4b', '#2e1065');
 
-    // Restroom Tile Floor
-    this.createTileFloor(-22, 0, 8, 8, '#e2e8f0', '#94a3b8');
+    // Restroom Tile Floor: Raised Tiles at Y = 0.02
+    this.createTileFloor(-22, 0, 8, 8, '#e2e8f0', '#94a3b8', 0.02);
 
     // ==================== ZONE 1: CORPORATE OFFICE (VĂN PHÒNG ĐIỀU HÀNH) ====================
     this.createZoneSign(-14, 3.8, -21.5, '🏢 VĂN PHÒNG ĐIỀU HÀNH & MERCHANDISER', '#4f46e5');
@@ -583,7 +571,7 @@ export class OfficeStage {
     this.scene.add(mesh);
   }
 
-  private createTileFloor(cx: number, cz: number, w: number, h: number, c1: string, c2: string): void {
+  private createTileFloor(cx: number, cz: number, w: number, h: number, c1: string, c2: string, yPos = 0.02): void {
     const geo = new THREE.PlaneGeometry(w, h);
     const canvas = document.createElement('canvas');
     canvas.width = 512;
@@ -609,7 +597,7 @@ export class OfficeStage {
     const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.25 });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.rotation.x = -Math.PI / 2;
-    mesh.position.set(cx, 0.015, cz);
+    mesh.position.set(cx, yPos, cz);
     mesh.receiveShadow = true;
     this.scene.add(mesh);
   }
@@ -636,7 +624,7 @@ export class OfficeStage {
     const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85 });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.rotation.x = -Math.PI / 2;
-    mesh.position.set(cx, 0.018, cz);
+    mesh.position.set(cx, 0.02, cz);
     mesh.receiveShadow = true;
     this.scene.add(mesh);
   }
@@ -708,7 +696,7 @@ export class OfficeStage {
     const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.25, metalness: 0.05 });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.rotation.x = -Math.PI / 2;
-    mesh.position.set(cx, 0.012, cz);
+    mesh.position.set(cx, 0.01, cz);
     mesh.receiveShadow = true;
     this.scene.add(mesh);
   }
@@ -789,7 +777,7 @@ export class OfficeStage {
     });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.rotation.x = -Math.PI / 2;
-    mesh.position.set(cx, 0.013, cz);
+    mesh.position.set(cx, 0.01, cz);
     mesh.receiveShadow = true;
     this.scene.add(mesh);
   }
@@ -869,7 +857,7 @@ export class OfficeStage {
     });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.rotation.x = -Math.PI / 2;
-    mesh.position.set(cx, 0.012, cz);
+    mesh.position.set(cx, 0.01, cz);
     mesh.receiveShadow = true;
     this.scene.add(mesh);
   }
@@ -1023,7 +1011,6 @@ export class OfficeStage {
     // Contoured Seat Cushion
     const seat = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.08, 0.52), seatMat);
     seat.position.y = 0.42;
-    seat.castShadow = true;
     cg.add(seat);
 
     // Curved Mesh Backrest
@@ -1103,10 +1090,6 @@ export class OfficeStage {
     const penBar = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.06, 0.12), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
     penBar.position.set(0, 2.4, 0);
     g.add(penBar);
-
-    const pLight = new THREE.PointLight(0xffedd5, 1.9, 14);
-    pLight.position.set(0, 2.3, 0);
-    g.add(pLight);
 
     this.scene.add(g);
 
@@ -1248,11 +1231,6 @@ export class OfficeStage {
     const c1Top = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.08, 1.2), topMat);
     c1Top.position.set(0, 0.98, 0);
     g.add(c1Top);
-
-    // Under-counter warm LED glow
-    const underLed = new THREE.PointLight(0xfef08a, 1.4, 6);
-    underLed.position.set(0, 0.88, 0.6);
-    g.add(underLed);
 
     // Commercial Espresso Coffee Machine
     const coffeeMach = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.6, 0.6), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.1 }));
@@ -1430,10 +1408,6 @@ export class OfficeStage {
       }
     }
 
-    const srvLight = new THREE.PointLight(0x06b6d4, 1.8, 9);
-    srvLight.position.set(0.75, 1.8, 0.6);
-    g.add(srvLight);
-
     this.scene.add(g);
   }
 
@@ -1509,11 +1483,6 @@ export class OfficeStage {
     const fruit1 = new THREE.Mesh(new THREE.SphereGeometry(0.065, 10, 10), fruitMat);
     fruit1.position.set(0.44, 0.30, 0.32);
     g.add(fruit1);
-
-    // Spiritual warm red PointLight
-    const altarLight = new THREE.PointLight(0xef4444, 2.4, 8);
-    altarLight.position.set(0, 0.9, 0.2);
-    g.add(altarLight);
 
     this.scene.add(g);
     this.addObstacle('altar', x, z, 1.7, 1.4);
@@ -1592,10 +1561,6 @@ export class OfficeStage {
     const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
     bulb.position.set(1.2, 4.5, 0);
     g.add(bulb);
-
-    const lampLight = new THREE.PointLight(0xfef08a, 2.2, 18);
-    lampLight.position.set(1.2, 4.4, 0);
-    g.add(lampLight);
 
     this.scene.add(g);
   }
@@ -1704,7 +1669,6 @@ export class OfficeStage {
       for (const lz of legZs) {
         const leg = new THREE.Mesh(legGeo, legMat);
         leg.position.set(lx, (tableH - 0.08) / 2, lz);
-        leg.castShadow = true;
         g.add(leg);
 
         const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.04, 10), footMat);
@@ -1786,7 +1750,6 @@ export class OfficeStage {
       new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.7 })
     );
     fabricLay.position.set(-0.15, tableH + 0.088, 0);
-    fabricLay.castShadow = true;
     g.add(fabricLay);
 
     // 6. CAD Marker Plotter Paper on top of fabric with printed garment patterns
@@ -1877,7 +1840,6 @@ export class OfficeStage {
       for (const pz of [-D / 2 + 0.05, D / 2 - 0.05]) {
         const post = new THREE.Mesh(postGeo, uprightMat);
         post.position.set(px, H / 2, pz);
-        post.castShadow = true;
         g.add(post);
 
         const foot = new THREE.Mesh(
@@ -1914,7 +1876,6 @@ export class OfficeStage {
       for (const bz of [-D / 2 + 0.04, D / 2 - 0.04]) {
         const b = new THREE.Mesh(beamXGeo, beamMat);
         b.position.set(0, y, bz);
-        b.castShadow = true;
         g.add(b);
       }
       for (const bx of [-W / 2 + 0.04, W / 2 - 0.04]) {
@@ -1940,14 +1901,12 @@ export class OfficeStage {
     for (const palX of [-0.55, 0.55]) {
       const pal = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.12, 1.05), palMat);
       pal.position.set(palX, 0.28, 0);
-      pal.castShadow = true;
       g.add(pal);
 
       const c = fabricColors[(rackIdx * 2 + (palX > 0 ? 1 : 0)) % fabricColors.length];
       const rollMat = new THREE.MeshStandardMaterial({ color: c, roughness: 0.35, metalness: 0.1 });
       const roll = new THREE.Mesh(rollGeo, rollMat);
       roll.position.set(palX, 0.52, 0);
-      roll.castShadow = true;
       g.add(roll);
 
       const core = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.04, 12), coreMat);
@@ -1974,7 +1933,6 @@ export class OfficeStage {
       });
       const roll = new THREE.Mesh(rollGeo, rollMat);
       roll.position.set(rx, 1.58, 0);
-      roll.castShadow = true;
       g.add(roll);
 
       const core = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.04, 12), coreMat);
@@ -1993,7 +1951,6 @@ export class OfficeStage {
       const bx = -0.75 + i * 0.5;
       const box = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.45, 0.8), boxMat);
       box.position.set(bx, 2.75, 0);
-      box.castShadow = true;
       g.add(box);
 
       const tape = new THREE.Mesh(
@@ -2154,7 +2111,6 @@ export class OfficeStage {
       for (const pz of [-W / 2 + 0.09, W / 2 - 0.09]) {
         const post = new THREE.Mesh(postGeo, postMat);
         post.position.set(px, H / 2, pz);
-        post.castShadow = true;
         g.add(post);
       }
     }
@@ -2218,7 +2174,6 @@ export class OfficeStage {
     for (const rz of rodZPositions) {
       const rod = new THREE.Mesh(rodGeo, rodMat);
       rod.position.set(doorX + 0.035, H / 2, rz);
-      rod.castShadow = true;
       g.add(rod);
 
       const topKeeper = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.1, 0.08), postMat);
@@ -2296,7 +2251,6 @@ export class OfficeStage {
     for (const [wx, wy, wz] of wheelPos) {
       const tire = new THREE.Mesh(tireGeo, tireMat);
       tire.position.set(wx, wy, wz);
-      tire.castShadow = true;
       g.add(tire);
 
       const rim = new THREE.Mesh(rimGeo, rimMat);
@@ -2347,7 +2301,6 @@ export class OfficeStage {
     for (const mz of [-0.38, 0.38]) {
       const mast = new THREE.Mesh(mastIBeam, mastMat);
       mast.position.set(0.85, 1.25, mz);
-      mast.castShadow = true;
       g.add(mast);
     }
     const hydroRam = new THREE.Mesh(
@@ -2366,7 +2319,6 @@ export class OfficeStage {
     for (const fz of [-0.26, 0.26]) {
       const blade = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.04, 0.1), forkMat);
       blade.position.set(1.42, 0.45, fz);
-      blade.castShadow = true;
       g.add(blade);
       const heel = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.3, 0.1), forkMat);
       heel.position.set(0.96, 0.58, fz);
@@ -2422,10 +2374,6 @@ export class OfficeStage {
       g.add(bulb);
     }
 
-    const light = new THREE.PointLight(0x93c5fd, 1.8, 22);
-    light.position.set(0, 6.5, 1.0);
-    g.add(light);
-
     this.scene.add(g);
   }
 
@@ -2451,7 +2399,6 @@ export class OfficeStage {
 
           const box = new THREE.Mesh(boxGeo, boxMat);
           box.position.set(bx, by, bz);
-          box.castShadow = true;
           g.add(box);
         }
       }
@@ -2738,7 +2685,6 @@ export class OfficeStage {
     for (let i = 0; i < 2; i++) {
       const box = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.26, 0.48), boxMat);
       box.position.set(0.72, 0.13 + i * 0.26, 0);
-      box.castShadow = true;
       g.add(box);
     }
   }
@@ -2763,10 +2709,6 @@ export class OfficeStage {
     lamp.rotateZ(Math.PI / 2);
     lamp.position.set(0, 1.78, 0.1);
     g.add(lamp);
-
-    const boothLight = new THREE.PointLight(0xf0fdf4, 1.8, 3.5);
-    boothLight.position.set(0, 1.7, 0.15);
-    g.add(boothLight);
 
     const easel = new THREE.Mesh(
       new THREE.BoxGeometry(0.8, 0.03, 0.45),
@@ -3417,8 +3359,8 @@ export class OfficeStage {
   public getActiveSpeechScreenData(): { speaker: string; role: string; emoji: string; text: string; avatarBg: string; x: number; y: number } | null {
     if (!this.activeSpeech || !this.camera || !this.container) return null;
 
-    const width = this.container.clientWidth;
-    const height = this.container.clientHeight;
+    const width = this.cachedWidth;
+    const height = this.cachedHeight;
     if (!width || !height) return null;
 
     const p = this.activeSpeech.worldPos.clone().project(this.camera);
@@ -3445,6 +3387,8 @@ export class OfficeStage {
     if (!this.container || !this.renderer || !this.camera) return;
     const width = Math.max(300, this.container.clientWidth || window.innerWidth);
     const height = Math.max(240, this.container.clientHeight || window.innerHeight);
+    this.cachedWidth = width;
+    this.cachedHeight = height;
 
     const aspect = width / height;
     this.camera.aspect = aspect;
@@ -4007,10 +3951,11 @@ export class OfficeStage {
       this.velocityPitch *= 0.91;
     }
 
-    // Smooth Lerp Spherical Angles and Distance
-    this.camAzimuth += (this.targetAzimuth - this.camAzimuth) * Math.min(1, 14 * delta);
-    this.camPitch += (this.targetPitch - this.camPitch) * Math.min(1, 14 * delta);
-    this.camDistance += (this.targetDistance - this.camDistance) * Math.min(1, 12 * delta);
+    // Smooth Lerp Spherical Angles and Distance with Frame-Rate Independent Exponential Smoothing
+    const angleSmooth = 1 - Math.exp(-16 * delta);
+    this.camAzimuth += (this.targetAzimuth - this.camAzimuth) * angleSmooth;
+    this.camPitch += (this.targetPitch - this.camPitch) * angleSmooth;
+    this.camDistance += (this.targetDistance - this.camDistance) * angleSmooth;
 
     // Target Focus Point
     let desiredTargetX = 0;
@@ -4033,9 +3978,11 @@ export class OfficeStage {
       desiredTargetZ = pPos.z + this.camPanOffset.y;
     }
 
-    this.currentLookAt.x += (desiredTargetX - this.currentLookAt.x) * Math.min(1, 9 * delta);
-    this.currentLookAt.y += (desiredTargetY - this.currentLookAt.y) * Math.min(1, 9 * delta);
-    this.currentLookAt.z += (desiredTargetZ - this.currentLookAt.z) * Math.min(1, 9 * delta);
+    // High-precision smooth camera tracking without spring oscillation or rubber-banding
+    const camSmooth = 1 - Math.exp(-22 * delta);
+    this.currentLookAt.x += (desiredTargetX - this.currentLookAt.x) * camSmooth;
+    this.currentLookAt.y += (desiredTargetY - this.currentLookAt.y) * camSmooth;
+    this.currentLookAt.z += (desiredTargetZ - this.currentLookAt.z) * camSmooth;
 
     // Calculate Eye Position from Spherical Coordinates
     const rHoriz = this.camDistance * Math.cos(this.camPitch);
@@ -4059,26 +4006,32 @@ export class OfficeStage {
     // 4. Update Boss AI Patrol
     this.updateBossAI(delta);
 
-    // 5. Workstations Proximity
+    // 5. Workstations Proximity (Optimized Single Pulse - Zero Frame Drops)
     let closestStation: Workstation | null = null;
     let minDist = Infinity;
 
-    for (const st of this.stations) {
+    for (let i = 0; i < this.stations.length; i++) {
+      const st = this.stations[i];
       const dist = pPos.distanceTo(st.position);
       if (dist < st.radius && dist < minDist) {
         minDist = dist;
         closestStation = st;
       }
-
-      if (st === closestStation) {
-        st.indicatorMesh.scale.setScalar(1 + Math.sin(Date.now() * 0.008) * 0.12);
-        (st.indicatorMesh.material as THREE.MeshBasicMaterial).opacity = 0.85;
-      } else {
-        st.indicatorMesh.scale.set(1, 1, 1);
-        (st.indicatorMesh.material as THREE.MeshBasicMaterial).opacity = 0.35;
-      }
     }
-    this.activeStation = closestStation;
+
+    if (closestStation !== this.activeStation) {
+      if (this.activeStation) {
+        this.activeStation.indicatorMesh.scale.set(1, 1, 1);
+        (this.activeStation.indicatorMesh.material as THREE.MeshBasicMaterial).opacity = 0.35;
+      }
+      this.activeStation = closestStation;
+    }
+
+    if (closestStation) {
+      const pulse = 1 + Math.sin(Date.now() * 0.008) * 0.12;
+      closestStation.indicatorMesh.scale.set(pulse, pulse, 1);
+      (closestStation.indicatorMesh.material as THREE.MeshBasicMaterial).opacity = 0.85;
+    }
 
     // 6. Floating Bobbing for Pickups
     for (const pu of this.pickups) {
