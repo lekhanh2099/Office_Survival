@@ -91,7 +91,7 @@ export class OfficeStage {
   private beaconBeamMesh!: THREE.Mesh;
   private beaconRing1!: THREE.Mesh;
   private beaconRing2!: THREE.Mesh;
-  private guideCompassArrow!: THREE.Mesh;
+  private guideCompassArrow!: THREE.Group;
   public currentTargetStationPos: THREE.Vector3 | null = null;
 
   // Solid Collision Obstacles
@@ -2442,26 +2442,56 @@ export class OfficeStage {
     this.scene.add(this.targetBeaconGroup);
 
     // 2. 3D Floor Guidance Compass Arrow (Hovering near Chibi pointing towards target)
+    this.guideCompassArrow = new THREE.Group();
+
+    // Outer cyan chevron arrow shape
     const shape = new THREE.Shape();
-    shape.moveTo(0, 0.55);
-    shape.lineTo(0.35, -0.28);
-    shape.lineTo(0.12, -0.16);
-    shape.lineTo(0.12, -0.42);
-    shape.lineTo(-0.12, -0.42);
-    shape.lineTo(-0.12, -0.16);
-    shape.lineTo(-0.35, -0.28);
+    shape.moveTo(0, 0.75);
+    shape.lineTo(0.42, -0.25);
+    shape.lineTo(0.16, -0.14);
+    shape.lineTo(0.16, -0.45);
+    shape.lineTo(-0.16, -0.45);
+    shape.lineTo(-0.16, -0.14);
+    shape.lineTo(-0.42, -0.25);
     shape.closePath();
 
     const arrowGeo = new THREE.ShapeGeometry(shape);
+    arrowGeo.rotateX(Math.PI / 2); // Rotate so tip (+Y in 2D) points to +Z on ground plane
+
     const arrowMat = new THREE.MeshBasicMaterial({
       color: 0x38bdf8,
       transparent: true,
-      opacity: 0.9,
-      side: THREE.DoubleSide
+      opacity: 0.95,
+      side: THREE.DoubleSide,
+      depthTest: false
     });
-    this.guideCompassArrow = new THREE.Mesh(arrowGeo, arrowMat);
-    this.guideCompassArrow.rotation.x = -Math.PI / 2;
-    this.guideCompassArrow.position.y = 0.05;
+    const arrowMesh = new THREE.Mesh(arrowGeo, arrowMat);
+    this.guideCompassArrow.add(arrowMesh);
+
+    // Inner bright gold accent chevron
+    const innerShape = new THREE.Shape();
+    innerShape.moveTo(0, 0.60);
+    innerShape.lineTo(0.26, -0.16);
+    innerShape.lineTo(0.09, -0.09);
+    innerShape.lineTo(0.09, -0.32);
+    innerShape.lineTo(-0.09, -0.32);
+    innerShape.lineTo(-0.09, -0.09);
+    innerShape.lineTo(-0.26, -0.16);
+    innerShape.closePath();
+
+    const innerGeo = new THREE.ShapeGeometry(innerShape);
+    innerGeo.rotateX(Math.PI / 2);
+    const innerMat = new THREE.MeshBasicMaterial({
+      color: 0xfacc15,
+      transparent: true,
+      opacity: 0.95,
+      side: THREE.DoubleSide,
+      depthTest: false
+    });
+    const innerMesh = new THREE.Mesh(innerGeo, innerMat);
+    innerMesh.position.y = 0.005;
+    this.guideCompassArrow.add(innerMesh);
+
     this.scene.add(this.guideCompassArrow);
   }
 
@@ -2672,20 +2702,26 @@ export class OfficeStage {
 
     if (this.currentTargetStationPos && this.guideCompassArrow) {
       const pPos = this.player.getPosition();
-      const dx = this.currentTargetStationPos.x - pPos.x;
-      const dz = this.currentTargetStationPos.z - pPos.z;
+      const tPos = this.currentTargetStationPos;
+      const dx = tPos.x - pPos.x;
+      const dz = tPos.z - pPos.z;
       const dist = Math.hypot(dx, dz);
 
-      if (dist < 1.8) {
+      if (dist < 1.6) {
         this.guideCompassArrow.visible = false;
       } else {
         this.guideCompassArrow.visible = true;
-        const angle = Math.atan2(dx, dz);
-        const offsetDist = 1.1 + Math.sin(Date.now() * 0.008) * 0.18;
-        this.guideCompassArrow.position.x = pPos.x + Math.sin(angle) * offsetDist;
-        this.guideCompassArrow.position.z = pPos.z + Math.cos(angle) * offsetDist;
-        this.guideCompassArrow.position.y = 0.05;
-        this.guideCompassArrow.rotation.z = -angle;
+        const nx = dx / dist;
+        const nz = dz / dist;
+        const pulse = Math.sin(Date.now() * 0.008) * 0.15;
+        const offsetDist = 1.35 + pulse;
+
+        this.guideCompassArrow.position.set(
+          pPos.x + nx * offsetDist,
+          0.08,
+          pPos.z + nz * offsetDist
+        );
+        this.guideCompassArrow.lookAt(tPos.x, 0.08, tPos.z);
       }
     }
 

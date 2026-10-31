@@ -45,7 +45,6 @@ interface HUDElementCache {
   bossDot: HTMLElement | null;
   targetDot: HTMLElement | null;
   camBtn: HTMLElement | null;
-  joyBtn: HTMLElement | null;
   dragModeBtn: HTMLElement | null;
   modeBtn: HTMLElement | null;
   speechBubble: HTMLElement | null;
@@ -284,11 +283,6 @@ export function mountShiftHUD(host: HTMLElement): void {
           ⚡
         </button>
 
-        <!-- Toggle Virtual Joystick Visibility: Hiện / Ẩn cần điều khiển ảo -->
-        <button class="shiftRailBtn active" id="hudJoyToggleBtn" data-act="toggle_joystick_visibility" type="button" title="Bật / Ẩn Cần Điều Khiển Joystick ảo (Chạm sàn để di chuyển)">
-          🕹️
-        </button>
-
         <!-- Zoom In & Zoom Out -->
         <button class="shiftRailBtn" id="hudZoomInBtn" data-act="zoom_in" type="button" title="Phóng to">
           ➕
@@ -357,7 +351,6 @@ export function mountShiftHUD(host: HTMLElement): void {
     bossDot: host.querySelector('#hudBossDot'),
     targetDot: host.querySelector('#hudTargetDot'),
     camBtn: host.querySelector('#hudCamBtn'),
-    joyBtn: host.querySelector('#hudJoyToggleBtn'),
     dragModeBtn: host.querySelector('#hudDragModeBtn'),
     modeBtn: host.querySelector('#hudModeToggleBtn'),
     speechBubble: host.querySelector('#hudSpeechBubble'),

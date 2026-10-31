@@ -171,17 +171,9 @@ function renderShiftMode(): void {
   shiftJoystick = new VirtualJoystick(container, () => {
     shiftEngine?.doAction();
   });
-  const showJoyPref = localStorage.getItem('os_show_joystick') !== 'false';
-  shiftJoystick.setVisible(showJoyPref);
 
   // Mount HUD DOM once
   mountShiftHUD(uiHost);
-
-  const joyToggleBtn = document.getElementById('hudJoyToggleBtn');
-  if (joyToggleBtn) {
-    joyToggleBtn.textContent = showJoyPref ? '🕹️' : '👆';
-    joyToggleBtn.classList.toggle('active', showJoyPref);
-  }
 
   // Set initial visual guidance target (Beacon pillar & floor arrow)
   shiftStage.updateTargetGuidance(shiftEngine.getState().currentTask.targetStation);
@@ -211,21 +203,15 @@ function renderShiftMode(): void {
     const isModalOpen = Boolean(HOST && HOST.innerHTML.trim() !== '');
 
     if (s.isFinished) {
-      shiftJoystick?.setVisible(false);
       if (!uiHost.classList.contains('shiftFinishedOverlay')) {
         uiHost.classList.add('shiftFinishedOverlay');
         uiHost.innerHTML = renderShiftFinishModal(s);
       }
-    } else if (isModalOpen) {
-      shiftJoystick?.setVisible(false);
-    } else if (uiHost && shiftStage) {
+    } else if (!isModalOpen && uiHost && shiftStage) {
       if (uiHost.classList.contains('shiftFinishedOverlay')) {
         uiHost.classList.remove('shiftFinishedOverlay');
         mountShiftHUD(uiHost);
       }
-      const showJoy = localStorage.getItem('os_show_joystick') !== 'false';
-      shiftJoystick?.setVisible(showJoy);
-      shiftJoystick?.updateActionState(s.activePrompt);
       updateShiftHUD(uiHost, s, shiftStage);
     }
 
@@ -612,20 +598,6 @@ document.addEventListener('click', (ev) => {
           arrow.textContent = isCollapsed ? '▼' : '▲';
         }
         showToast(isCollapsed ? 'Thu gọn bảng nhiệm vụ (rộng màn hình 3D)' : 'Mở rộng bảng nhiệm vụ');
-      }
-      break;
-    }
-    case 'toggle_joystick_visibility': {
-      sounds.click();
-      const current = localStorage.getItem('os_show_joystick') !== 'false';
-      const next = !current;
-      localStorage.setItem('os_show_joystick', String(next));
-      shiftJoystick?.setVisible(next);
-      showToast(next ? '🕹️ Đã hiện Cần Điều Khiển Joystick!' : '👆 Đã ẩn cần điều khiển! Hãy chạm trực tiếp lên sàn để di chuyển.');
-      const joyBtn = document.getElementById('hudJoyToggleBtn');
-      if (joyBtn) {
-        joyBtn.textContent = next ? '🕹️' : '👆';
-        joyBtn.classList.toggle('active', next);
       }
       break;
     }
