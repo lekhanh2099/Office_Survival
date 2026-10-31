@@ -32,15 +32,15 @@ export const PICKLEBALL_COLLEAGUES: Record<ColleagueId, ColleagueProfile> = {
     role: 'Thực Tập Sinh',
     emoji: '👧',
     avatarBg: '#06b6d4',
-    difficultyLabel: 'Dễ (Tân thủ)',
+    difficultyLabel: 'Tân Thủ (1★)',
     difficultyStars: 1,
-    speed: 3.8,
-    power: 0.75,
-    accuracy: 0.78,
-    dinkTendency: 0.15,
-    smashTendency: 0.10,
-    spinTendency: 0.05,
-    errorRate: 0.22,
+    speed: 4.6,
+    power: 0.90,
+    accuracy: 0.88,
+    dinkTendency: 0.20,
+    smashTendency: 0.20,
+    spinTendency: 0.10,
+    errorRate: 0.09,
     taunts: ['Em mới tập thôi, anh/chị nương tay xíu nha!', 'U là trời banh bay nhanh quá!', 'Huhu em suýt chạm được rồi!'],
     praises: ['Anh/chị đánh hay quá trời luôn!', 'Đỉnh nóc kịch trần luôn sốp ơi!']
   },
@@ -50,15 +50,15 @@ export const PICKLEBALL_COLLEAGUES: Record<ColleagueId, ColleagueProfile> = {
     role: 'IT Support',
     emoji: '🖥️',
     avatarBg: '#4f46e5',
-    difficultyLabel: 'Vừa (Bóng xoáy)',
-    difficultyStars: 2,
-    speed: 4.5,
-    power: 0.90,
-    accuracy: 0.88,
+    difficultyLabel: 'Xoáy Góc Ma Thuật (3★)',
+    difficultyStars: 3,
+    speed: 5.4,
+    power: 1.10,
+    accuracy: 0.93,
     dinkTendency: 0.25,
-    smashTendency: 0.20,
-    spinTendency: 0.55,
-    errorRate: 0.12,
+    smashTendency: 0.35,
+    spinTendency: 0.75, // Extreme sidespin curves!
+    errorRate: 0.04,
     taunts: ['Banh này có thuật toán xoáy 60fps đó em!', 'Đã ping cao lại còn gặp banh gắt!', 'Đang debug đường banh...'],
     praises: ['Phản xạ chuẩn 1ms luôn!', 'Quả vừa rồi xịn như code production!']
   },
@@ -68,15 +68,15 @@ export const PICKLEBALL_COLLEAGUES: Record<ColleagueId, ColleagueProfile> = {
     role: 'Kế Toán Kho',
     emoji: '📊',
     avatarBg: '#ef4444',
-    difficultyLabel: 'Vừa (Dink Master)',
-    difficultyStars: 2,
-    speed: 4.2,
-    power: 0.82,
-    accuracy: 0.94,
-    dinkTendency: 0.65,
-    smashTendency: 0.15,
-    spinTendency: 0.20,
-    errorRate: 0.07,
+    difficultyLabel: 'Bức Tường Kitchen (3★)',
+    difficultyStars: 3,
+    speed: 5.2,
+    power: 0.95,
+    accuracy: 0.96,
+    dinkTendency: 0.65, // Master of soft drops & Kitchen warfare!
+    smashTendency: 0.25,
+    spinTendency: 0.25,
+    errorRate: 0.03, // Ultra steady defense!
     taunts: ['Bỏ nhỏ một quả vào Kitchen coi em đỡ được không!', 'Cân đối sổ sách còn khó hơn quả này!', 'Thủ kín kẽ không hở 1 xu!'],
     praises: ['Gớm, tay nghề dạo này lên dữ ha!', 'Được của nó đấy, chiều chị khao trà sữa!']
   },
@@ -86,15 +86,15 @@ export const PICKLEBALL_COLLEAGUES: Record<ColleagueId, ColleagueProfile> = {
     role: 'Tài Xế Cont Cát Lái',
     emoji: '🚚',
     avatarBg: '#10b981',
-    difficultyLabel: 'Khó (Power Smasher)',
-    difficultyStars: 3,
-    speed: 5.1,
-    power: 1.25,
-    accuracy: 0.82,
-    dinkTendency: 0.10,
-    smashTendency: 0.60,
-    spinTendency: 0.15,
-    errorRate: 0.15,
+    difficultyLabel: 'Smash Sấm Sét (4★)',
+    difficultyStars: 4,
+    speed: 5.8,
+    power: 1.35, // High kinetic power!
+    accuracy: 0.91,
+    dinkTendency: 0.15,
+    smashTendency: 0.68, // Aggressive baseline & Kitchen smasher!
+    spinTendency: 0.20,
+    errorRate: 0.04,
     taunts: ['Cont 40HQ anh còn lùi ngọt, quả banh này xi-nhê gì!', 'Né ra kẻo banh bay rách áo!', 'Lực tay vác cont nó phải thế!'],
     praises: ['Khá lắm em trai! Cứng tay đấy!', 'Pha đập vừa rồi chuẩn tải trọng luôn!']
   },
@@ -104,15 +104,15 @@ export const PICKLEBALL_COLLEAGUES: Record<ColleagueId, ColleagueProfile> = {
     role: 'Tổng Giám Đốc',
     emoji: '👔',
     avatarBg: '#f59e0b',
-    difficultyLabel: 'Cực Khó (Chiến Thần)',
-    difficultyStars: 4,
-    speed: 5.6,
-    power: 1.15,
-    accuracy: 0.96,
-    dinkTendency: 0.40,
-    smashTendency: 0.45,
-    spinTendency: 0.35,
-    errorRate: 0.03,
+    difficultyLabel: 'Chiến Thần Công Sở (5★)',
+    difficultyStars: 5,
+    speed: 6.4, // Fast athletic coverage!
+    power: 1.25,
+    accuracy: 0.98,
+    dinkTendency: 0.45,
+    smashTendency: 0.52,
+    spinTendency: 0.48,
+    errorRate: 0.015, // Grandmaster precision!
     taunts: ['Chơi Pickleball cũng như chạy KPI: Không có chỗ cho chần chừ!', 'Tập trung vào đường banh nào!', 'Pha này anh bắt bài từ trước rồi!'],
     praises: ['Tốt! Tinh thần chiến binh công sở đáng khen!', 'Thắng được anh séc này anh duyệt tăng thưởng KPI!']
   }
@@ -600,16 +600,21 @@ export class PickleballEngine {
     } else {
       this.ball.lastHitter = 'ai';
       this.ball.serveTargetSide = 'player';
-      this.aiStamina = Math.max(0, this.aiStamina - 8);
+      this.aiStamina = Math.max(0, this.aiStamina - 4);
 
-      const targetX = this.serverQuadrant === 'right' ? -1.4 : 1.4;
-      const targetZ = 4.6;
-      const flightTime = 0.88 / this.settings.ballSpeedFactor;
+      // Dynamic AI Serve based on opponent skill & archetype
+      const baseTargetX = this.serverQuadrant === 'right' ? -1.6 : 1.6;
+      const targetVariationX = (Math.random() - 0.5) * 0.8;
+      const targetX = Math.max(-2.5, Math.min(2.5, baseTargetX + targetVariationX));
+      const targetZ = 4.6 + Math.random() * 0.7;
+      const flightTime = (0.74 / (this.opponent.power * this.settings.ballSpeedFactor));
 
-      const traj = this.calculateTrajectory(this.ball.x, this.ball.y, this.ball.z, targetX, targetZ, flightTime, 0.40);
+      const traj = this.calculateTrajectory(this.ball.x, this.ball.y, this.ball.z, targetX, targetZ, flightTime, 0.34);
       this.ball.vx = traj.vx;
       this.ball.vy = traj.vy;
       this.ball.vz = traj.vz;
+      this.ball.spinX = (this.opponent.spinTendency > 0.4) ? (targetX > 0 ? -3.5 : 3.5) : 0;
+      this.ball.spinZ = 1.2;
       this.aiPaddleAnim = 0.25;
       this.targetLanding = { x: targetX, z: targetZ, hitter: 'ai', type: 'drive' };
 
@@ -851,12 +856,16 @@ export class PickleballEngine {
     // In Pickleball: if receiving serve, must bounce before hitting
     if (this.rallyCount === 0 && this.ball.bouncesSinceHit === 0) return;
 
-    // SMASH PUNISHMENT & WINNER OPPORTUNITY:
-    // If incoming ball is a blazing Smash from player, AI needs stamina & composure to return!
+    // SMASH DEFENSE / WINNER RESOLUTION:
+    // If incoming ball is a Smash from player:
     if (this.targetLanding?.type === 'smash') {
-      const smashReturnChance = 0.25 + (this.aiStamina / 100) * 0.45;
-      if (Math.random() > smashReturnChance) {
-        // AI is overpowered or wrong-footed! Ball zooms past for a Winner!
+      const smashDefenseSkill = (this.opponent.accuracy * 0.45) + (this.aiStamina / 100) * 0.45;
+      const distFromAi = Math.abs(this.targetLanding.x - this.aiPos.x);
+      const anglePenalty = distFromAi > 1.6 ? 0.35 : (distFromAi > 0.8 ? 0.15 : 0);
+      const finalReturnChance = Math.max(0.12, Math.min(0.92, smashDefenseSkill - anglePenalty));
+
+      if (Math.random() > finalReturnChance) {
+        // AI is overpowered or wrong-footed! Ball zooms past for a clean winner!
         return;
       }
     }
@@ -865,39 +874,41 @@ export class PickleballEngine {
     let chosenShot: ShotType = 'drive';
     let targetX = 0;
     let targetZ = 4.8;
-    let flightTime = 0.82 / (this.opponent.power * this.settings.ballSpeedFactor);
-    let desiredClearance = 0.35;
+    let flightTime = 0.68 / (this.opponent.power * this.settings.ballSpeedFactor);
+    let desiredClearance = 0.32;
 
-    // Stamina drain for AI
+    // Stamina drain: minimal per hit so AI doesn't burn out after 3 rallies
     const distRun = Math.hypot(this.ball.x - this.aiPos.x, this.ball.z - this.aiPos.z);
-    this.aiStamina = Math.max(0, this.aiStamina - Math.min(22, 6 + distRun * 2.8));
+    this.aiStamina = Math.max(0, this.aiStamina - Math.min(8, 1.5 + distRun * 1.0));
 
-    // Exhaustion & Mistake calculation
+    // Exhaustion & Mistake calculation:
+    // Errors ONLY possible on longer rallies (rally >= 5) and scaled to opponent error rate
     const staminaPenalty = (100 - this.aiStamina) / 100;
-    const effectiveErrorRate = this.opponent.errorRate + (staminaPenalty * 0.35);
-    const isMistake = (this.rallyCount >= 3) && (Math.random() < effectiveErrorRate);
+    const effectiveErrorRate = this.opponent.errorRate * (1 + staminaPenalty * 1.5);
+    const isMistake = (this.rallyCount >= 5) && (Math.random() < effectiveErrorRate);
+
     if (isMistake) {
-      if (Math.random() < 0.35) {
+      if (Math.random() < 0.25) {
         // AI hits into net
         this.ball.vx = (0 - this.ball.x) / 0.7;
         this.ball.vz = (1.5 - this.ball.z) / 0.7;
         this.ball.vy = 1.3;
         this.targetLanding = null;
-      } else if (Math.random() < 0.7) {
+      } else if (Math.random() < 0.50) {
         // AI hits out of bounds
-        this.ball.vx = (Math.random() > 0.5 ? 3.4 : -3.4);
-        this.ball.vz = 7.2;
-        this.ball.vy = 4.2;
+        this.ball.vx = (Math.random() > 0.5 ? 3.3 : -3.3);
+        this.ball.vz = 7.1;
+        this.ball.vy = 4.0;
         this.targetLanding = null;
       } else {
-        // AI pops up a WEAK HIGH FLOATER! (Opportunity for player to smash!)
+        // AI pops up a weak high floater -> Golden smash chance for player!
         chosenShot = 'drive';
         targetX = (Math.random() - 0.5) * 1.2;
         targetZ = 4.2;
-        flightTime = 1.15; // Slow, hanging in the air!
-        desiredClearance = 0.85; // High arch!
+        flightTime = 1.2;
+        desiredClearance = 1.1;
         this.tacticalHint = `🔥 ${this.opponent.name} đuối sức trả bóng bổng! ĐẬP SMASH DỨT ĐIỂM!`;
-        this.targetLanding = { x: targetX, z: targetZ, hitter: 'ai', type: 'drive' };
+        this.targetLanding = { x: targetX, z: targetZ, hitter: 'ai', type: 'smash' };
       }
       this.ball.lastHitter = 'ai';
       this.ball.bouncesSinceHit = 0;
@@ -915,58 +926,59 @@ export class PickleballEngine {
 
     const playerX = this.playerPos.x;
     const playerZ = this.playerPos.z;
-    const isPlayerDeep = playerZ > 5.4;
-    const isPlayerNearKitchen = playerZ < 3.4;
-    const isPlayerRight = playerX > 0.5;
-    const isPlayerLeft = playerX < -0.5;
+    const isPlayerDeep = playerZ > 5.1;
+    const isPlayerNearKitchen = playerZ < 3.2;
+    const isPlayerRight = playerX > 0.35;
+    const isPlayerLeft = playerX < -0.35;
+    // Calculate opposite open corner to exploit:
+    const openCornerX = isPlayerRight ? (-2.1 - Math.random() * 0.35) : (isPlayerLeft ? (2.1 + Math.random() * 0.35) : (Math.random() > 0.5 ? 2.1 : -2.1));
 
-    if (this.rallyCount <= 2) {
-      // Warmup phase: friendly return to establish rally
-      targetX = playerX * 0.35 + (Math.random() - 0.5) * 0.8;
-      targetZ = 4.6;
-      flightTime = 0.86;
-      desiredClearance = 0.38;
-    } else {
-      const rand = Math.random();
+    const rand = Math.random();
 
-      // TACTIC 1: Drop Shot (Dink) Punish if player is camping deep at baseline
-      if (isPlayerDeep && rand < (this.opponent.dinkTendency * 1.3)) {
-        chosenShot = 'dink';
-        targetX = isPlayerRight ? -1.3 : (isPlayerLeft ? 1.3 : (Math.random() > 0.5 ? 1.3 : -1.3));
-        targetZ = 1.3 + Math.random() * 0.5; // drops just over net into kitchen
-        flightTime = 0.88;
-        desiredClearance = 0.45;
-        this.ball.spinZ = -2.2;
-        this.ball.spinX = 0;
-      }
-      // TACTIC 2: Smash Punish if player rushed to kitchen or incoming ball is high floater
-      else if ((isPlayerNearKitchen || this.ball.y > 1.15) && rand < (this.opponent.smashTendency * 1.35)) {
-        chosenShot = 'smash';
-        targetX = isPlayerRight ? -2.2 : (isPlayerLeft ? 2.2 : (Math.random() > 0.5 ? 2.2 : -2.2));
-        targetZ = 5.3;
-        flightTime = 0.56 / (this.opponent.power * this.settings.ballSpeedFactor);
-        desiredClearance = 0.32;
-        this.ball.spinZ = 3.4;
-      }
-      // TACTIC 3: Curve Spin outward away from player
-      else if (rand < this.opponent.spinTendency) {
-        chosenShot = 'curve';
-        targetX = isPlayerRight ? -2.2 : 2.2;
-        targetZ = 4.6;
-        flightTime = 0.76 / (this.opponent.power * this.settings.ballSpeedFactor);
-        desiredClearance = 0.36;
-        this.ball.spinX = targetX > 0 ? -3.8 : 3.8;
-        this.ball.spinZ = 1.0;
-      }
-      // TACTIC 4: Crosscourt drive into open corner
-      else {
-        chosenShot = 'drive';
-        targetX = isPlayerRight ? -2.0 - Math.random() * 0.3 : (isPlayerLeft ? 2.0 + Math.random() * 0.3 : (Math.random() > 0.5 ? 1.8 : -1.8));
-        targetZ = 4.8;
-        flightTime = 0.78;
-        desiredClearance = 0.36;
-        this.ball.spinZ = 0.8;
-      }
+    // 1. TACTIC: Drop Shot (Dink) into Kitchen
+    if (isPlayerDeep && rand < this.opponent.dinkTendency) {
+      chosenShot = 'dink';
+      targetX = openCornerX * 0.7;
+      targetZ = 1.35 + Math.random() * 0.45; // drops just over net inside Kitchen
+      flightTime = 0.80;
+      desiredClearance = 0.36;
+      this.ball.spinZ = -2.8; // Backspin float
+      this.ball.spinX = 0;
+      this.aiStamina = Math.min(100, this.aiStamina + 10); // Dinking recovers stamina!
+      this.tacticalHint = `🏓 ${this.opponent.name} BỎ NHỎ Kitchen! Chạy lên cứu bóng!`;
+    }
+    // 2. TACTIC: Smash Attack
+    else if ((this.ball.y > 0.90 || isPlayerNearKitchen || this.rallyCount >= 3) && rand < this.opponent.smashTendency) {
+      chosenShot = 'smash';
+      targetX = openCornerX;
+      targetZ = 5.3 + Math.random() * 0.3;
+      flightTime = 0.50 / (this.opponent.power * this.settings.ballSpeedFactor);
+      desiredClearance = 0.26;
+      this.ball.spinZ = 3.8; // Heavy topspin missile
+      this.ball.spinX = (Math.random() - 0.5) * 1.0;
+      this.tacticalHint = `🚀 ${this.opponent.name} ĐẬP SMASH cực mạnh! Chuẩn bị đón đỡ!`;
+    }
+    // 3. TACTIC: Curve Sidespin
+    else if (rand < this.opponent.spinTendency) {
+      chosenShot = 'curve';
+      targetX = openCornerX;
+      targetZ = 4.7;
+      flightTime = 0.68 / (this.opponent.power * this.settings.ballSpeedFactor);
+      desiredClearance = 0.32;
+      this.ball.spinX = targetX > 0 ? 5.2 : -5.2; // Aggressive spin kick
+      this.ball.spinZ = 1.2;
+      this.tacticalHint = `🌀 ${this.opponent.name} xoáy bóng cong về mép sân!`;
+    }
+    // 4. TACTIC: Piercing Baseline Drive
+    else {
+      chosenShot = 'drive';
+      targetX = openCornerX;
+      targetZ = 4.9;
+      flightTime = 0.64 / (this.opponent.power * this.settings.ballSpeedFactor);
+      desiredClearance = 0.30;
+      this.ball.spinZ = 1.4;
+      this.ball.spinX = 0;
+      this.tacticalHint = `🎾 ${this.opponent.name} ép góc hiểm! Di chuyển đón bóng!`;
     }
 
     targetX = Math.max(-2.55, Math.min(2.55, targetX));
@@ -1024,16 +1036,19 @@ export class PickleballEngine {
       }
     }
 
-    // Proximity Auto-Return: If ball enters player's hitting zone anywhere on player's half
-    if (this.ball.inPlay && this.ball.lastHitter === 'ai' && this.ball.vz > 0) {
+    // Proximity Auto-Return (Fallback safety net only):
+    // Only triggers if player is using autoPositionAssist, and within intimate paddle reach (0.85m),
+    // so active player inputs (Swipe/Tap) feel distinctly superior and necessary!
+    if (this.ball.inPlay && this.ball.lastHitter === 'ai' && this.ball.vz > 0 && this.settings.autoPositionAssist) {
       const dx = Math.abs(this.ball.x - this.playerPos.x);
       const dz = Math.abs(this.ball.z - (this.playerPos.z - 0.45));
-      if (dx <= 1.4 && dz <= 1.4 && this.ball.z >= 2.0 && this.ball.z <= 6.0 && this.ball.y >= 0.15 && this.ball.y <= 1.9) {
+      if (dx <= 0.85 && dz <= 0.85 && this.ball.z >= 2.0 && this.ball.z <= 6.0 && this.ball.y >= 0.15 && this.ball.y <= 1.9) {
         const canHit = (this.rallyCount > 0) || (this.ball.bouncesSinceHit >= 1);
         if (canHit) {
           const shot = this.bufferedShot ? this.bufferedShot.shotType : 'drive';
+          const aim = this.bufferedShot ? (this.bufferedShot.aimOffset || 0) : 0;
           this.bufferedShot = null;
-          this.playerHitBall(shot);
+          this.playerHitBall(shot, aim);
         }
       }
     }
@@ -1151,31 +1166,29 @@ export class PickleballEngine {
     this.playerPos.x = Math.max(-2.7, Math.min(2.7, this.playerPos.x));
     this.playerPos.z = Math.max(2.2, Math.min(5.8, this.playerPos.z));
 
-    // 3. AI Movement (Predictive & Adaptive with Stamina Factor)
+    // 3. AI Movement (Predictive & Adaptive with Athletic Speed)
     if (this.ball.inPlay) {
-      const staminaFactor = 0.55 + (this.aiStamina / 100) * 0.45;
+      const staminaFactor = 0.70 + (this.aiStamina / 100) * 0.30;
       if (this.ball.vz < 0) {
-        // Ball flying towards AI: predict arrival X at baseline z = -4.8
+        // Ball flying towards AI: calculate arrival intercept
         const timeToAI = Math.max(0.01, (-4.8 - this.ball.z) / this.ball.vz);
-        const predictedX = Math.max(-2.5, Math.min(2.5, this.ball.x + this.ball.vx * timeToAI));
+        const predictedX = Math.max(-2.55, Math.min(2.55, this.ball.x + this.ball.vx * timeToAI));
         const dx = predictedX - this.aiPos.x;
-        const aiSpeed = this.opponent.speed * 1.15 * staminaFactor;
+        const aiSpeed = this.opponent.speed * 1.25 * staminaFactor;
         this.aiPos.x += Math.sign(dx) * Math.min(Math.abs(dx), aiSpeed * delta);
 
-        // AI Z Position: charge kitchen for dinks, stay at baseline for smashes
-        if (this.ball.z > -2.5 && this.ball.y < 1.1) {
-          const targetZ = -2.4;
-          this.aiPos.z += (targetZ - this.aiPos.z) * Math.min(1, 4.5 * staminaFactor * delta);
-        } else {
-          const targetZ = -5.4;
-          this.aiPos.z += (targetZ - this.aiPos.z) * Math.min(1, 4.0 * staminaFactor * delta);
-        }
+        // AI Z Position: charge kitchen for shallow drop shots, otherwise hold baseline
+        const isShallowDrop = (this.targetLanding && this.targetLanding.z > -3.0) || (this.ball.z > -3.2 && this.ball.vz < 0 && this.ball.y < 1.0);
+        const targetZ = isShallowDrop ? -2.3 : -5.1;
+        const sprintSpeedZ = isShallowDrop ? (aiSpeed * 1.15) : (aiSpeed * 0.9);
+        this.aiPos.z += Math.sign(targetZ - this.aiPos.z) * Math.min(Math.abs(targetZ - this.aiPos.z), sprintSpeedZ * delta);
       } else {
-        // Ball flying away to player: AI recovers towards center court
-        this.aiPos.x += (0 - this.aiPos.x) * Math.min(1, 3.0 * delta);
-        this.aiPos.z += (-5.4 - this.aiPos.z) * Math.min(1, 4.0 * delta);
+        // Ball flying away to player: AI recovers back towards center court
+        this.aiPos.x += (0 - this.aiPos.x) * Math.min(1, 3.2 * delta);
+        this.aiPos.z += (-5.0 - this.aiPos.z) * Math.min(1, 3.8 * delta);
       }
       this.aiPos.x = Math.max(-2.6, Math.min(2.6, this.aiPos.x));
+      this.aiPos.z = Math.max(-5.8, Math.min(-2.2, this.aiPos.z));
     }
 
     // 3b. Update Tactical Opportunities & Real-Time Advice
