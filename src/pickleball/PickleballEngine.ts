@@ -284,7 +284,7 @@ export class PickleballEngine {
   public aiPos = { x: -1.2, z: -5.8 };
   public playerPaddleAnim = 0; // 0: idle, >0: swinging
   public aiPaddleAnim = 0;
-  public bufferedShot: { shotType: ShotType; timestamp: number } | null = null;
+  public bufferedShot: { shotType: ShotType; timestamp: number; aimOffset?: number } | null = null;
   public manualInputTimer = 0; // seconds remaining where manual input overrides auto-assist
   public isDiving = false;
   public diveTimer = 0;
@@ -619,6 +619,43 @@ export class PickleballEngine {
     return true;
   }
 
+  public triggerPlayerShotWithGesture(dx: number, dy: number, _dt: number, speed: number): { success: boolean; shotType?: ShotType; quality?: ShotQuality; buffered?: boolean } {
+    if (this.isMatchOver) return { success: false };
+
+    // If serving, immediately execute serve!
+    if (this.isServing && this.currentServer === 'player') {
+      this.executeServe();
+      return { success: true, quality: 'good' };
+    }
+
+    if (!this.ball.inPlay || this.ball.lastHitter === 'player') {
+      return { success: false };
+    }
+
+    let shotType: ShotType = 'drive';
+    // Continuous directional aiming from swipe vector (-1.5 to +1.5)
+    const aimOffset = Math.max(-1.5, Math.min(1.5, dx / 35));
+
+    // High velocity or long upward flick -> Smash / Power Drive
+    if (dy < -20 || speed > 0.42) {
+      shotType = 'smash';
+    } else if (Math.abs(dx) > 35 && Math.abs(dy) < 35) {
+      // Direct sideways swipe -> Curve Sidespin
+      shotType = 'curve';
+    } else if (dy < -8 && dy >= -25) {
+      // Gentle flick -> Drop shot Dink
+      shotType = 'dink';
+    } else {
+      // Adaptive shot based on ball height
+      if (this.ball.y > 1.05) shotType = 'smash';
+      else if (this.ball.y < 0.6) shotType = 'dink';
+      else shotType = 'curve';
+    }
+
+    const res = this.triggerPlayerShot(shotType, aimOffset);
+    return { ...res, shotType };
+  }
+
   public triggerPlayerShot(shotType: ShotType, aimOffset = 0): { success: boolean; quality?: ShotQuality; buffered?: boolean } {
     if (this.isMatchOver) return { success: false };
 
@@ -642,7 +679,7 @@ export class PickleballEngine {
       return this.playerHitBall(shotType, aimOffset);
     } else if (this.ball.vz > 0 && this.ball.z < 6.2) {
       // Buffer the shot for 650ms so it fires automatically the moment the ball arrives!
-      this.bufferedShot = { shotType, timestamp: performance.now() };
+      this.bufferedShot = { shotType, timestamp: performance.now(), aimOffset };
       return { success: true, buffered: true };
     }
 
@@ -684,20 +721,25 @@ export class PickleballEngine {
       quality = 'late';
     }
 
-    // TACTICAL PENALTY: SMASH ON LOW BALL
-    // If player blindly smashes a ball that is below 0.62m off the ground: FAULT into the net!
+    // TACTICAL ADAPTATION: AGGRESSIVE SHOT ON LOW BALL (Speed-up / Rolled Volley)
+    // In real pickleball, hitting hard on low ball becomes a rolled topspin drive skimming the net tape.
     if (shotType === 'smash' && this.ball.y < 0.62) {
-      this.playerStamina = Math.max(0, this.playerStamina - 20);
-      this.playerPaddleAnim = 0.28;
-      this.ball.lastHitter = 'player';
-      this.ball.bouncesSinceHit = 0;
-      this.ball.hasClearedNet = false;
-      this.ball.vx = (Math.random() - 0.5) * 1.5;
-      this.ball.vy = -1.2;
-      this.ball.vz = -9.0;
-      this.targetLanding = null;
-      this.awardPoint('ai', 'net', '🕸️ Rúc lưới! Bóng quá thấp để Đập Smash (Nên dùng Bỏ Nhỏ)!');
-      return { success: false, quality: 'late' };
+      if (this.ball.y < 0.12 && dist > 2.2) {
+        // Only if ball has essentially scraped the floor does it fault into net
+        this.playerStamina = Math.max(0, this.playerStamina - 20);
+        this.playerPaddleAnim = 0.28;
+        this.ball.lastHitter = 'player';
+        this.ball.bouncesSinceHit = 0;
+        this.ball.hasClearedNet = false;
+        this.ball.vx = (Math.random() - 0.5) * 1.5;
+        this.ball.vy = -1.2;
+        this.ball.vz = -9.0;
+        this.targetLanding = null;
+        this.awardPoint('ai', 'net', '🕸️ Rúc lưới! Bóng chạm đất quá sâu!');
+        return { success: false, quality: 'late' };
+      }
+      // Otherwise convert to flat aggressive Speed-Up Drive!
+      shotType = 'drive';
     }
 
     this.rallyCount++;
@@ -808,6 +850,16 @@ export class PickleballEngine {
 
     // In Pickleball: if receiving serve, must bounce before hitting
     if (this.rallyCount === 0 && this.ball.bouncesSinceHit === 0) return;
+
+    // SMASH PUNISHMENT & WINNER OPPORTUNITY:
+    // If incoming ball is a blazing Smash from player, AI needs stamina & composure to return!
+    if (this.targetLanding?.type === 'smash') {
+      const smashReturnChance = 0.25 + (this.aiStamina / 100) * 0.45;
+      if (Math.random() > smashReturnChance) {
+        // AI is overpowered or wrong-footed! Ball zooms past for a Winner!
+        return;
+      }
+    }
 
     // SMART TACTICAL AI DECISION MATRIX
     let chosenShot: ShotType = 'drive';
@@ -963,8 +1015,9 @@ export class PickleballEngine {
         const dist = Math.hypot(dx, dz);
         if (dist <= 2.8 && this.ball.z >= 1.6) {
           const shot = this.bufferedShot.shotType;
+          const aim = this.bufferedShot.aimOffset || 0;
           this.bufferedShot = null;
-          this.playerHitBall(shot);
+          this.playerHitBall(shot, aim);
         }
       } else {
         this.bufferedShot = null;
@@ -1061,7 +1114,7 @@ export class PickleballEngine {
     }
 
     if (hasManualInput) {
-      this.manualInputTimer = 0.8;
+      this.manualInputTimer = 0.25;
     } else if (this.manualInputTimer <= 0 && this.settings.autoPositionAssist && this.ball.inPlay) {
       if (this.ball.vz > 0) {
         // Incoming ball to player side!

@@ -63,7 +63,10 @@ const APPROOT = document.getElementById('appRoot') as HTMLElement;
 const audioToggleBtn = document.getElementById('audioToggle') as HTMLButtonElement;
 const modeSwitchBtn = document.getElementById('modeSwitchBtn') as HTMLButtonElement | null;
 
-let currentMode: 'shift' | 'story' | 'battler' | 'pickleball' = 'shift';
+const urlParams = new URLSearchParams(window.location.search);
+const initialModeParam = urlParams.get('mode');
+let currentMode: 'shift' | 'story' | 'battler' | 'pickleball' =
+  initialModeParam === 'pickleball' ? 'pickleball' : 'shift';
 let shiftDay = 1;
 let engine: GameEngine;
 let battlerEngine: BattlerEngine;
@@ -243,6 +246,7 @@ function renderShiftMode(): void {
 }
 
 function cleanupPickleball(): void {
+  document.body.classList.remove('isPickleballMode');
   if (pbAnimFrameId) {
     cancelAnimationFrame(pbAnimFrameId);
     pbAnimFrameId = null;
@@ -256,10 +260,12 @@ function cleanupPickleball(): void {
 
 function renderPickleballMode(): void {
   cleanupPickleball();
+  document.body.classList.add('isPickleballMode');
 
   ROOT.innerHTML = `
     <div class="pbContainer" id="pbContainer">
       <div id="pbCanvasHost"></div>
+      <canvas id="pbSwipeCanvas"></canvas>
       <div id="pbUIHost"></div>
     </div>
   `;
@@ -279,22 +285,48 @@ function renderPickleballMode(): void {
 
   mountPickleballHUD(uiHost, pbEngine);
 
-  // Setup direct court touch / click steering & mobile swipe-to-hit
+  // Setup direct court touch / click steering & mobile swipe-to-hit (Tennis Clash Style)
   const container = document.getElementById('pbContainer');
+  const swipeCanvas = document.getElementById('pbSwipeCanvas') as HTMLCanvasElement | null;
   if (container) {
-    let isTouchingCourt = false;
+    const sctx = swipeCanvas?.getContext('2d');
+    const resizeSwipeCanvas = () => {
+      if (swipeCanvas && container) {
+        swipeCanvas.width = container.clientWidth;
+        swipeCanvas.height = container.clientHeight;
+      }
+    };
+    resizeSwipeCanvas();
+    window.addEventListener('resize', resizeSwipeCanvas);
+
+    let isTouching = false;
     let touchStartX = 0;
     let touchStartY = 0;
     let touchStartTime = 0;
+    let swipePoints: { x: number; y: number }[] = [];
 
-    const handleCourtPointer = (clientX: number, clientY: number) => {
-      if (!pbEngine) return;
-      const rect = container.getBoundingClientRect();
-      const ratioX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-      const ratioY = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
-      // Map Y to Z: top 28% of court = kitchen 2.2, bottom 85% of court = baseline 5.8
-      const targetZ = 2.2 + Math.max(0, Math.min(1, (ratioY - 0.28) / 0.58)) * 3.6;
-      pbEngine.setPlayerPos((ratioX - 0.5) * 5.4, targetZ);
+    const drawSwipeTrail = () => {
+      if (!sctx || !swipeCanvas || swipePoints.length < 2) return;
+      sctx.clearRect(0, 0, swipeCanvas.width, swipeCanvas.height);
+      sctx.beginPath();
+      sctx.moveTo(swipePoints[0].x, swipePoints[0].y);
+      for (let i = 1; i < swipePoints.length; i++) {
+        sctx.lineTo(swipePoints[i].x, swipePoints[i].y);
+      }
+      sctx.strokeStyle = 'rgba(56, 189, 248, 0.85)';
+      sctx.lineWidth = 4;
+      sctx.lineCap = 'round';
+      sctx.lineJoin = 'round';
+      sctx.shadowColor = '#0284c7';
+      sctx.shadowBlur = 10;
+      sctx.stroke();
+    };
+
+    const clearSwipeTrail = () => {
+      if (sctx && swipeCanvas) {
+        sctx.clearRect(0, 0, swipeCanvas.width, swipeCanvas.height);
+      }
+      swipePoints = [];
     };
 
     container.addEventListener('pointerdown', (e) => {
@@ -302,57 +334,85 @@ function renderPickleballMode(): void {
       if (target.closest('.pbShotBtn, .pbHeadBtn, .dialog, #pbSliderTrack, .pbMoveBtn, .pbScoreboardRibbon, .pbDialogueBubble')) {
         return;
       }
+
+      // If serving, immediate single tap anywhere on screen serves!
       if (pbEngine && pbEngine.isServing && pbEngine.currentServer === 'player') {
         pbEngine.executeServe();
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          try { navigator.vibrate(18); } catch (_) {}
+        }
         return;
       }
-      isTouchingCourt = true;
+
+      isTouching = true;
       touchStartX = e.clientX;
       touchStartY = e.clientY;
       touchStartTime = performance.now();
-      handleCourtPointer(e.clientX, e.clientY);
-      try {
-        container.setPointerCapture(e.pointerId);
-      } catch (_) {}
+      swipePoints = [{ x: e.offsetX, y: e.offsetY }];
+      try { container.setPointerCapture(e.pointerId); } catch (_) {}
     });
 
     container.addEventListener('pointermove', (e) => {
-      if (isTouchingCourt) {
-        handleCourtPointer(e.clientX, e.clientY);
+      if (!isTouching) return;
+      swipePoints.push({ x: e.offsetX, y: e.offsetY });
+      if (swipePoints.length > 10) swipePoints.shift();
+      drawSwipeTrail();
+
+      // Only if touch is held (>240ms) do we consider it manual positioning:
+      const dt = performance.now() - touchStartTime;
+      if (dt > 240 && pbEngine) {
+        const rect = container.getBoundingClientRect();
+        const ratioX = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        const ratioY = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+        const targetZ = 2.4 + Math.max(0, Math.min(1, (ratioY - 0.25) / 0.6)) * 3.4;
+        pbEngine.setPlayerPos((ratioX - 0.5) * 5.4, targetZ);
       }
     });
 
     const stopTouch = (e: PointerEvent) => {
-      if (isTouchingCourt) {
-        isTouchingCourt = false;
-        try {
-          container.releasePointerCapture(e.pointerId);
-        } catch (_) {}
+      if (!isTouching) return;
+      isTouching = false;
+      try { container.releasePointerCapture(e.pointerId); } catch (_) {}
 
-        // Swipe-to-Hit Flick Gesture Detection (Arcade Mobile Experience)
-        const dx = e.clientX - touchStartX;
-        const dy = e.clientY - touchStartY;
-        const dt = Math.max(1, performance.now() - touchStartTime);
-        const flickSpeed = Math.hypot(dx, dy) / dt; // px/ms
+      const dx = e.clientX - touchStartX;
+      const dy = e.clientY - touchStartY;
+      const dt = Math.max(1, performance.now() - touchStartTime);
+      const speed = Math.hypot(dx, dy) / dt;
 
-        // If upward flick of at least 22px within 450ms:
-        if (dy < -22 && dt < 450) {
-          if (pbEngine && pbEngine.isServing && pbEngine.currentServer === 'player') {
-            pbEngine.executeServe();
-          } else if (pbEngine) {
-            if (dx > 36) {
-              // Upward flick angled right -> Curve slice right
-              pbEngine.triggerPlayerShot('curve', 1);
-            } else if (dx < -36) {
-              // Upward flick angled left -> Curve slice left
-              pbEngine.triggerPlayerShot('curve', -1);
-            } else if (flickSpeed > 0.65 || dy < -65) {
-              // Fast/high-power flick -> SMASH!
-              pbEngine.triggerPlayerShot('smash');
+      setTimeout(clearSwipeTrail, 120);
+
+      if (pbEngine) {
+        if (pbEngine.isServing && pbEngine.currentServer === 'player') {
+          pbEngine.executeServe();
+          if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+            try { navigator.vibrate(18); } catch (_) {}
+          }
+          return;
+        }
+
+        // SWIPE-TO-HIT GESTURE (Tennis Clash Style)
+        if (Math.hypot(dx, dy) > 20 || dy < -16) {
+          const res = pbEngine.triggerPlayerShotWithGesture(dx, dy, dt, speed);
+          if (res.success) {
+            if (res.shotType === 'smash') {
+              sounds.pickleballPaddleHit(true);
+              pbStage?.triggerScreenShake(0.35);
+              if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+                try { navigator.vibrate([30, 20, 50]); } catch (_) {}
+              }
             } else {
-              // Gentle soft flick -> DINK drop shot!
-              pbEngine.triggerPlayerShot('dink');
+              sounds.pickleballPaddleHit(false);
+              if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+                try { navigator.vibrate(18); } catch (_) {}
+              }
             }
+          }
+        } else if (dt < 240) {
+          // Quick Tap on screen: smart adaptive shot!
+          const chosen = pbEngine.ball.y > 1.05 ? 'smash' : (pbEngine.ball.y < 0.62 ? 'dink' : 'curve');
+          const res = pbEngine.triggerPlayerShot(chosen);
+          if (res.success && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+            try { navigator.vibrate(18); } catch (_) {}
           }
         }
       }
@@ -443,6 +503,13 @@ function render(): void {
     if (currentMode !== 'pickleball') {
       cleanupPickleball();
     }
+
+    try {
+      const search = currentMode === 'shift' ? '' : `?mode=${currentMode}`;
+      if (window.location.search !== search) {
+        window.history.replaceState(null, '', window.location.pathname + search);
+      }
+    } catch (_) {}
 
     if (audioToggleBtn) {
       audioToggleBtn.textContent = sounds.isMuted() ? '🔇' : '🔊';

@@ -37,9 +37,11 @@ export class PickleballStage {
   private ballMesh!: THREE.Mesh;
   private ballShadowMesh!: THREE.Mesh;
   private landingTargetMesh!: THREE.Mesh;
+  private timingRingMesh!: THREE.Mesh;
   private ballTrailPoints: THREE.Vector3[] = [];
   private ballTrailMesh!: THREE.Line;
   private hitParticles: { mesh: THREE.Mesh; vel: THREE.Vector3; life: number }[] = [];
+  public cameraShake = 0;
 
   // Characters
   public playerRig!: ChibiRig;
@@ -66,11 +68,12 @@ export class PickleballStage {
     this.scene.background = new THREE.Color(0x0a0f1d);
     this.scene.fog = new THREE.FogExp2(0x0a0f1d, 0.016);
 
-    // 2. Camera: Broadcast TV pickleball angle (Player full body, net, ball & opponent)
+    // 2. Camera: Full 100% court broadcast framing for both Desktop & Mobile Portrait
     const aspect = width / height;
-    this.camera = new THREE.PerspectiveCamera(aspect < 0.8 ? 52 : 44, aspect, 0.1, 100);
-    this.targetCameraPos.set(0, 5.8, 12.0);
-    this.cameraLookAt.set(0, 0.9, 0.8);
+    const isPortrait = aspect < 0.85;
+    this.camera = new THREE.PerspectiveCamera(isPortrait ? 62 : 44, aspect, 0.1, 100);
+    this.targetCameraPos.set(0, isPortrait ? 7.6 : 5.8, isPortrait ? 13.6 : 12.0);
+    this.cameraLookAt.set(0, 0.6, isPortrait ? -0.6 : 0.8);
     this.camera.position.copy(this.targetCameraPos);
     this.camera.lookAt(this.cameraLookAt);
 
@@ -104,13 +107,40 @@ export class PickleballStage {
     this.engine.onBallBounce = this.onBounce.bind(this);
   }
 
-  public onHit(hitter: 'player' | 'ai', _shot: ShotType, quality: ShotQuality): void {
-    this.spawnHitBurst(
-      this.engine.ball.x,
-      this.engine.ball.y,
-      this.engine.ball.z,
-      quality === 'perfect' ? 0xfacc15 : (hitter === 'player' ? 0x38bdf8 : 0xef4444)
-    );
+  public triggerScreenShake(intensity = 0.28): void {
+    this.cameraShake = Math.max(this.cameraShake, intensity);
+  }
+
+  public onHit(hitter: 'player' | 'ai', shot: ShotType, quality: ShotQuality): void {
+    const isSmash = shot === 'smash';
+    const isPerfect = quality === 'perfect';
+
+    // 1. Particle Explosion
+    const burstColor = isSmash ? 0xf97316 : (isPerfect ? 0xfacc15 : (hitter === 'player' ? 0x38bdf8 : 0xef4444));
+    this.spawnHitBurst(this.engine.ball.x, this.engine.ball.y, this.engine.ball.z, burstColor);
+    if (isSmash || isPerfect) {
+      this.spawnHitBurst(this.engine.ball.x, this.engine.ball.y + 0.12, this.engine.ball.z, 0xfacc15);
+    }
+
+    // 2. Smash Comet Trail Color Shift
+    if (this.ballTrailMesh) {
+      const trailMat = this.ballTrailMesh.material as THREE.LineBasicMaterial;
+      if (isSmash) {
+        trailMat.color.setHex(0xf97316); // Electric flame orange!
+        trailMat.opacity = 0.95;
+      } else if (shot === 'dink') {
+        trailMat.color.setHex(0x10b981); // Emerald drop!
+        trailMat.opacity = 0.75;
+      } else {
+        trailMat.color.setHex(0xfef08a); // Crisp optic yellow
+        trailMat.opacity = 0.65;
+      }
+    }
+
+    // 3. Punchy Screen Shake
+    if (isSmash || isPerfect) {
+      this.triggerScreenShake(isPerfect ? 0.36 : 0.26);
+    }
   }
 
   public onBounce(x: number, z: number, isFault: boolean): void {
@@ -406,6 +436,19 @@ export class PickleballStage {
     this.landingTargetMesh.position.y = 0.025;
     this.landingTargetMesh.visible = false;
     this.scene.add(this.landingTargetMesh);
+
+    // 5. Dynamic Sweet Spot Timing Ring (Shows shrinking perfect hit timing)
+    const ringGeo = new THREE.RingGeometry(0.18, 0.22, 24);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.8,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+    this.timingRingMesh = new THREE.Mesh(ringGeo, ringMat);
+    this.timingRingMesh.visible = false;
+    this.scene.add(this.timingRingMesh);
   }
 
   private createChibiAvatars(): void {
@@ -910,6 +953,33 @@ export class PickleballStage {
       this.landingTargetMesh.visible = false;
     }
 
+    // 3c. Dynamic Sweet Spot Timing Ring (Guides player to strike at the exact right moment!)
+    if (this.timingRingMesh) {
+      if (this.engine.ball.inPlay && this.engine.ball.vz > 0 && this.engine.ball.z > 1.2 && this.engine.ball.z < 6.0) {
+        this.timingRingMesh.visible = true;
+        this.timingRingMesh.position.set(this.engine.ball.x, this.engine.ball.y, this.engine.ball.z);
+        this.timingRingMesh.lookAt(this.camera.position);
+
+        const distToPlayer = Math.abs((this.engine.playerPos.z - 0.4) - this.engine.ball.z);
+        // Scale contracts from 2.5 down to 0.7 as ball approaches paddle
+        const ringScale = Math.max(0.65, Math.min(2.4, distToPlayer * 0.95));
+        this.timingRingMesh.scale.set(ringScale, ringScale, 1);
+
+        const ringMat = this.timingRingMesh.material as THREE.MeshBasicMaterial;
+        if (ringScale < 1.15) {
+          // Sweet spot window: Golden glow!
+          ringMat.color.setHex(0xfacc15);
+          ringMat.opacity = 0.95;
+        } else {
+          // Approaching: Clean cyan guide
+          ringMat.color.setHex(0x38bdf8);
+          ringMat.opacity = 0.65;
+        }
+      } else {
+        this.timingRingMesh.visible = false;
+      }
+    }
+
     // 4. Update Chibi Avatars Kinematics & Full-Body Swing Animations
     if (this.playerRig) {
       this.updateChibiAnimation(
@@ -933,14 +1003,29 @@ export class PickleballStage {
       );
     }
 
-    // 5. Dynamic Camera Smooth Tracking (Adapts when rushing to net or baseline)
-    const camTargetX = this.engine.playerPos.x * 0.3;
-    const camTargetZ = 12.0 + (this.engine.playerPos.z - 5.2) * 0.35;
-    this.targetCameraPos.set(camTargetX, 5.8, camTargetZ);
+    // 5. Dynamic Camera Smooth Tracking & Portrait Multi-Aspect Ratio Adaptation
+    const isPortrait = this.camera.aspect < 0.85;
+    const camTargetX = this.engine.playerPos.x * (isPortrait ? 0.22 : 0.3);
+    const targetY = isPortrait ? 7.6 : 5.8;
+    const targetZ = (isPortrait ? 13.6 : 12.0) + (this.engine.playerPos.z - 5.2) * 0.25;
+    const targetLookAtZ = isPortrait ? -0.6 : 0.8;
+
+    this.targetCameraPos.set(camTargetX, targetY, targetZ);
     this.camera.position.x += (this.targetCameraPos.x - this.camera.position.x) * Math.min(1, 12 * delta);
     this.camera.position.y += (this.targetCameraPos.y - this.camera.position.y) * Math.min(1, 10 * delta);
     this.camera.position.z += (this.targetCameraPos.z - this.camera.position.z) * Math.min(1, 8 * delta);
+
+    // Dynamic 3D Camera Shake Impact Punch
+    if (this.cameraShake > 0.005) {
+      const shakeX = (Math.random() - 0.5) * this.cameraShake * 0.45;
+      const shakeY = (Math.random() - 0.5) * this.cameraShake * 0.35;
+      this.camera.position.x += shakeX;
+      this.camera.position.y += shakeY;
+      this.cameraShake *= Math.exp(-14 * delta);
+    }
+
     this.cameraLookAt.x += (this.engine.ball.x * 0.18 - this.cameraLookAt.x) * Math.min(1, 10 * delta);
+    this.cameraLookAt.z += (targetLookAtZ - this.cameraLookAt.z) * Math.min(1, 8 * delta);
     this.camera.lookAt(this.cameraLookAt);
 
     // 6. Update Hit & Bounce Particles
@@ -970,7 +1055,7 @@ export class PickleballStage {
 
     const aspect = width / height;
     this.camera.aspect = aspect;
-    this.camera.fov = aspect < 0.8 ? 54 : 46;
+    this.camera.fov = aspect < 0.85 ? 62 : 44;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);
   };

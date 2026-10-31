@@ -117,7 +117,7 @@ export function mountPickleballHUD(host: HTMLElement, engine: PickleballEngine):
     <footer class="pbBottomControlRail">
       <!-- Mobile Swipe-to-Hit & Tap-to-Run Ergonomics Guide Pill -->
       <div class="pbSwipeGuidePill">
-        👆 <b>Vuốt lên</b> để Smash/Dink · <b>Chạm sân</b> để chạy tới đón bóng!
+        👆 <b>Vuốt ⬆️</b>: Smash · <b>Vuốt ngắn</b>: Bỏ nhỏ · <b>Vuốt ↗️</b>: Xoáy góc
       </div>
 
       <!-- Horizontal Paddle Position Slider for Mobile Touch -->
@@ -135,7 +135,7 @@ export function mountPickleballHUD(host: HTMLElement, engine: PickleballEngine):
         <button class="pbShotBtn btnSmash" data-pb-shot="smash" id="pbBtnSmash" type="button">
           <span class="shotIcon">🚀</span>
           <div class="shotMeta">
-            <span class="shotTitle">ĐẬP SMASH</span>
+            <span class="shotTitle">SMASH</span>
             <span class="shotDesc">Khi bóng bổng · -25% Thể lực</span>
           </div>
           <span class="pbShotStatusBadge" id="pbSmashBadge"></span>
@@ -145,7 +145,7 @@ export function mountPickleballHUD(host: HTMLElement, engine: PickleballEngine):
         <button class="pbShotBtn btnDink" data-pb-shot="dink" id="pbBtnDink" type="button">
           <span class="shotIcon">🏓</span>
           <div class="shotMeta">
-            <span class="shotTitle">BỎ NHỎ DINK</span>
+            <span class="shotTitle">BỎ NHỎ</span>
             <span class="shotDesc">Vào Kitchen · +20% Thể lực</span>
           </div>
           <span class="pbShotStatusBadge" id="pbDinkBadge"></span>
@@ -155,8 +155,8 @@ export function mountPickleballHUD(host: HTMLElement, engine: PickleballEngine):
         <button class="pbShotBtn btnCurve" data-pb-shot="curve" id="pbBtnCurve" type="button">
           <span class="shotIcon">🌀</span>
           <div class="shotMeta">
-            <span class="shotTitle">ĐỔI GÓC HIỂM</span>
-            <span class="shotDesc">Xoáy vào sân trống</span>
+            <span class="shotTitle">XOÁY GÓC</span>
+            <span class="shotDesc">Lượn bóng hiểm hóc</span>
           </div>
           <span class="pbShotStatusBadge" id="pbCurveBadge">🎯 SÂN TRỐNG</span>
         </button>
@@ -301,8 +301,8 @@ export function updatePickleballHUD(host: HTMLElement, engine: PickleballEngine)
       smashBtn.innerHTML = `
         <span class="shotIcon" style="animation:spinPulse 1.2s infinite">🎾</span>
         <div class="shotMeta">
-          <span class="shotTitle">BẤM GIAO BÓNG!</span>
-          <span class="shotDesc">Chạm sân hoặc bấm nút</span>
+          <span class="shotTitle">GIAO BÓNG</span>
+          <span class="shotDesc">Chạm sân hoặc bấm</span>
         </div>
       `;
     }
@@ -313,7 +313,7 @@ export function updatePickleballHUD(host: HTMLElement, engine: PickleballEngine)
       smashBtn.innerHTML = `
         <span class="shotIcon">🚀</span>
         <div class="shotMeta">
-          <span class="shotTitle">ĐẬP SMASH</span>
+          <span class="shotTitle">SMASH</span>
           <span class="shotDesc">Khi bóng bổng · -25% Thể lực</span>
         </div>
         <span class="pbShotStatusBadge" id="pbSmashBadge"></span>
