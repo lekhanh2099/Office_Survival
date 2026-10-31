@@ -220,6 +220,8 @@ export class PickleballEngine {
   public aiPos = { x: -1.2, z: -5.8 };
   public playerPaddleAnim = 0; // 0: idle, >0: swinging
   public aiPaddleAnim = 0;
+  public bufferedShot: { shotType: ShotType; timestamp: number } | null = null;
+  public manualInputTimer = 0; // seconds remaining where manual input overrides auto-assist
 
   // Ball 3D Physical State
   public ball = {
@@ -299,6 +301,45 @@ export class PickleballEngine {
 
   public setPlayerX(targetX: number): void {
     this.playerPos.x = Math.max(-2.7, Math.min(2.7, targetX));
+    this.manualInputTimer = 1.0;
+  }
+
+  public stepPlayer(direction: -1 | 1, distance = 0.75): void {
+    this.playerPos.x = Math.max(-2.7, Math.min(2.7, this.playerPos.x + direction * distance));
+    this.manualInputTimer = 1.0;
+  }
+
+  /**
+   * Kinematic trajectory calculation that strictly guarantees clearing the net at Z = 0
+   */
+  public calculateTrajectory(
+    startX: number,
+    startY: number,
+    startZ: number,
+    targetX: number,
+    targetZ: number,
+    flightTime: number,
+    desiredNetClearance = 0.35
+  ): { vx: number; vy: number; vz: number } {
+    const vx = (targetX - startX) / flightTime;
+    const vz = (targetZ - startZ) / flightTime;
+
+    // Time to reach net plane (Z = 0): startZ + vz * tNet = 0 => tNet = -startZ / vz
+    let vy: number;
+    const tNet = -startZ / vz;
+
+    if (tNet > 0.04 && tNet < flightTime) {
+      const targetNetY = this.netHeight + desiredNetClearance; // e.g. 0.88 + 0.35 = 1.23m
+      const gravity = 11.2;
+      // Kinematic equation: y(tNet) = startY + vy * tNet - 0.5 * g * tNet^2 = targetNetY
+      vy = (targetNetY - startY + 0.5 * gravity * tNet * tNet) / tNet;
+      // Safety clamp: keep within healthy range
+      vy = Math.max(2.5, Math.min(8.0, vy));
+    } else {
+      vy = 3.8;
+    }
+
+    return { vx, vy, vz };
   }
 
   public resetMatch(): void {
@@ -309,6 +350,8 @@ export class PickleballEngine {
     this.currentServer = 'player';
     this.serverQuadrant = 'right';
     this.rallyCount = 0;
+    this.bufferedShot = null;
+    this.manualInputTimer = 0;
     this.stats = {
       aces: 0,
       smashes: 0,
@@ -322,8 +365,9 @@ export class PickleballEngine {
   public setupServe(server: 'player' | 'ai'): void {
     this.currentServer = server;
     this.isServing = true;
-    this.serveTimer = 1.0;
+    this.serveTimer = server === 'player' ? 6.0 : 1.8;
     this.rallyCount = 0;
+    this.bufferedShot = null;
 
     // Alternate quadrant based on server score (Pickleball standard: even score = right, odd score = left)
     const serverScore = server === 'player' ? this.playerScore : this.aiScore;
@@ -338,7 +382,7 @@ export class PickleballEngine {
 
       this.ball.x = this.playerPos.x + 0.3;
       this.ball.y = 0.85;
-      this.ball.z = this.playerPos.z - 0.4;
+      this.ball.z = this.playerPos.z - 0.45;
       this.ball.vx = 0;
       this.ball.vy = 0;
       this.ball.vz = 0;
@@ -354,7 +398,7 @@ export class PickleballEngine {
 
       this.ball.x = this.aiPos.x - 0.3;
       this.ball.y = 0.85;
-      this.ball.z = this.aiPos.z + 0.4;
+      this.ball.z = this.aiPos.z + 0.45;
       this.ball.vx = 0;
       this.ball.vy = 0;
       this.ball.vz = 0;
@@ -377,6 +421,7 @@ export class PickleballEngine {
     this.ball.inPlay = true;
     this.ball.bouncesSinceHit = 0;
     this.ball.hasClearedNet = false;
+    this.bufferedShot = null;
 
     if (this.currentServer === 'player') {
       this.ball.lastHitter = 'player';
@@ -384,12 +429,13 @@ export class PickleballEngine {
 
       // Crosscourt serve trajectory into diagonal receiving box (past Kitchen: z < -2.1)
       const targetX = this.serverQuadrant === 'right' ? -1.4 : 1.4;
-      const targetZ = -4.5;
-      const timeToTarget = 0.85 / this.settings.ballSpeedFactor;
+      const targetZ = -4.6;
+      const flightTime = 0.84 / this.settings.ballSpeedFactor;
 
-      this.ball.vx = (targetX - this.ball.x) / timeToTarget;
-      this.ball.vz = (targetZ - this.ball.z) / timeToTarget;
-      this.ball.vy = 3.6; // Upward arc to clear net comfortably
+      const traj = this.calculateTrajectory(this.ball.x, this.ball.y, this.ball.z, targetX, targetZ, flightTime, 0.40);
+      this.ball.vx = traj.vx;
+      this.ball.vy = traj.vy;
+      this.ball.vz = traj.vz;
       this.playerPaddleAnim = 0.25;
 
       this.onBallHit?.('player', 'drive', 'good');
@@ -398,12 +444,13 @@ export class PickleballEngine {
       this.ball.serveTargetSide = 'player';
 
       const targetX = this.serverQuadrant === 'right' ? -1.4 : 1.4;
-      const targetZ = 4.5;
-      const timeToTarget = 0.90 / this.settings.ballSpeedFactor;
+      const targetZ = 4.6;
+      const flightTime = 0.88 / this.settings.ballSpeedFactor;
 
-      this.ball.vx = (targetX - this.ball.x) / timeToTarget;
-      this.ball.vz = (targetZ - this.ball.z) / timeToTarget;
-      this.ball.vy = 3.5;
+      const traj = this.calculateTrajectory(this.ball.x, this.ball.y, this.ball.z, targetX, targetZ, flightTime, 0.40);
+      this.ball.vx = traj.vx;
+      this.ball.vy = traj.vy;
+      this.ball.vz = traj.vz;
       this.aiPaddleAnim = 0.25;
 
       this.onBallHit?.('ai', 'drive', 'good');
@@ -412,18 +459,46 @@ export class PickleballEngine {
     return true;
   }
 
+  public triggerPlayerShot(shotType: ShotType, aimOffset = 0): { success: boolean; quality?: ShotQuality; buffered?: boolean } {
+    if (this.isMatchOver) return { success: false };
+
+    // If serving, immediately serve!
+    if (this.isServing && this.currentServer === 'player') {
+      this.executeServe();
+      return { success: true, quality: 'good' };
+    }
+
+    if (!this.ball.inPlay || this.ball.lastHitter === 'player') {
+      return { success: false };
+    }
+
+    // Generous player reach check
+    const dx = this.ball.x - this.playerPos.x;
+    const dz = this.ball.z - (this.playerPos.z - 0.45);
+    const dist = Math.hypot(dx, dz);
+
+    if (dist <= 2.6 && this.ball.z >= 1.8 && this.ball.vz > 0) {
+      this.bufferedShot = null;
+      return this.playerHitBall(shotType, aimOffset);
+    } else if (this.ball.vz > 0 && this.ball.z < 6.2) {
+      // Buffer the shot for 650ms so it fires automatically the moment the ball arrives!
+      this.bufferedShot = { shotType, timestamp: performance.now() };
+      return { success: true, buffered: true };
+    }
+
+    return { success: false, quality: 'early' };
+  }
+
   public playerHitBall(shotType: ShotType, aimOffset = 0): { success: boolean; quality: ShotQuality } {
     if (!this.ball.inPlay || this.ball.lastHitter === 'player' || this.isMatchOver) {
       return { success: false, quality: 'late' };
     }
 
-    // Distance to ball check (Player hitbox reach ~1.6m)
     const dx = this.ball.x - this.playerPos.x;
     const dz = this.ball.z - (this.playerPos.z - 0.45);
     const dist = Math.hypot(dx, dz);
 
-    if (dist > 1.8 || this.ball.z < 1.0) {
-      // Ball too far or already past player
+    if (dist > 2.8 || this.ball.z < 1.2) {
       return { success: false, quality: 'early' };
     }
 
@@ -442,10 +517,10 @@ export class PickleballEngine {
 
     // Timing quality evaluation
     let quality: ShotQuality = 'good';
-    if (dist < 0.65 && this.ball.y > 0.4 && this.ball.y < 1.4) {
+    if (dist < 1.1 && this.ball.y > 0.35 && this.ball.y < 1.6) {
       quality = 'perfect';
       this.stats.perfectHits++;
-    } else if (dist > 1.35 || this.ball.y < 0.25) {
+    } else if (dist > 2.2 || this.ball.y < 0.22) {
       quality = 'late';
     }
 
@@ -458,38 +533,49 @@ export class PickleballEngine {
     this.ball.lastHitter = 'player';
     this.ball.bouncesSinceHit = 0;
     this.ball.hasClearedNet = false;
+    this.bufferedShot = null;
 
     // Target position calculation on AI side
-    let targetX = (Math.random() - 0.5) * 4.2 + aimOffset * 1.5;
+    let targetX = (Math.random() - 0.5) * 3.6 + aimOffset * 1.5;
     targetX = Math.max(-2.5, Math.min(2.5, targetX));
     let targetZ = -4.8;
-    let targetVy = 3.8;
-    let flightTime = 0.85 / powerMult;
+    let flightTime = 0.74 / powerMult;
+    let desiredClearance = 0.35; // default safe net clearance (meters above net)
 
     if (shotType === 'dink') {
-      // Soft drop into AI kitchen (between -0.6 and -1.8)
+      // Soft drop into AI kitchen (between -0.8 and -1.8)
       targetZ = -1.3 - Math.random() * 0.6;
-      targetVy = 2.9;
-      flightTime = 0.88;
+      flightTime = 0.84;
+      desiredClearance = 0.46; // high rainbow arc over net
       this.stats.dinks++;
     } else if (shotType === 'smash') {
-      // High-speed downward smash if ball is high enough
-      targetZ = -5.5;
-      targetVy = 1.6;
-      flightTime = 0.52 / powerMult;
+      // High-speed piercing smash to deep baseline
+      targetZ = -5.3 - Math.random() * 0.5;
+      flightTime = 0.58 / powerMult;
+      desiredClearance = 0.32; // sharp, aggressive clearance
       this.stats.smashes++;
     } else if (shotType === 'curve') {
       // Curve spin to corner
       targetX = aimOffset > 0 ? 2.3 : -2.3;
       targetZ = -4.6;
-      targetVy = 3.4;
+      flightTime = 0.72 / powerMult;
+      desiredClearance = 0.36;
       this.ball.spinX = aimOffset > 0 ? 3.5 : -3.5;
-      flightTime = 0.78 / powerMult;
     }
 
-    this.ball.vx = (targetX - this.ball.x) / flightTime;
-    this.ball.vz = (targetZ - this.ball.z) / flightTime;
-    this.ball.vy = targetVy;
+    const traj = this.calculateTrajectory(
+      this.ball.x,
+      this.ball.y,
+      this.ball.z,
+      targetX,
+      targetZ,
+      flightTime,
+      desiredClearance
+    );
+
+    this.ball.vx = traj.vx;
+    this.ball.vy = traj.vy;
+    this.ball.vz = traj.vz;
 
     this.onBallHit?.('player', shotType, quality);
     return { success: true, quality };
@@ -551,26 +637,37 @@ export class PickleballEngine {
     let targetX = openX + (Math.random() - 0.5) * (1.2 - this.opponent.accuracy * 0.6);
     targetX = Math.max(-2.5, Math.min(2.5, targetX));
     let targetZ = 4.8;
-    let targetVy = 3.6;
-    let flightTime = 0.90 / (this.opponent.power * this.settings.ballSpeedFactor);
+    let flightTime = 0.88 / (this.opponent.power * this.settings.ballSpeedFactor);
+    let desiredClearance = 0.30;
 
     if (chosenShot === 'dink') {
       targetZ = 1.3 + Math.random() * 0.6;
-      targetVy = 2.8;
-      flightTime = 0.92;
+      flightTime = 0.90;
+      desiredClearance = 0.38;
     } else if (chosenShot === 'smash') {
-      targetZ = 5.6;
-      targetVy = 1.8;
-      flightTime = 0.55 / (this.opponent.power * this.settings.ballSpeedFactor);
+      targetZ = 5.5;
+      flightTime = 0.62 / (this.opponent.power * this.settings.ballSpeedFactor);
+      desiredClearance = 0.24;
     } else if (chosenShot === 'curve') {
-      targetX = (Math.random() > 0.5 ? 2.4 : -2.4);
-      targetVy = 3.5;
+      targetX = (Math.random() > 0.5 ? 2.3 : -2.3);
+      flightTime = 0.78 / (this.opponent.power * this.settings.ballSpeedFactor);
+      desiredClearance = 0.28;
       this.ball.spinX = targetX > 0 ? -3.0 : 3.0;
     }
 
-    this.ball.vx = (targetX - this.ball.x) / flightTime;
-    this.ball.vz = (targetZ - this.ball.z) / flightTime;
-    this.ball.vy = targetVy;
+    const traj = this.calculateTrajectory(
+      this.ball.x,
+      this.ball.y,
+      this.ball.z,
+      targetX,
+      targetZ,
+      flightTime,
+      desiredClearance
+    );
+
+    this.ball.vx = traj.vx;
+    this.ball.vy = traj.vy;
+    this.ball.vz = traj.vz;
 
     this.onBallHit?.('ai', chosenShot, 'good');
 
@@ -588,9 +685,43 @@ export class PickleballEngine {
     if (this.playerPaddleAnim > 0) this.playerPaddleAnim = Math.max(0, this.playerPaddleAnim - delta);
     if (this.aiPaddleAnim > 0) this.aiPaddleAnim = Math.max(0, this.aiPaddleAnim - delta);
 
-    // 1. Serving countdown
+    // Check buffered shot execution
+    if (this.bufferedShot && this.ball.inPlay && this.ball.lastHitter !== 'player' && this.ball.vz > 0) {
+      if (performance.now() - this.bufferedShot.timestamp < 650) {
+        const dx = this.ball.x - this.playerPos.x;
+        const dz = this.ball.z - (this.playerPos.z - 0.45);
+        const dist = Math.hypot(dx, dz);
+        if (dist <= 2.8 && this.ball.z >= 1.6) {
+          const shot = this.bufferedShot.shotType;
+          this.bufferedShot = null;
+          this.playerHitBall(shot);
+        }
+      } else {
+        this.bufferedShot = null;
+      }
+    }
+
+    // 1. Serving countdown & positioning
     if (this.isServing) {
       this.serveTimer -= delta;
+
+      if (this.currentServer === 'player') {
+        const playerSpeed = 5.8;
+        if (Math.abs(playerInputX) > 0.05) {
+          this.playerPos.x += playerInputX * playerSpeed * delta;
+        }
+        // Keep within serve side boundary
+        if (this.serverQuadrant === 'right') {
+          this.playerPos.x = Math.max(0.3, Math.min(2.5, this.playerPos.x));
+        } else {
+          this.playerPos.x = Math.max(-2.5, Math.min(-0.3, this.playerPos.x));
+        }
+        // Ball stays in hand/paddle ready to serve
+        this.ball.x = this.playerPos.x + (this.serverQuadrant === 'right' ? 0.25 : -0.25);
+        this.ball.y = 0.85;
+        this.ball.z = this.playerPos.z - 0.45;
+      }
+
       if (this.serveTimer <= 0) {
         this.executeServe();
       }
@@ -598,13 +729,20 @@ export class PickleballEngine {
     }
 
     // 2. Player Movement (Manual or Assisted)
-    const playerSpeed = 5.8;
+    const playerSpeed = 6.2;
+    if (this.manualInputTimer > 0) {
+      this.manualInputTimer -= delta;
+    }
+
     if (Math.abs(playerInputX) > 0.05) {
       this.playerPos.x += playerInputX * playerSpeed * delta;
-    } else if (this.settings.autoPositionAssist && this.ball.inPlay && this.ball.vz > 0) {
-      // Gently glide towards predicted ball X position
-      const diffX = this.ball.x - this.playerPos.x;
-      this.playerPos.x += Math.sign(diffX) * Math.min(Math.abs(diffX), playerSpeed * 0.75 * delta);
+      this.manualInputTimer = 0.8;
+    } else if (this.manualInputTimer <= 0 && this.settings.autoPositionAssist && this.ball.inPlay && this.ball.vz > 0) {
+      // Predict where ball will reach baseline z = 5.6
+      const timeToBaseline = Math.max(0.01, (5.6 - this.ball.z) / this.ball.vz);
+      const predictedX = Math.max(-2.6, Math.min(2.6, this.ball.x + this.ball.vx * timeToBaseline));
+      const diffX = predictedX - this.playerPos.x;
+      this.playerPos.x += Math.sign(diffX) * Math.min(Math.abs(diffX), playerSpeed * 0.85 * delta);
     }
     this.playerPos.x = Math.max(-2.7, Math.min(2.7, this.playerPos.x));
 
@@ -628,11 +766,7 @@ export class PickleballEngine {
 
     // 4. Ball 3D Physics Integration
     if (this.ball.inPlay) {
-      const gravity = -11.5;
-      const drag = 0.993;
-
-      this.ball.vx *= drag;
-      this.ball.vz *= drag;
+      const gravity = -11.2;
       this.ball.vy += gravity * delta;
 
       // Apply Spin Curve Deflection
@@ -651,8 +785,8 @@ export class PickleballEngine {
 
       if (crossedNet) {
         const netY = this.netHeight;
-        if (this.ball.y < netY) {
-          // Ball hit the net!
+        if (this.ball.y < netY - 0.08) {
+          // Ball hit solidly into the net mesh!
           this.ball.vx *= 0.15;
           this.ball.vz = -this.ball.vz * 0.2; // slight rebound
           this.ball.vy = Math.min(this.ball.vy, 0.4);
@@ -662,6 +796,11 @@ export class PickleballEngine {
             this.ball.lastHitter === 'player' ? '🕸️ Banh rúc lưới!' : `🕸️ ${this.opponent.name} đánh rúc lưới!`
           );
           return;
+        } else if (this.ball.y < netY) {
+          // Ball grazed the top tape (cord)! Tape deflection: slows down slightly and continues over
+          this.ball.vz *= 0.85;
+          this.ball.vy = Math.max(0.8, this.ball.vy * 0.7);
+          this.ball.hasClearedNet = true;
         } else {
           this.ball.hasClearedNet = true;
         }

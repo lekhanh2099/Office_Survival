@@ -276,6 +276,53 @@ function renderPickleballMode(): void {
 
   mountPickleballHUD(uiHost, pbEngine);
 
+  // Setup direct court touch / click steering & tap-to-serve
+  const container = document.getElementById('pbContainer');
+  if (container) {
+    let isTouchingCourt = false;
+
+    const handleCourtPointer = (clientX: number) => {
+      if (!pbEngine) return;
+      const rect = container.getBoundingClientRect();
+      const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      pbEngine.setPlayerX((ratio - 0.5) * 5.4);
+    };
+
+    container.addEventListener('pointerdown', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('.pbShotBtn, .pbHeadBtn, .dialog, #pbSliderTrack, .pbMoveBtn, .pbScoreboardRibbon, .pbDialogueBubble')) {
+        return;
+      }
+      if (pbEngine && pbEngine.isServing && pbEngine.currentServer === 'player') {
+        pbEngine.executeServe();
+        return;
+      }
+      isTouchingCourt = true;
+      handleCourtPointer(e.clientX);
+      try {
+        container.setPointerCapture(e.pointerId);
+      } catch (_) {}
+    });
+
+    container.addEventListener('pointermove', (e) => {
+      if (isTouchingCourt) {
+        handleCourtPointer(e.clientX);
+      }
+    });
+
+    const stopTouch = (e: PointerEvent) => {
+      if (isTouchingCourt) {
+        isTouchingCourt = false;
+        try {
+          container.releasePointerCapture(e.pointerId);
+        } catch (_) {}
+      }
+    };
+
+    container.addEventListener('pointerup', stopTouch);
+    container.addEventListener('pointercancel', stopTouch);
+  }
+
   pbEngine.onPointScored = (result) => {
     sounds.perk();
     showPickleballPointBanner(result);
@@ -592,11 +639,7 @@ document.addEventListener('click', (ev) => {
   const pbShotBtn = target.closest('[data-pb-shot]') as HTMLElement | null;
   if (pbShotBtn && currentMode === 'pickleball' && pbEngine) {
     const shot = pbShotBtn.dataset.pbShot as ShotType;
-    if (pbEngine.isServing && pbEngine.currentServer === 'player') {
-      pbEngine.executeServe();
-    } else {
-      pbEngine.playerHitBall(shot);
-    }
+    pbEngine.triggerPlayerShot(shot);
     return;
   }
 
@@ -1057,8 +1100,10 @@ window.addEventListener('enter-pickleball-mode', () => {
 document.addEventListener('pointerdown', (e) => {
   const target = e.target as HTMLElement;
   if (target.closest('#pbMoveLeftBtn')) {
+    pbEngine?.stepPlayer(-1, 0.75);
     pbPlayerDirX = -1;
   } else if (target.closest('#pbMoveRightBtn')) {
+    pbEngine?.stepPlayer(1, 0.75);
     pbPlayerDirX = 1;
   }
 });
@@ -1173,33 +1218,19 @@ document.addEventListener('keydown', (e) => {
   if (currentMode === 'pickleball' && pbEngine) {
     if (key === 'arrowleft' || key === 'a') {
       pbPlayerDirX = -1;
+      pbEngine.stepPlayer(-1, 0.4);
     } else if (key === 'arrowright' || key === 'd') {
       pbPlayerDirX = 1;
+      pbEngine.stepPlayer(1, 0.4);
     } else if (key === 'j') {
-      if (pbEngine.isServing && pbEngine.currentServer === 'player') {
-        pbEngine.executeServe();
-      } else {
-        pbEngine.playerHitBall('smash');
-      }
+      pbEngine.triggerPlayerShot('smash');
     } else if (key === 'k') {
-      if (pbEngine.isServing && pbEngine.currentServer === 'player') {
-        pbEngine.executeServe();
-      } else {
-        pbEngine.playerHitBall('dink');
-      }
+      pbEngine.triggerPlayerShot('dink');
     } else if (key === 'l') {
-      if (pbEngine.isServing && pbEngine.currentServer === 'player') {
-        pbEngine.executeServe();
-      } else {
-        pbEngine.playerHitBall('curve');
-      }
+      pbEngine.triggerPlayerShot('curve');
     } else if (e.key === ' ' || e.key === 'Enter') {
       e.preventDefault();
-      if (pbEngine.isServing && pbEngine.currentServer === 'player') {
-        pbEngine.executeServe();
-      } else {
-        pbEngine.playerHitBall('smash');
-      }
+      pbEngine.triggerPlayerShot('smash');
     }
     return;
   }

@@ -3168,6 +3168,42 @@ body:has(#dialogHost:not(:empty)) .virtualControlsOverlay {
   background: linear-gradient(135deg, #6366f1, #4338ca);
 }
 
+.pbShotBtn.isServeState {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  border-color: #fef08a !important;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.8), 2.5px 2.5px 0 var(--ink) !important;
+  animation: servePulse 1.2s infinite alternate;
+}
+
+@keyframes servePulse {
+  0% { transform: scale(1); box-shadow: 0 0 10px rgba(245, 158, 11, 0.6), 2.5px 2.5px 0 var(--ink); }
+  100% { transform: scale(1.04); box-shadow: 0 0 20px rgba(245, 158, 11, 0.95), 2.5px 2.5px 0 var(--ink); }
+}
+
+.pbServeCue {
+  position: absolute;
+  bottom: 128px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.92);
+  color: #fef08a;
+  border: 2px solid #f59e0b;
+  border-radius: 100px;
+  padding: 6px 18px;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(245, 158, 11, 0.5);
+  pointer-events: none;
+  z-index: 40;
+  animation: serveCueBob 1.5s infinite ease-in-out;
+  white-space: nowrap;
+}
+
+@keyframes serveCueBob {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, -6px); }
+}
+
 .pbKeyboardHint {
   font-size: 11px;
   color: #94a3b8;
@@ -3180,6 +3216,15 @@ body:has(#dialogHost:not(:empty)) .virtualControlsOverlay {
 @media (max-width: 600px) {
   .pbKeyboardHint {
     display: none;
+  }
+  .pbServeCue {
+    bottom: 115px;
+    font-size: 11px;
+    padding: 5px 14px;
+    max-width: 90%;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
   .pbScoreboardRibbon {
     top: 6px;

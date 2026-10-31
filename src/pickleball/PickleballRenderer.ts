@@ -91,6 +91,11 @@ export function mountPickleballHUD(host: HTMLElement, engine: PickleballEngine):
       ⭐ PERFECT!
     </div>
 
+    <!-- Prominent Serve Cue Banner -->
+    <div class="pbServeCue" id="pbServeCue" style="display:none">
+      🎾 LƯỢT BẠN GIAO BÓNG — Chạm sân hoặc bấm nút để giao!
+    </div>
+
     <!-- Bottom Controls Rail (Desktop & Mobile Optimized) -->
     <footer class="pbBottomControlRail">
       <!-- Horizontal Paddle Position Slider for Mobile Touch -->
@@ -175,7 +180,7 @@ function setupSliderControls(host: HTMLElement, engine: PickleballEngine): void 
     const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     thumb.style.left = `${ratio * 100}%`;
     // Map ratio [0, 1] to court X [-2.6, 2.6]
-    engine.playerPos.x = (ratio - 0.5) * 5.2;
+    engine.setPlayerX((ratio - 0.5) * 5.4);
   };
 
   track.addEventListener('pointerdown', (e) => {
@@ -239,6 +244,43 @@ export function updatePickleballHUD(host: HTMLElement, engine: PickleballEngine)
       } else {
         pbCache.rallyCountEl.style.display = 'none';
       }
+    }
+  }
+
+  // 4. Update Slider thumb position to match live playerPos.x
+  const thumbEl = host.querySelector('#pbSliderThumb') as HTMLElement | null;
+  if (thumbEl) {
+    const ratio = Math.max(0, Math.min(1, (engine.playerPos.x / 5.4) + 0.5));
+    thumbEl.style.left = `${ratio * 100}%`;
+  }
+
+  // 5. Update Smash button state when serving vs during rally
+  const smashBtn = host.querySelector('[data-pb-shot="smash"]') as HTMLElement | null;
+  const serveCueEl = host.querySelector('#pbServeCue') as HTMLElement | null;
+
+  if (engine.isServing && engine.currentServer === 'player') {
+    if (serveCueEl) serveCueEl.style.display = 'block';
+    if (smashBtn && !smashBtn.classList.contains('isServeState')) {
+      smashBtn.classList.add('isServeState');
+      smashBtn.innerHTML = `
+        <span class="shotIcon" style="animation:spinPulse 1.2s infinite">🎾</span>
+        <div class="shotMeta">
+          <span class="shotTitle">BẤM GIAO BÓNG!</span>
+          <span class="shotDesc">Chạm sân hoặc bấm nút</span>
+        </div>
+      `;
+    }
+  } else {
+    if (serveCueEl) serveCueEl.style.display = 'none';
+    if (smashBtn && smashBtn.classList.contains('isServeState')) {
+      smashBtn.classList.remove('isServeState');
+      smashBtn.innerHTML = `
+        <span class="shotIcon">🚀</span>
+        <div class="shotMeta">
+          <span class="shotTitle">ĐẬP SMASH</span>
+          <span class="shotDesc">Lực mạnh cuối sân</span>
+        </div>
+      `;
     }
   }
 }
