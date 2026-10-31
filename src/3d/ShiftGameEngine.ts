@@ -322,6 +322,7 @@ export class ShiftGameEngine {
       case 'whiteboard': return 'Họp Chiến Lược VIP 📊';
       case 'mirror': return 'Rửa Mặt Soi Gương 🪞';
       case 'boss_desk': return 'Trình Sếp Ký Duyệt 👔';
+      case 'pickleball': return 'Đấu Pickleball Xả Stress 🎾';
       default: return 'Làm Việc';
     }
   }
@@ -369,6 +370,9 @@ export class ShiftGameEngine {
     } else if (st.type === 'boss_desk') {
       desc = 'Báo cáo trực tiếp tiến độ đơn hàng với Giám Đốc Hùng: Trình ký xác nhận hồ sơ và nhận +50 điểm KPI!';
       buttonText = '👔 BÁO CÁO TIẾN ĐỘ (+50 đ)';
+    } else if (st.type === 'pickleball') {
+      desc = 'Sân Pickleball Công Sở: Đấu một séc kịch tính với đồng nghiệp để xả sạch -35% Stress 🔥 và gia tăng điểm thân thiết!';
+      buttonText = '🎾 VÀO SÂN ĐẤU NGAY';
     } else if (isTarget) {
       desc = `Nhiệm vụ đơn hàng: ${this.state.currentTask.stepDescription}.`;
       buttonText = `⚡ ${this.getPromptActionText(st.type)}`;
@@ -384,6 +388,12 @@ export class ShiftGameEngine {
     if (this.state.isFinished) return;
     const activeSt = stationOverride || this.stage.activeStation;
     if (!activeSt) return;
+
+    // Pickleball sports club
+    if (activeSt.type === 'pickleball') {
+      window.dispatchEvent(new CustomEvent('enter-pickleball-mode'));
+      return;
+    }
 
     // Coffee pantry
     if (activeSt.type === 'coffee') {

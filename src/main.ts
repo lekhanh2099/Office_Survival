@@ -43,6 +43,18 @@ import { sounds } from './audio/SoundManager';
 import { showToast } from './ui/Toast';
 import { CARDS } from './data/cards';
 import { ALL_PERKS } from './data/perks';
+import { PickleballEngine, ShotType } from './pickleball/PickleballEngine';
+import { PickleballStage } from './pickleball/PickleballStage';
+import {
+  mountPickleballHUD,
+  updatePickleballHUD,
+  showPickleballPointBanner,
+  showPickleballTimingBadge
+} from './pickleball/PickleballRenderer';
+import {
+  renderPickleballSettingsModal,
+  renderPickleballMatchOverModal
+} from './pickleball/PickleballModals';
 
 const ROOT = document.getElementById('root') as HTMLElement;
 const HOST = document.getElementById('dialogHost') as HTMLElement;
@@ -50,11 +62,18 @@ const APPROOT = document.getElementById('appRoot') as HTMLElement;
 const audioToggleBtn = document.getElementById('audioToggle') as HTMLButtonElement;
 const modeSwitchBtn = document.getElementById('modeSwitchBtn') as HTMLButtonElement | null;
 
-let currentMode: 'shift' | 'story' | 'battler' = 'shift';
+let currentMode: 'shift' | 'story' | 'battler' | 'pickleball' = 'shift';
 let shiftDay = 1;
 let engine: GameEngine;
 let battlerEngine: BattlerEngine;
 let active3DCard: Card3DCanvas | null = null;
+
+// Pickleball Mode Lifecycle
+let pbEngine: PickleballEngine | null = null;
+let pbStage: PickleballStage | null = null;
+let pbAnimFrameId: number | null = null;
+let pbPlayerDirX = 0;
+let pbLastFrameTime = performance.now();
 
 // 3D Shift Mode Lifecycle
 let shiftStage: OfficeStage | null = null;
@@ -221,6 +240,86 @@ function renderShiftMode(): void {
   shiftAnimFrameId = requestAnimationFrame(loop);
 }
 
+function cleanupPickleball(): void {
+  if (pbAnimFrameId) {
+    cancelAnimationFrame(pbAnimFrameId);
+    pbAnimFrameId = null;
+  }
+  pbStage?.destroy();
+  pbStage = null;
+  pbEngine = null;
+  pbPlayerDirX = 0;
+}
+
+function renderPickleballMode(): void {
+  cleanupPickleball();
+
+  ROOT.innerHTML = `
+    <div class="pbContainer" id="pbContainer">
+      <div id="pbCanvasHost"></div>
+      <div id="pbUIHost"></div>
+    </div>
+  `;
+
+  const canvasHost = document.getElementById('pbCanvasHost');
+  const uiHost = document.getElementById('pbUIHost');
+  if (!canvasHost || !uiHost) return;
+
+  pbEngine = new PickleballEngine({
+    opponentId: 'nga',
+    targetScore: 5,
+    ballSpeedFactor: 1.0,
+    autoPositionAssist: true
+  });
+
+  pbStage = new PickleballStage(canvasHost, pbEngine);
+
+  mountPickleballHUD(uiHost, pbEngine);
+
+  pbEngine.onPointScored = (result) => {
+    sounds.perk();
+    showPickleballPointBanner(result);
+  };
+
+  pbEngine.onBallHit = (_hitter, _shot, quality) => {
+    sounds.click();
+    showPickleballTimingBadge(quality);
+  };
+
+  pbEngine.onMatchFinished = (winner, stats) => {
+    if (winner === 'player') {
+      sounds.success();
+      burstHearts();
+    } else {
+      sounds.click();
+    }
+    HOST.innerHTML = renderPickleballMatchOverModal(winner, pbEngine!, stats);
+  };
+
+  (window as any).__pbEngine = pbEngine;
+  (window as any).__pbStage = pbStage;
+
+  pbLastFrameTime = performance.now();
+
+  const loop = (now: number) => {
+    if (!pbStage || !pbEngine) return;
+    const delta = Math.min((now - pbLastFrameTime) / 1000, 0.05);
+    pbLastFrameTime = now;
+
+    pbEngine.update(delta, pbPlayerDirX);
+    pbStage.update(delta);
+    pbStage.render();
+
+    if (uiHost) {
+      updatePickleballHUD(uiHost, pbEngine);
+    }
+
+    pbAnimFrameId = requestAnimationFrame(loop);
+  };
+
+  pbAnimFrameId = requestAnimationFrame(loop);
+}
+
 function render(): void {
   try {
     // Cleanup any active 3D card
@@ -232,6 +331,10 @@ function render(): void {
     if (currentMode !== 'shift') {
       cleanupShift();
     }
+    // Cleanup pickleball if we're not in pickleball mode
+    if (currentMode !== 'pickleball') {
+      cleanupPickleball();
+    }
 
     if (audioToggleBtn) {
       audioToggleBtn.textContent = sounds.isMuted() ? '🔇' : '🔊';
@@ -239,6 +342,8 @@ function render(): void {
     if (modeSwitchBtn) {
       if (currentMode === 'shift') {
         modeSwitchBtn.innerHTML = '<span class="btnIcon">🏢</span><span class="btnText">Ca Trực 3D</span>';
+      } else if (currentMode === 'pickleball') {
+        modeSwitchBtn.innerHTML = '<span class="btnIcon">🎾</span><span class="btnText">Pickleball</span>';
       } else if (currentMode === 'story') {
         modeSwitchBtn.innerHTML = '<span class="btnIcon">🎴</span><span class="btnText">Thẻ 3D</span>';
       } else {
@@ -248,6 +353,11 @@ function render(): void {
 
     if (currentMode === 'shift') {
       renderShiftMode();
+      return;
+    }
+
+    if (currentMode === 'pickleball') {
+      renderPickleballMode();
       return;
     }
 
@@ -478,6 +588,63 @@ document.addEventListener('click', (ev) => {
     }
   }
 
+  // Pickleball Shot Buttons
+  const pbShotBtn = target.closest('[data-pb-shot]') as HTMLElement | null;
+  if (pbShotBtn && currentMode === 'pickleball' && pbEngine) {
+    const shot = pbShotBtn.dataset.pbShot as ShotType;
+    if (pbEngine.isServing && pbEngine.currentServer === 'player') {
+      pbEngine.executeServe();
+    } else {
+      pbEngine.playerHitBall(shot);
+    }
+    return;
+  }
+
+  // Pickleball Settings Modal Item Selection
+  const pbOppBtn = target.closest('[data-pb-opponent]') as HTMLElement | null;
+  if (pbOppBtn) {
+    sounds.click();
+    document.querySelectorAll('.pbOpponentCard').forEach(el => {
+      el.classList.remove('active');
+      (el as HTMLElement).style.borderColor = '#cbd5e1';
+      (el as HTMLElement).style.background = '#f8fafc';
+    });
+    pbOppBtn.classList.add('active');
+    pbOppBtn.style.borderColor = '#0284c7';
+    pbOppBtn.style.background = '#eff6ff';
+    return;
+  }
+
+  const pbTargetBtn = target.closest('[data-pb-target]') as HTMLElement | null;
+  if (pbTargetBtn) {
+    sounds.click();
+    document.querySelectorAll('.pbTargetBtn').forEach(el => {
+      el.classList.remove('active');
+      (el as HTMLElement).style.background = '#ffffff';
+      (el as HTMLElement).style.color = '#334155';
+      (el as HTMLElement).style.borderColor = '#cbd5e1';
+    });
+    pbTargetBtn.classList.add('active');
+    pbTargetBtn.style.background = '#0284c7';
+    pbTargetBtn.style.color = '#ffffff';
+    pbTargetBtn.style.borderColor = '#0284c7';
+    return;
+  }
+
+  const pbPadBtn = target.closest('[data-pb-paddle]') as HTMLElement | null;
+  if (pbPadBtn) {
+    sounds.click();
+    document.querySelectorAll('.pbPaddleCard').forEach(el => {
+      el.classList.remove('active');
+      (el as HTMLElement).style.borderColor = '#cbd5e1';
+      (el as HTMLElement).style.background = '#ffffff';
+    });
+    pbPadBtn.classList.add('active');
+    pbPadBtn.style.borderColor = '#10b981';
+    pbPadBtn.style.background = '#f0fdf4';
+    return;
+  }
+
   const btn = target.closest('[data-act],[data-choice],[data-perk]') as HTMLElement | null;
   if (!btn) return;
 
@@ -502,6 +669,74 @@ document.addEventListener('click', (ev) => {
   }
 
   switch (btn.dataset.act) {
+    case 'open_pb_settings':
+      if (pbEngine) {
+        sounds.click();
+        HOST.innerHTML = renderPickleballSettingsModal(pbEngine);
+      }
+      break;
+    case 'close_pb_settings':
+      sounds.click();
+      HOST.innerHTML = '';
+      break;
+    case 'save_pb_settings': {
+      sounds.success();
+      if (pbEngine) {
+        const oppCard = HOST.querySelector('.pbOpponentCard.active') as HTMLElement | null;
+        const oppId = (oppCard?.dataset.pbOpponent || 'nga') as any;
+        const tgtBtn = HOST.querySelector('.pbTargetBtn.active') as HTMLElement | null;
+        const targetScore = Number(tgtBtn?.dataset.pbTarget || 5) as 5 | 7 | 11;
+        const padCard = HOST.querySelector('.pbPaddleCard.active') as HTMLElement | null;
+        const paddleId = padCard?.dataset.pbPaddle || 'carbon_genz';
+        const autoAssist = (document.getElementById('pbAutoAssistCheck') as HTMLInputElement)?.checked ?? true;
+        const fastSpeed = (document.getElementById('pbFastSpeedCheck') as HTMLInputElement)?.checked ?? false;
+
+        pbEngine.updateSettings({
+          opponentId: oppId,
+          targetScore: targetScore,
+          selectedPaddleId: paddleId,
+          autoPositionAssist: autoAssist,
+          ballSpeedFactor: fastSpeed ? 1.25 : 1.0
+        });
+        pbStage?.updateOpponentVisuals();
+        const uiHostEl = document.getElementById('pbUIHost');
+        if (uiHostEl) mountPickleballHUD(uiHostEl, pbEngine);
+        HOST.innerHTML = '';
+        showToast(`🎾 Đã sẵn sàng thi đấu cùng ${pbEngine.opponent.name}!`);
+      }
+      break;
+    }
+    case 'exit_pb':
+      sounds.click();
+      currentMode = 'shift';
+      render();
+      break;
+    case 'pb_play_again':
+      sounds.success();
+      HOST.innerHTML = '';
+      pbEngine?.resetMatch();
+      break;
+    case 'pb_exit_to_campus':
+      sounds.click();
+      HOST.innerHTML = '';
+      if (shiftEngine) {
+        const s = shiftEngine.getState();
+        s.stress = Math.max(0, s.stress - 35);
+        const oppId = pbEngine?.opponent.id;
+        if (oppId && s.colleagueFavors[oppId] !== undefined) {
+          s.colleagueFavors[oppId] = Math.min(100, s.colleagueFavors[oppId] + 20);
+        }
+        showToast('🧘 Tinh thần sảng khoái: -35% Stress 🔥 và +20% Thân thiết đồng nghiệp!');
+      }
+      currentMode = 'shift';
+      render();
+      break;
+    case 'shift_play_pickleball':
+      sounds.success();
+      HOST.innerHTML = '';
+      currentMode = 'pickleball';
+      render();
+      break;
     case 'start_shift':
       sounds.click();
       currentMode = 'shift';
@@ -795,6 +1030,9 @@ document.addEventListener('click', (ev) => {
 modeSwitchBtn?.addEventListener('click', () => {
   sounds.click();
   if (currentMode === 'shift') {
+    currentMode = 'pickleball';
+    showToast('🎾 Đã bật Sân Pickleball Công Sở!');
+  } else if (currentMode === 'pickleball') {
     currentMode = 'story';
     showToast('🎴 Đã bật chế độ Cốt Truyện Thẻ Bài 3D!');
   } else if (currentMode === 'story') {
@@ -805,6 +1043,30 @@ modeSwitchBtn?.addEventListener('click', () => {
     showToast('🏢 Đã bật chế độ Ca Trực 3D Chibi!');
   }
   render();
+});
+
+// Custom Event to enter Pickleball directly from Campus workstation or ending
+window.addEventListener('enter-pickleball-mode', () => {
+  sounds.perk();
+  showToast('🎾 Đang bước vào Sân Pickleball Công Sở...');
+  currentMode = 'pickleball';
+  render();
+});
+
+// Pointer down/up for Mobile left/right paddle nudge buttons
+document.addEventListener('pointerdown', (e) => {
+  const target = e.target as HTMLElement;
+  if (target.closest('#pbMoveLeftBtn')) {
+    pbPlayerDirX = -1;
+  } else if (target.closest('#pbMoveRightBtn')) {
+    pbPlayerDirX = 1;
+  }
+});
+
+document.addEventListener('pointerup', () => {
+  if (currentMode === 'pickleball' && pbPlayerDirX !== 0) {
+    pbPlayerDirX = 0;
+  }
 });
 
 audioToggleBtn.addEventListener('click', () => {
@@ -907,6 +1169,41 @@ document.addEventListener('keydown', (e) => {
   const key = e.key.toLowerCase();
   const state = engine.getState();
 
+  // Pickleball Controls
+  if (currentMode === 'pickleball' && pbEngine) {
+    if (key === 'arrowleft' || key === 'a') {
+      pbPlayerDirX = -1;
+    } else if (key === 'arrowright' || key === 'd') {
+      pbPlayerDirX = 1;
+    } else if (key === 'j') {
+      if (pbEngine.isServing && pbEngine.currentServer === 'player') {
+        pbEngine.executeServe();
+      } else {
+        pbEngine.playerHitBall('smash');
+      }
+    } else if (key === 'k') {
+      if (pbEngine.isServing && pbEngine.currentServer === 'player') {
+        pbEngine.executeServe();
+      } else {
+        pbEngine.playerHitBall('dink');
+      }
+    } else if (key === 'l') {
+      if (pbEngine.isServing && pbEngine.currentServer === 'player') {
+        pbEngine.executeServe();
+      } else {
+        pbEngine.playerHitBall('curve');
+      }
+    } else if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      if (pbEngine.isServing && pbEngine.currentServer === 'player') {
+        pbEngine.executeServe();
+      } else {
+        pbEngine.playerHitBall('smash');
+      }
+    }
+    return;
+  }
+
   if (state.stage === 'play') {
     let choiceIdx = -1;
     if (/^[123]$/.test(key)) choiceIdx = Number(key) - 1;
@@ -935,6 +1232,17 @@ document.addEventListener('keydown', (e) => {
     const isMuted = sounds.toggle();
     audioToggleBtn.textContent = isMuted ? '🔇' : '🔊';
     showToast(isMuted ? 'Đã tắt âm thanh' : 'Đã bật âm thanh');
+  }
+});
+
+document.addEventListener('keyup', (e) => {
+  const key = e.key.toLowerCase();
+  if (currentMode === 'pickleball') {
+    if ((key === 'arrowleft' || key === 'a') && pbPlayerDirX < 0) {
+      pbPlayerDirX = 0;
+    } else if ((key === 'arrowright' || key === 'd') && pbPlayerDirX > 0) {
+      pbPlayerDirX = 0;
+    }
   }
 });
 

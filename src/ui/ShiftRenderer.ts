@@ -18,7 +18,8 @@ const stationCoords: Record<string, [number, number]> = {
   mirror: [-21.0, 1.0],
   boss_desk: [-18.0, -19.5],
   showroom: [-3.5, -17.5],
-  balcony: [19.0, 0.0]
+  balcony: [19.0, 0.0],
+  pickleball: [22.0, -16.0]
 };
 
 function esc(t?: string | number | null): string {
@@ -740,6 +741,9 @@ export function renderShiftFinishModal(state: ShiftState): string {
     ` : ''}
 
     <div class="buttons" style="margin-top:14px;gap:8px">
+      <button class="accent" data-act="shift_play_pickleball" type="button" style="width:100%;padding:12px;font-size:13px;font-weight:900;background:linear-gradient(135deg, #0284c7, #0369a1);color:#ffffff;border:none;border-radius:12px;cursor:pointer;margin-bottom:6px;box-shadow:0 4px 14px rgba(2,132,199,0.4)">
+        🎾 Tan Ca Đi Đánh Pickleball Với Đồng Nghiệp (-35% Stress)
+      </button>
       <button class="primary btnNextShift" data-act="shift_next_day" style="padding:11px 16px;font-weight:900;font-size:13px">
         ☀️ BƯỚC VÀO CA TRỰC NGÀY TIẾP THEO →
       </button>

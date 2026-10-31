@@ -25,7 +25,8 @@ export interface Workstation {
     | 'mirror'
     | 'boss_desk'
     | 'showroom'
-    | 'balcony';
+    | 'balcony'
+    | 'pickleball';
   mesh: THREE.Group;
   indicatorMesh: THREE.Mesh;
   billboardSprite?: THREE.Sprite;
@@ -3022,6 +3023,11 @@ export class OfficeStage {
     // 16. Ban Công Hóng Gió & Lounge
     const balconyG = this.createBalconyLounge(19.0, 0.0);
     this.addStation('balcony', 'Ban Công Hóng Gió & Lounge', 'Ban Công Ngoài Trời', '🌿', new THREE.Vector3(19.0, 0, 0.0), 2.6, balconyG);
+
+    // 17. Sân Pickleball Công Sở (CLB Thể Thao Ngoài Trời)
+    const pickleG = this.createCampusPickleballCourt(22.0, -16.0);
+    this.addStation('pickleball', 'Sân Pickleball Công Sở', 'CLB Thể Thao', '🎾', new THREE.Vector3(22.0, 0, -16.0), 3.0, pickleG);
+    this.addObstacle('pickle_net', 22.0, -16.0, 6.4, 0.3);
   }
 
   private createShowroomFitting(x: number, z: number): THREE.Group {
@@ -3164,6 +3170,156 @@ export class OfficeStage {
     const chair2 = chair1.clone();
     chair2.position.set(0.2, 0.35, 1.0);
     g.add(chair2);
+
+    this.scene.add(g);
+    return g;
+  }
+
+  private createCampusPickleballCourt(x: number, z: number): THREE.Group {
+    const g = new THREE.Group();
+    g.position.set(x, 0, z);
+
+    // 1. Acrylic Court Base (6.4m wide x 8.4m long)
+    const baseCourt = new THREE.Mesh(
+      new THREE.BoxGeometry(6.4, 0.04, 8.4),
+      new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.4 })
+    );
+    baseCourt.position.y = 0.02;
+    baseCourt.receiveShadow = true;
+    g.add(baseCourt);
+
+    // 2. Kitchen Zone (Emerald Green, 6.0m wide x 2.8m long)
+    const kitchenMat = new THREE.Mesh(
+      new THREE.PlaneGeometry(6.0, 2.8),
+      new THREE.MeshStandardMaterial({ color: 0x059669, roughness: 0.35 })
+    );
+    kitchenMat.rotation.x = -Math.PI / 2;
+    kitchenMat.position.y = 0.042;
+    kitchenMat.receiveShadow = true;
+    g.add(kitchenMat);
+
+    // 3. Court Lines (White)
+    const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const borderGeos = [
+      { w: 6.0, h: 0.08, px: 0, pz: -4.0 },
+      { w: 6.0, h: 0.08, px: 0, pz: 4.0 },
+      { w: 0.08, h: 8.0, px: -3.0, pz: 0 },
+      { w: 0.08, h: 8.0, px: 3.0, pz: 0 },
+      { w: 6.0, h: 0.08, px: 0, pz: -1.4 },
+      { w: 6.0, h: 0.08, px: 0, pz: 1.4 },
+      { w: 0.08, h: 2.6, px: 0, pz: -2.7 },
+      { w: 0.08, h: 2.6, px: 0, pz: 2.7 }
+    ];
+    for (const bg of borderGeos) {
+      const line = new THREE.Mesh(new THREE.PlaneGeometry(bg.w, bg.h), lineMat);
+      line.rotation.x = -Math.PI / 2;
+      line.position.set(bg.px, 0.044, bg.pz);
+      g.add(line);
+    }
+
+    // 4. Pickleball Net
+    const postMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9 });
+    const postL = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.85, 12), postMat);
+    postL.position.set(-3.2, 0.425, 0);
+    g.add(postL);
+    const postR = postL.clone();
+    postR.position.set(3.2, 0.425, 0);
+    g.add(postR);
+
+    // Net mesh
+    const netMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(6.4, 0.72, 0.02),
+      new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8, transparent: true, opacity: 0.85 })
+    );
+    netMesh.position.set(0, 0.46, 0);
+    g.add(netMesh);
+
+    // Top vinyl tape
+    const netTape = new THREE.Mesh(
+      new THREE.BoxGeometry(6.42, 0.06, 0.05),
+      new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 })
+    );
+    netTape.position.set(0, 0.82, 0);
+    g.add(netTape);
+
+    // Center strap
+    const strap = new THREE.Mesh(
+      new THREE.BoxGeometry(0.06, 0.76, 0.05),
+      new THREE.MeshStandardMaterial({ color: 0xffffff })
+    );
+    strap.position.set(0, 0.44, 0);
+    g.add(strap);
+
+    // 5. Court Billboard / Marquee Banner
+    const boardPillar1 = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.2, 12), postMat);
+    boardPillar1.position.set(-2.2, 1.1, -4.3);
+    g.add(boardPillar1);
+    const boardPillar2 = boardPillar1.clone();
+    boardPillar2.position.set(2.2, 1.1, -4.3);
+    g.add(boardPillar2);
+
+    const signBoard = new THREE.Mesh(
+      new THREE.BoxGeometry(4.8, 0.8, 0.08),
+      new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.3 })
+    );
+    signBoard.position.set(0, 2.0, -4.3);
+    g.add(signBoard);
+
+    const signCanvas = document.createElement('canvas');
+    signCanvas.width = 512;
+    signCanvas.height = 128;
+    const sctx = signCanvas.getContext('2d');
+    if (sctx) {
+      sctx.fillStyle = '#0284c7';
+      sctx.fillRect(0, 0, 512, 128);
+      sctx.strokeStyle = '#38bdf8';
+      sctx.lineWidth = 6;
+      sctx.strokeRect(4, 4, 504, 120);
+      sctx.fillStyle = '#fef08a';
+      sctx.font = 'bold 36px sans-serif';
+      sctx.textAlign = 'center';
+      sctx.textBaseline = 'middle';
+      sctx.fillText('🎾 CLB PICKLEBALL CÔNG SỞ 🏓', 256, 48);
+      sctx.fillStyle = '#ffffff';
+      sctx.font = 'bold 22px sans-serif';
+      sctx.fillText('Giao lưu đồng nghiệp • Xả sạch stress', 256, 92);
+    }
+    const signTex = new THREE.CanvasTexture(signCanvas);
+    const signFace = new THREE.Mesh(
+      new THREE.PlaneGeometry(4.7, 0.75),
+      new THREE.MeshBasicMaterial({ map: signTex, transparent: true })
+    );
+    signFace.position.set(0, 2.0, -4.25);
+    g.add(signFace);
+
+    // 6. Sideline Bench with Paddle and Water Bottles
+    const bench = new THREE.Mesh(
+      new THREE.BoxGeometry(0.5, 0.38, 2.0),
+      new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.6 })
+    );
+    bench.position.set(-3.5, 0.19, 0);
+    bench.castShadow = true;
+    g.add(bench);
+
+    // 2 Paddles resting on bench
+    const paddleMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.3 });
+    const paddle1 = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.03, 0.38), paddleMat);
+    paddle1.position.set(-3.5, 0.40, -0.4);
+    paddle1.rotation.y = 0.2;
+    g.add(paddle1);
+
+    const paddle2 = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.03, 0.38), new THREE.MeshStandardMaterial({ color: 0xef4444 }));
+    paddle2.position.set(-3.5, 0.40, 0.4);
+    paddle2.rotation.y = -0.15;
+    g.add(paddle2);
+
+    // Neon Yellow Pickleball on bench
+    const pbBall = new THREE.Mesh(
+      new THREE.SphereGeometry(0.09, 16, 16),
+      new THREE.MeshStandardMaterial({ color: 0xd9f99d, roughness: 0.2, emissive: 0x84cc16, emissiveIntensity: 0.35 })
+    );
+    pbBall.position.set(-3.5, 0.47, 0);
+    g.add(pbBall);
 
     this.scene.add(g);
     return g;

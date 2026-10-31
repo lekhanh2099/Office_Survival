@@ -2732,3 +2732,477 @@ body:has(#dialogHost:not(:empty)) .virtualControlsOverlay {
 
 
 
+
+/* ==========================================================================
+   PICKLEBALL SPORTS CLUB - 3D Minigame & Match HUD Styles
+   ========================================================================== */
+
+.pbContainer {
+  position: relative;
+  width: 100%;
+  height: 640px;
+  min-height: 520px;
+  border: 2px solid var(--ink);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 4px 4px 0 var(--ink);
+  background: #0f172a;
+  user-select: none;
+  touch-action: none;
+  -webkit-user-select: none;
+}
+
+@media (min-width: 900px) {
+  .app:has(.pbContainer) {
+    max-width: 1040px;
+    padding-top: 10px;
+  }
+
+  .pbContainer {
+    height: 680px;
+  }
+}
+
+@media (max-width: 540px) {
+  .pbContainer {
+    height: calc(100dvh - 86px);
+    min-height: 480px;
+    max-height: 780px;
+    border-radius: 16px;
+    margin: 0 auto;
+  }
+}
+
+#pbCanvasHost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+#pbUIHost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Top Match Scoreboard Ribbon */
+.pbScoreboardRibbon {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  pointer-events: auto;
+  z-index: 12;
+}
+
+.pbPlayerScoreCard,
+.pbOpponentScoreCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+  padding: 6px 14px;
+  box-shadow: 2px 2px 0 var(--ink);
+  color: #ffffff;
+}
+
+.pbOpponentScoreCard {
+  flex-direction: row-reverse;
+}
+
+.pbAvatar {
+  font-size: 22px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+}
+
+.pbName {
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.pbPaddleTag,
+.pbRoleTag {
+  font-size: 10px;
+  color: #94a3b8;
+  font-weight: 700;
+}
+
+.pbScoreDigit {
+  font-size: 24px;
+  font-weight: 900;
+  color: #facc15;
+  background: #0f172a;
+  border-radius: 8px;
+  padding: 2px 10px;
+  border: 1.5px solid rgba(250, 204, 21, 0.4);
+}
+
+.pbCenterMatchInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.pbTargetBadge {
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 3px 10px;
+  border-radius: 100px;
+  border: 1.5px solid var(--ink);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+.pbServerBadge {
+  background: rgba(15, 23, 42, 0.88);
+  color: #facc15;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(250, 204, 21, 0.3);
+}
+
+.pbRallyCounter {
+  background: #ea580c;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 6px;
+  animation: pulse 1s infinite alternate;
+}
+
+.pbHeadActions {
+  display: flex;
+  gap: 6px;
+}
+
+.pbHeadBtn {
+  background: rgba(15, 23, 42, 0.9);
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  font-size: 16px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 1.5px 1.5px 0 var(--ink);
+  color: #ffffff;
+  transition: transform 0.1s, background 0.15s;
+}
+
+.pbHeadBtn:hover {
+  background: #0284c7;
+  transform: scale(1.08);
+}
+
+/* Center Floating Point / Fault Banner */
+.pbCenterBanner {
+  position: absolute;
+  top: 28%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(15, 23, 42, 0.96);
+  border: 3.5px solid #22c55e;
+  border-radius: 18px;
+  padding: 14px 28px;
+  text-align: center;
+  box-shadow: 4px 4px 0 var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 20;
+}
+
+.pbCenterBanner .bannerText {
+  font-size: 22px;
+  font-weight: 900;
+  color: #facc15;
+}
+
+.pbCenterBanner .bannerSubtext {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.bannerAnimate {
+  animation: pbBannerPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes pbBannerPop {
+  0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(1.0); opacity: 1; }
+}
+
+/* Colleague Speech Dialogue Bubble */
+.pbDialogueBubble {
+  position: absolute;
+  top: 14%;
+  right: 20px;
+  background: #ffffff;
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+  padding: 8px 12px;
+  box-shadow: 3px 3px 0 var(--ink);
+  max-width: 220px;
+  z-index: 15;
+}
+
+.pbDialogueBubble .bubbleTail {
+  position: absolute;
+  top: -8px;
+  right: 28px;
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 8px solid #ffffff;
+}
+
+.pbDialogueBubble .bubbleContent {
+  font-size: 12px;
+  color: #0f172a;
+  line-height: 1.35;
+}
+
+.pbDialogueBubble .bubbleContent b {
+  color: #0284c7;
+  display: block;
+  font-size: 11px;
+}
+
+.speechPop {
+  animation: pbSpeechAnim 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes pbSpeechAnim {
+  0% { transform: scale(0.7) translateY(-10px); opacity: 0; }
+  100% { transform: scale(1.0) translateY(0); opacity: 1; }
+}
+
+/* Timing Quality Hit Badge */
+.pbTimingBadge {
+  position: absolute;
+  bottom: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.92);
+  border: 2px solid var(--ink);
+  border-radius: 100px;
+  padding: 4px 16px;
+  font-size: 14px;
+  font-weight: 900;
+  box-shadow: 2px 2px 0 var(--ink);
+  z-index: 18;
+}
+
+.timingPop {
+  animation: timingBadgePop 0.4s ease-out;
+}
+
+@keyframes timingBadgePop {
+  0% { transform: translateX(-50%) translateY(10px) scale(0.7); opacity: 0; }
+  50% { transform: translateX(-50%) translateY(0) scale(1.15); opacity: 1; }
+  100% { transform: translateX(-50%) translateY(-15px) scale(1.0); opacity: 0.9; }
+}
+
+/* Bottom Control Rail */
+.pbBottomControlRail {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+  z-index: 14;
+}
+
+/* Horizontal Paddle Position Slider */
+.pbPositionControlArea {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pbMoveBtn {
+  background: #1e293b;
+  border: 2px solid var(--ink);
+  color: #ffffff;
+  border-radius: 12px;
+  width: 44px;
+  height: 40px;
+  font-size: 16px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.pbMoveBtn:active {
+  transform: translateY(1.5px);
+  box-shadow: none;
+}
+
+.pbSliderTrack {
+  flex: 1;
+  height: 40px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  position: relative;
+  touch-action: none;
+  cursor: ew-resize;
+  box-shadow: 2px 2px 0 var(--ink);
+  display: flex;
+  align-items: center;
+}
+
+.pbSliderThumb {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 4px 14px;
+  border-radius: 100px;
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 0 8px rgba(2, 132, 199, 0.6);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* 3 Shot Action Buttons */
+.pbShotButtonsGroup {
+  width: 100%;
+  max-width: 460px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.pbShotBtn {
+  border: 2.5px solid var(--ink);
+  border-radius: 14px;
+  padding: 8px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  box-shadow: 2.5px 2.5px 0 var(--ink);
+  transition: transform 0.08s, filter 0.1s;
+  color: #ffffff;
+}
+
+.pbShotBtn:active {
+  transform: translateY(2px);
+  box-shadow: 0.5px 0.5px 0 var(--ink);
+}
+
+.pbShotBtn .shotIcon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.pbShotBtn .shotMeta {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.pbShotBtn .shotTitle {
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.pbShotBtn .shotDesc {
+  font-size: 9px;
+  opacity: 0.85;
+  font-weight: 700;
+}
+
+.btnSmash {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+}
+
+.btnDink {
+  background: linear-gradient(135deg, #10b981, #047857);
+}
+
+.btnCurve {
+  background: linear-gradient(135deg, #6366f1, #4338ca);
+}
+
+.pbKeyboardHint {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 700;
+  background: rgba(15, 23, 42, 0.75);
+  padding: 3px 12px;
+  border-radius: 100px;
+}
+
+@media (max-width: 600px) {
+  .pbKeyboardHint {
+    display: none;
+  }
+  .pbScoreboardRibbon {
+    top: 6px;
+    left: 6px;
+    right: 6px;
+  }
+  .pbPlayerScoreCard,
+  .pbOpponentScoreCard {
+    padding: 4px 8px;
+    gap: 6px;
+  }
+  .pbAvatar {
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+  }
+  .pbScoreDigit {
+    font-size: 18px;
+    padding: 2px 6px;
+  }
+  .pbBottomControlRail {
+    bottom: 6px;
+    left: 6px;
+    right: 6px;
+  }
+}

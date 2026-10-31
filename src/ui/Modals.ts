@@ -610,7 +610,8 @@ export function openCampusMapModal(
       stations: [
         { type: 'lab', name: '🔬 Phòng Lab Soi Màu D65', desc: 'Đo độ lệch Delta E cùng Em Linh' },
         { type: 'showroom', name: '👗 Showroom Mẫu & Fitting', desc: 'Lấy áo mẫu & soi form dáng' },
-        { type: 'whiteboard', name: '📊 Bảng Chiến Lược Q4', desc: 'Phòng họp VIP Boardroom' }
+        { type: 'whiteboard', name: '📊 Bảng Chiến Lược Q4', desc: 'Phòng họp VIP Boardroom' },
+        { type: 'pickleball', name: '🎾 Sân Pickleball Công Sở', desc: 'Đấu Pickleball vs đồng nghiệp xả stress' }
       ]
     },
     {
