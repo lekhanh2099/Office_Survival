@@ -300,6 +300,7 @@ export class PickleballEngine {
     spinX: 0,
     spinY: 0,
     spinZ: 0,
+    squashY: 1.0,
     radius: 0.11,
     inPlay: false,
     bouncesSinceHit: 0,
@@ -469,8 +470,10 @@ export class PickleballEngine {
     flightTime: number,
     desiredNetClearance = 0.35
   ): { vx: number; vy: number; vz: number } {
-    const vx = (targetX - startX) / flightTime;
-    const vz = (targetZ - startZ) / flightTime;
+    // Air drag compensation factor for wiffle ball deceleration
+    const dragComp = 1.0 + 0.045 * flightTime;
+    const vx = ((targetX - startX) / flightTime) * dragComp;
+    const vz = ((targetZ - startZ) / flightTime) * dragComp;
 
     // Time to reach net plane (Z = 0): startZ + vz * tNet = 0 => tNet = -startZ / vz
     let vy: number;
@@ -496,7 +499,7 @@ export class PickleballEngine {
     this.playerStamina = 100;
     this.aiStamina = 100;
     this.targetLanding = null;
-    this.tacticalHint = '🎾 Lượt bạn giao bóng: Chạm sân để phát bóng!';
+    this.tacticalHint = '🎯 Giao bóng chéo sân sang góc xa để mở thế trận!';
     this.shotOpportunity = { smashReady: false, dinkFavorable: false, lowBallRisk: false };
     this.isMatchOver = false;
     this.matchWinner = null;
@@ -706,6 +709,7 @@ export class PickleballEngine {
     this.ball.lastHitter = 'player';
     this.ball.bouncesSinceHit = 0;
     this.ball.hasClearedNet = false;
+    this.ball.squashY = 0.70;
     this.bufferedShot = null;
 
     let targetX: number;
@@ -725,6 +729,8 @@ export class PickleballEngine {
       targetZ = -5.4 - Math.random() * 0.3;
       flightTime = (isHighBall ? 0.46 : 0.54) / powerMult;
       desiredClearance = 0.28;
+      this.ball.spinZ = 3.6; // Heavy topspin dips sharply down into backcourt
+      this.ball.spinX = (Math.random() - 0.5) * 1.0;
       this.tacticalHint = '🚀 Cú ĐẬP SMASH sấm sét! Ép đối thủ lùi sâu!';
     } else if (shotType === 'dink') {
       // DINK recovers stamina!
@@ -736,6 +742,8 @@ export class PickleballEngine {
       targetZ = -1.2 - Math.random() * 0.5;
       flightTime = 0.88;
       desiredClearance = 0.44;
+      this.ball.spinZ = -2.4; // Backspin float: hovers softly over net, drops dead
+      this.ball.spinX = 0;
 
       if (this.aiPos.z < -4.6) {
         this.tacticalHint = `🏓 Bỏ nhỏ Kitchen hiểm! ${this.opponent.name} bị hụt trớn!`;
@@ -750,7 +758,8 @@ export class PickleballEngine {
       targetZ = -4.8 - Math.random() * 0.3;
       flightTime = 0.68 / powerMult;
       desiredClearance = 0.34;
-      this.ball.spinX = openRight ? 4.2 : -4.2;
+      this.ball.spinX = openRight ? 4.4 : -4.4;
+      this.ball.spinZ = 1.0;
       this.tacticalHint = `🌀 Đổi góc hiểm sang ${openRight ? 'phải' : 'trái'}! Ép đối thủ di chuyển!`;
     } else {
       // Drive: standard crosscourt return
@@ -761,6 +770,8 @@ export class PickleballEngine {
       targetZ = -4.9;
       flightTime = 0.74 / powerMult;
       desiredClearance = 0.36;
+      this.ball.spinZ = 1.0;
+      this.ball.spinX = (Math.random() - 0.5) * 0.8;
       this.tacticalHint = '🎾 Đẩy bóng an toàn, chờ thời cơ dứt điểm!';
     }
 
@@ -873,6 +884,8 @@ export class PickleballEngine {
         targetZ = 1.3 + Math.random() * 0.5; // drops just over net into kitchen
         flightTime = 0.88;
         desiredClearance = 0.45;
+        this.ball.spinZ = -2.2;
+        this.ball.spinX = 0;
       }
       // TACTIC 2: Smash Punish if player rushed to kitchen or incoming ball is high floater
       else if ((isPlayerNearKitchen || this.ball.y > 1.15) && rand < (this.opponent.smashTendency * 1.35)) {
@@ -881,6 +894,7 @@ export class PickleballEngine {
         targetZ = 5.3;
         flightTime = 0.56 / (this.opponent.power * this.settings.ballSpeedFactor);
         desiredClearance = 0.32;
+        this.ball.spinZ = 3.4;
       }
       // TACTIC 3: Curve Spin outward away from player
       else if (rand < this.opponent.spinTendency) {
@@ -889,7 +903,8 @@ export class PickleballEngine {
         targetZ = 4.6;
         flightTime = 0.76 / (this.opponent.power * this.settings.ballSpeedFactor);
         desiredClearance = 0.36;
-        this.ball.spinX = targetX > 0 ? -3.5 : 3.5;
+        this.ball.spinX = targetX > 0 ? -3.8 : 3.8;
+        this.ball.spinZ = 1.0;
       }
       // TACTIC 4: Crosscourt drive into open corner
       else {
@@ -898,11 +913,13 @@ export class PickleballEngine {
         targetZ = 4.8;
         flightTime = 0.78;
         desiredClearance = 0.36;
+        this.ball.spinZ = 0.8;
       }
     }
 
     targetX = Math.max(-2.55, Math.min(2.55, targetX));
     this.targetLanding = { x: targetX, z: targetZ, hitter: 'ai', type: chosenShot };
+    this.ball.squashY = 0.70;
 
     const traj = this.calculateTrajectory(
       this.ball.x,
@@ -1142,14 +1159,34 @@ export class PickleballEngine {
 
     // 4. Ball 3D Physics Integration
     if (this.ball.inPlay) {
+      // Squash & Stretch Recovery
+      if (this.ball.squashY < 1.0) {
+        this.ball.squashY += (1.0 - this.ball.squashY) * Math.min(1, 16 * delta);
+      }
+
+      // Aerodynamic Air Drag for realistic wiffle ball flight deceleration
+      const hSpeed = Math.hypot(this.ball.vx, this.ball.vz);
+      if (hSpeed > 0.4) {
+        const dragFactor = Math.min(0.2, 0.048 * hSpeed * delta);
+        this.ball.vx -= this.ball.vx * dragFactor;
+        this.ball.vz -= this.ball.vz * dragFactor;
+      }
+
+      // Magnus Spin Dynamics:
+      // Topspin (spinZ > 0) pulls down sharply; Backspin (spinZ < 0) provides aerodynamic float/lift
+      if (Math.abs(this.ball.spinZ) > 0.05) {
+        this.ball.vy -= this.ball.spinZ * delta * 1.5;
+        this.ball.spinZ *= Math.pow(0.97, delta * 60);
+      }
+
+      // Sidespin curves sideways in the air
+      if (Math.abs(this.ball.spinX) > 0.05) {
+        this.ball.vx += this.ball.spinX * delta * 2.2;
+        this.ball.spinX *= Math.pow(0.96, delta * 60);
+      }
+
       const gravity = -11.2;
       this.ball.vy += gravity * delta;
-
-      // Apply Spin Curve Deflection
-      if (Math.abs(this.ball.spinX) > 0.01) {
-        this.ball.vx += this.ball.spinX * delta * 2.2;
-        this.ball.spinX *= 0.96;
-      }
 
       this.ball.x += this.ball.vx * delta;
       this.ball.y += this.ball.vy * delta;
@@ -1186,6 +1223,7 @@ export class PickleballEngine {
       if (this.ball.y <= this.ball.radius) {
         this.ball.y = this.ball.radius;
         this.ball.bouncesSinceHit++;
+        this.ball.squashY = 0.65; // Elastic squash deformation on impact
 
         // Check if bounce was out of bounds
         const isOutOfBounds = Math.abs(this.ball.x) > this.courtWidth / 2 || Math.abs(this.ball.z) > this.courtLength / 2;
