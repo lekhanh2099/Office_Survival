@@ -3,7 +3,7 @@
 // ============================================================================
 
 import * as THREE from 'three';
-import { PickleballEngine } from './PickleballEngine';
+import { PickleballEngine, type ShotType, type ShotQuality } from './PickleballEngine';
 
 export class PickleballStage {
   private container: HTMLElement;
@@ -84,18 +84,21 @@ export class PickleballStage {
     window.addEventListener('resize', this.onResize);
 
     // Register engine hit events for visual particle bursts
-    this.engine.onBallHit = (hitter, _shot, quality) => {
-      this.spawnHitBurst(
-        this.engine.ball.x,
-        this.engine.ball.y,
-        this.engine.ball.z,
-        quality === 'perfect' ? 0xfacc15 : (hitter === 'player' ? 0x38bdf8 : 0xef4444)
-      );
-    };
+    this.engine.onBallHit = this.onHit.bind(this);
+    this.engine.onBallBounce = this.onBounce.bind(this);
+  }
 
-    this.engine.onBallBounce = (x, z, isFault) => {
-      this.spawnBouncePuff(x, 0.04, z, isFault ? 0xef4444 : 0xffffff);
-    };
+  public onHit(hitter: 'player' | 'ai', _shot: ShotType, quality: ShotQuality): void {
+    this.spawnHitBurst(
+      this.engine.ball.x,
+      this.engine.ball.y,
+      this.engine.ball.z,
+      quality === 'perfect' ? 0xfacc15 : (hitter === 'player' ? 0x38bdf8 : 0xef4444)
+    );
+  }
+
+  public onBounce(x: number, z: number, isFault: boolean): void {
+    this.spawnBouncePuff(x, 0.04, z, isFault ? 0xef4444 : 0xffffff);
   }
 
   private setupLighting(): void {

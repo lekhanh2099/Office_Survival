@@ -96,6 +96,21 @@ export class SoundManager {
     this.tone(554.37, 'triangle', 0.1, 0.16, 0.01, 0.07);
     this.tone(659.25, 'sine', 0.22, 0.18, 0.01, 0.14);
   }
+
+  pickleballPaddleHit(isSmash = false): void {
+    if (isSmash) {
+      this.tone(480, 'sine', 0.06, 0.35, 0.01);
+      this.tone(200, 'triangle', 0.08, 0.28, 0.01, 0.02);
+      this.tone(110, 'square', 0.1, 0.22, 0.01, 0.03);
+    } else {
+      this.tone(360, 'sine', 0.05, 0.28, 0.01);
+      this.tone(220, 'triangle', 0.07, 0.2, 0.01, 0.02);
+    }
+  }
+
+  pickleballBounce(): void {
+    this.tone(260, 'sine', 0.04, 0.16, 0.01);
+  }
 }
 
 export const sounds = new SoundManager();

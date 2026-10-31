@@ -328,9 +328,15 @@ function renderPickleballMode(): void {
     showPickleballPointBanner(result);
   };
 
-  pbEngine.onBallHit = (_hitter, _shot, quality) => {
-    sounds.click();
+  pbEngine.onBallHit = (hitter, shot, quality) => {
+    pbStage?.onHit(hitter, shot, quality);
+    sounds.pickleballPaddleHit(shot === 'smash');
     showPickleballTimingBadge(quality);
+  };
+
+  pbEngine.onBallBounce = (x, z, isFault) => {
+    pbStage?.onBounce(x, z, isFault);
+    sounds.pickleballBounce();
   };
 
   pbEngine.onMatchFinished = (winner, stats) => {

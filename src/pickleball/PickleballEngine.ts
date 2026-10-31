@@ -589,71 +589,78 @@ export class PickleballEngine {
     const dz = this.ball.z - (this.aiPos.z + 0.45);
     const dist = Math.hypot(dx, dz);
 
-    if (dist > 1.65 || this.ball.z > -1.0) return;
+    if (dist > 2.4 || this.ball.z > -1.2) return;
 
-    // AI Mistake calculation
-    const isMistake = Math.random() < this.opponent.errorRate;
+    // In Pickleball: if receiving serve, must bounce before hitting
+    if (this.rallyCount === 0 && this.ball.bouncesSinceHit === 0) return;
+
+    // Mistake calculation: only occurs after long rallies (rally >= 5)
+    const isMistake = this.rallyCount >= 5 && (Math.random() < this.opponent.errorRate * 0.6);
     if (isMistake) {
       if (Math.random() < 0.5) {
         // AI hits into net
         this.ball.vx = (0 - this.ball.x) / 0.7;
         this.ball.vz = (1.5 - this.ball.z) / 0.7;
-        this.ball.vy = 1.4; // Too low -> hits net!
+        this.ball.vy = 1.3;
       } else {
         // AI hits out of bounds
-        this.ball.vx = (Math.random() > 0.5 ? 3.6 : -3.6);
-        this.ball.vz = 8.0;
+        this.ball.vx = (Math.random() > 0.5 ? 3.4 : -3.4);
+        this.ball.vz = 7.2;
         this.ball.vy = 4.2;
       }
       this.ball.lastHitter = 'ai';
       this.ball.bouncesSinceHit = 0;
-      this.aiPaddleAnim = 0.25;
+      this.aiPaddleAnim = 0.28;
       this.onBallHit?.('ai', 'drive', 'late');
       return;
-    }
-
-    // AI Strategy Selection
-    let chosenShot: ShotType = 'drive';
-    const rand = Math.random();
-
-    if (this.ball.y > 1.2 && rand < this.opponent.smashTendency) {
-      chosenShot = 'smash';
-    } else if (rand < this.opponent.dinkTendency && Math.abs(this.aiPos.z) < 3.0) {
-      chosenShot = 'dink';
-    } else if (rand < this.opponent.dinkTendency + this.opponent.spinTendency) {
-      chosenShot = 'curve';
     }
 
     this.rallyCount++;
     this.stats.longestRally = Math.max(this.stats.longestRally, this.rallyCount);
     this.aiPaddleAnim = 0.28;
-
     this.ball.lastHitter = 'ai';
     this.ball.bouncesSinceHit = 0;
     this.ball.hasClearedNet = false;
 
-    // AI targets player's open court
-    const openX = this.playerPos.x > 0 ? -1.8 : 1.8;
-    let targetX = openX + (Math.random() - 0.5) * (1.2 - this.opponent.accuracy * 0.6);
-    targetX = Math.max(-2.5, Math.min(2.5, targetX));
+    // AI Targeting logic based on rally progression:
+    let chosenShot: ShotType = 'drive';
+    let targetX: number;
     let targetZ = 4.8;
-    let flightTime = 0.88 / (this.opponent.power * this.settings.ballSpeedFactor);
-    let desiredClearance = 0.30;
+    let flightTime = 0.82 / (this.opponent.power * this.settings.ballSpeedFactor);
+    let desiredClearance = 0.35;
 
-    if (chosenShot === 'dink') {
-      targetZ = 1.3 + Math.random() * 0.6;
-      flightTime = 0.90;
+    if (this.rallyCount <= 3) {
+      // Warmup rally: keep shots accessible to player to build momentum
+      targetX = this.playerPos.x * 0.4 + (Math.random() - 0.5) * 1.0;
+      targetZ = 4.6;
+      flightTime = 0.86;
       desiredClearance = 0.38;
-    } else if (chosenShot === 'smash') {
-      targetZ = 5.5;
-      flightTime = 0.62 / (this.opponent.power * this.settings.ballSpeedFactor);
-      desiredClearance = 0.24;
-    } else if (chosenShot === 'curve') {
-      targetX = (Math.random() > 0.5 ? 2.3 : -2.3);
-      flightTime = 0.78 / (this.opponent.power * this.settings.ballSpeedFactor);
-      desiredClearance = 0.28;
-      this.ball.spinX = targetX > 0 ? -3.0 : 3.0;
+    } else {
+      // Competitive rally: AI starts testing player with placement
+      const openX = this.playerPos.x > 0 ? -1.6 : 1.6;
+      targetX = openX + (Math.random() - 0.5) * (1.0 - this.opponent.accuracy * 0.5);
+
+      const rand = Math.random();
+      if (this.ball.y > 1.2 && rand < this.opponent.smashTendency) {
+        chosenShot = 'smash';
+        targetZ = 5.2;
+        flightTime = 0.64 / (this.opponent.power * this.settings.ballSpeedFactor);
+        desiredClearance = 0.32;
+      } else if (rand < this.opponent.dinkTendency && Math.abs(this.aiPos.z) < 3.2) {
+        chosenShot = 'dink';
+        targetZ = 1.4 + Math.random() * 0.6;
+        flightTime = 0.88;
+        desiredClearance = 0.46;
+      } else if (rand < this.opponent.dinkTendency + this.opponent.spinTendency) {
+        chosenShot = 'curve';
+        targetX = (targetX > 0 ? 2.1 : -2.1);
+        flightTime = 0.78 / (this.opponent.power * this.settings.ballSpeedFactor);
+        desiredClearance = 0.36;
+        this.ball.spinX = targetX > 0 ? -3.0 : 3.0;
+      }
     }
+
+    targetX = Math.max(-2.4, Math.min(2.4, targetX));
 
     const traj = this.calculateTrajectory(
       this.ball.x,
@@ -672,7 +679,7 @@ export class PickleballEngine {
     this.onBallHit?.('ai', chosenShot, 'good');
 
     // Occasional AI banter during rally
-    if (this.rallyCount === 4 && Math.random() < 0.4) {
+    if (this.rallyCount === 4 && Math.random() < 0.5) {
       const taunt = this.opponent.taunts[Math.floor(Math.random() * this.opponent.taunts.length)];
       this.onSpeechTaunt?.(this.opponent.name, taunt);
     }
@@ -698,6 +705,20 @@ export class PickleballEngine {
         }
       } else {
         this.bufferedShot = null;
+      }
+    }
+
+    // Proximity Auto-Return: If ball enters player's hitting zone and player is in position, auto-return!
+    if (this.ball.inPlay && this.ball.lastHitter === 'ai' && this.ball.vz > 0) {
+      const dx = Math.abs(this.ball.x - this.playerPos.x);
+      // In strike zone: within 1.4m horizontally, near player baseline z in [4.6, 5.8], and in playable air
+      if (dx <= 1.4 && this.ball.z >= 4.6 && this.ball.z <= 5.8 && this.ball.y >= 0.15 && this.ball.y <= 1.9) {
+        const canHit = (this.rallyCount > 0) || (this.ball.bouncesSinceHit >= 1);
+        if (canHit) {
+          const shot = this.bufferedShot ? this.bufferedShot.shotType : 'drive';
+          this.bufferedShot = null;
+          this.playerHitBall(shot);
+        }
       }
     }
 
@@ -746,22 +767,30 @@ export class PickleballEngine {
     }
     this.playerPos.x = Math.max(-2.7, Math.min(2.7, this.playerPos.x));
 
-    // 3. AI Movement (Tracks Ball with Reaction Latency)
+    // 3. AI Movement (Predictive & Adaptive)
     if (this.ball.inPlay) {
-      const aiTargetX = this.ball.vz < 0 ? this.ball.x : 0;
-      const dx = aiTargetX - this.aiPos.x;
-      this.aiPos.x += Math.sign(dx) * Math.min(Math.abs(dx), this.opponent.speed * delta);
-      this.aiPos.x = Math.max(-2.7, Math.min(2.7, this.aiPos.x));
+      if (this.ball.vz < 0) {
+        // Ball flying towards AI: predict arrival X at baseline z = -4.8
+        const timeToAI = Math.max(0.01, (-4.8 - this.ball.z) / this.ball.vz);
+        const predictedX = Math.max(-2.5, Math.min(2.5, this.ball.x + this.ball.vx * timeToAI));
+        const dx = predictedX - this.aiPos.x;
+        const aiSpeed = Math.max(5.8, this.opponent.speed * 1.35);
+        this.aiPos.x += Math.sign(dx) * Math.min(Math.abs(dx), aiSpeed * delta);
 
-      // AI Position Z: stays back near baseline unless ball is dropping in kitchen
-      if (this.ball.vz < 0 && this.ball.z > -3.0 && this.ball.y < 1.0) {
-        // Move forward to handle dink
-        const targetZ = Math.max(-2.4, this.ball.z - 0.5);
-        this.aiPos.z += (targetZ - this.aiPos.z) * Math.min(1, 4 * delta);
+        // AI Z Position: charge kitchen for dinks, stay at baseline for smashes
+        if (this.ball.z > -2.5 && this.ball.y < 1.1) {
+          const targetZ = -2.4;
+          this.aiPos.z += (targetZ - this.aiPos.z) * Math.min(1, 6 * delta);
+        } else {
+          const targetZ = -5.4;
+          this.aiPos.z += (targetZ - this.aiPos.z) * Math.min(1, 5 * delta);
+        }
       } else {
-        // Recover to baseline
-        this.aiPos.z += (-5.8 - this.aiPos.z) * Math.min(1, 3 * delta);
+        // Ball flying away to player: AI recovers towards center court
+        this.aiPos.x += (0 - this.aiPos.x) * Math.min(1, 3.0 * delta);
+        this.aiPos.z += (-5.4 - this.aiPos.z) * Math.min(1, 4.0 * delta);
       }
+      this.aiPos.x = Math.max(-2.6, Math.min(2.6, this.aiPos.x));
     }
 
     // 4. Ball 3D Physics Integration
@@ -840,10 +869,10 @@ export class PickleballEngine {
           return;
         }
 
-        // Rebound velocity with surface elasticity
-        this.ball.vy = -this.ball.vy * 0.72;
-        this.ball.vx *= 0.94;
-        this.ball.vz *= 0.94;
+        // Rebound velocity with authentic wiffle ball elasticity
+        this.ball.vy = Math.max(3.2, -this.ball.vy * 0.76);
+        this.ball.vx *= 0.78;
+        this.ball.vz *= 0.78;
       }
 
       // Check AI hit opportunity
