@@ -371,19 +371,30 @@ export class OfficeStage {
     base.receiveShadow = true;
     this.scene.add(base);
 
-    // 2. High-Resolution Warm Scandinavian Oak Parquet Flooring
-    this.createWoodParquetFloor(0, 0, 56, 44);
+    // 2. Department-specific Architectural Floorings:
+    // Zone 1 (Corporate Office): Warm Scandinavian Natural Oak Parquet
+    this.createWoodParquetFloor(-14, -12, 26, 22);
 
-    // 3. Luxurious White Hexagon Tile Floor for Pantry & Kitchen
-    this.createTileFloor(0, 2, 14, 12, '#f8fafc', '#cbd5e1');
+    // Zone 2 (Color Lab & Cutting Workshop): Sterile Medical-Grade ESD Cleanroom Vinyl Tiles
+    this.createCleanroomFloor(14, -12, 26, 22);
 
-    // 4. Dark Patterned Acoustic Carpet for Boardroom & Boss Office
+    // Zone 3 (Mega Fabric Warehouse): Industrial Emerald Green Epoxy with Forklift Traffic Lanes & Pallet Bays
+    this.createEpoxyWarehouseFloor(-14, 12, 26, 22);
+
+    // Zone 4 (Logistics Port & Container Dock): Reinforced Industrial Concrete Slabs with Crane Rail Tracks
+    this.createPortDockFloor(14, 12, 26, 22);
+
+    // Central Walkways & Corridor Transit Hallways (Polished Dark Slate Terrazzo)
+    this.createTileFloor(0, 0, 56, 3.2, '#1e293b', '#334155');
+    this.createTileFloor(0, 0, 3.2, 44, '#1e293b', '#334155');
+
+    // Zone 5 (Pantry & Executive Lounge): Designer White Marble Hexagon Tiles
+    this.createTileFloor(0, 1.5, 12, 10, '#f8fafc', '#cbd5e1');
+
+    // Boardroom & Boss Office Acoustic Carpet
     this.createCarpetFloor(-17, -14, 16, 16, '#1e1b4b', '#2e1065');
 
-    // 5. Polished Industrial Concrete Floor for Warehouse & Shipping
-    this.createIndustrialFloor(14, 11, 22, 20);
-
-    // 6. Restroom Tile Floor
+    // Restroom Tile Floor
     this.createTileFloor(-22, 0, 8, 8, '#e2e8f0', '#94a3b8');
 
     // ==================== ZONE 1: CORPORATE OFFICE (VĂN PHÒNG ĐIỀU HÀNH) ====================
@@ -428,47 +439,64 @@ export class OfficeStage {
     this.createZoneSign(14, 3.2, -21.5, '✂️ XƯỞNG CẮT RẬP & PHÒNG LAB MÀU D65', '#059669');
 
     this.createCuttingTable(8, -12);
-    this.addObstacle('cut_table_1', 8, -12, 4.3, 1.9);
+    this.addObstacle('cut_table_1', 8, -12, 4.4, 2.0);
 
     this.createCuttingTable(16, -12);
-    this.addObstacle('cut_table_2', 16, -12, 4.3, 1.9);
+    this.addObstacle('cut_table_2', 16, -12, 4.4, 2.0);
 
     this.createCuttingTable(8, -7);
-    this.addObstacle('cut_table_3', 8, -7, 4.3, 1.9);
+    this.addObstacle('cut_table_3', 8, -7, 4.4, 2.0);
 
     this.createCuttingTable(16, -7);
-    this.addObstacle('cut_table_4', 16, -7, 4.3, 1.9);
+    this.addObstacle('cut_table_4', 16, -7, 4.4, 2.0);
 
     // Mannequin Dress Forms
-    this.createMannequin(3.5, -12, '#3b82f6');
-    this.createMannequin(3.5, -7, '#ef4444');
+    this.createMannequin(3.5, -12, '#1e3a8a');
+    this.createMannequin(3.5, -7, '#b91c1c');
 
     // ==================== ZONE 3: MEGA FABRIC WAREHOUSE (KHO VẢI ĐẠI NGÀN) ====================
     this.createZoneSign(-14, 3.2, 2.5, '🧵 KHO VẢI CUỘN & NGUYÊN PHỤ LIỆU', '#d97706');
 
     for (let r = 0; r < 3; r++) {
       const rx = -22 + r * 7;
-      this.createWarehouseRack(rx, 8);
-      this.addObstacle(`rack_row1_${r}`, rx, 8, 2.2, 1.4);
+      this.createWarehouseRack(rx, 8, r);
+      this.addObstacle(`rack_row1_${r}`, rx, 8, 2.4, 1.3);
 
-      this.createWarehouseRack(rx, 16);
-      this.addObstacle(`rack_row2_${r}`, rx, 16, 2.2, 1.4);
+      this.createWarehouseRack(rx, 16, r + 3);
+      this.addObstacle(`rack_row2_${r}`, rx, 16, 2.4, 1.3);
     }
 
+    // Heavy-duty Toyota Forklift with Hoisted Pallet
     this.createForklift(-5, 14);
-    this.addObstacle('forklift', -5, 14, 1.8, 1.3);
+    this.addObstacle('forklift', -5, 14, 2.2, 1.4);
+
+    // Hydraulic Manual Pallet Jack
+    this.createPalletJack(-8, 9);
+    this.addObstacle('pallet_jack', -8, 9, 1.4, 0.9);
 
     // ==================== ZONE 4: LOGISTICS PORT & DOCK (CẢNG BIỂN & XUẤT CONT) ====================
     this.createZoneSign(14, 3.2, 2.5, '🚢 CẢNG XUẤT HÀNG & BÃI CONT 40HQ', '#0284c7');
 
-    this.createShippingContainer(8, 12, '#0284c7', 'CÁT LÁI EXPRESS');
+    // Container 1: Cát Lái Logistics 40HQ (Ocean Blue)
+    this.createShippingContainer(8, 12, '#0284c7', 'CÁT LÁI LOGISTICS', 'SGP-40HQ #9012', 0);
     this.addObstacle('container_1', 8, 12, 5.4, 2.6);
 
-    this.createShippingContainer(18, 12, '#e11d48', 'MAERSK LINE 40HQ');
+    // Container 2: Maersk Line (Deep Maritime Blue)
+    this.createShippingContainer(18, 12, '#002444', 'MAERSK LINE', 'MSKU 89210-4', 0);
     this.addObstacle('container_2', 18, 12, 5.4, 2.6);
 
-    this.createShippingContainer(14, 18, '#16a34a', 'ONE OCEAN NETWORK');
+    // Container 2B (Stacked on top of Maersk at y=2.62, slightly offset): ONE Magenta
+    this.createShippingContainer(18, 12.15, '#e11481', 'ONE NETWORK', 'ONEU 40918-0', 1);
+
+    // Container 3: Evergreen Line (Forest Green)
+    this.createShippingContainer(14, 18, '#046a38', 'EVERGREEN 40HQ', 'EMCU 73091-2', 0);
     this.addObstacle('container_3', 14, 18, 5.4, 2.6);
+
+    // Dock Stadium Floodlight Mast (4 high-power LED floodlights)
+    this.createPortFloodlightTower(26, 20);
+
+    // Stacked EUR-Pallets with Export Cardboard Cartons
+    this.createPalletWithCartons(8, 17.5);
 
     // ==================== ZONE 5: REAL DESIGNER PANTRY & LOUNGE ====================
     this.createZoneSign(0, 3.2, -4.5, '🧋 PANTRY CÀ PHÊ & LOUNGE NGHỈ NGƠI', '#9333ea');
@@ -613,9 +641,232 @@ export class OfficeStage {
     this.scene.add(mesh);
   }
 
-  private createIndustrialFloor(cx: number, cz: number, w: number, h: number): void {
+  private createCleanroomFloor(cx: number, cz: number, w: number, h: number): void {
     const geo = new THREE.PlaneGeometry(w, h);
-    const mat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.7 });
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 1024;
+    const ctx = canvas.getContext('2d')!;
+
+    // Cleanroom medical-grade anti-static vinyl tiles
+    ctx.fillStyle = '#f1f5f9';
+    ctx.fillRect(0, 0, 1024, 1024);
+
+    const tileSize = 128;
+    for (let y = 0; y < 1024; y += tileSize) {
+      for (let x = 0; x < 1024; x += tileSize) {
+        // Tile subtle tint
+        const tint = (Math.sin(x * 0.05) + Math.cos(y * 0.05)) * 0.5 + 0.5;
+        const g = Math.round(242 + tint * 10);
+        const b = Math.round(248 + tint * 7);
+        ctx.fillStyle = `rgb(238,${g},${b})`;
+        ctx.fillRect(x + 1, y + 1, tileSize - 2, tileSize - 2);
+
+        // Anti-static conductive carbon filament veins
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x + 15, y + 25);
+        ctx.lineTo(x + 65, y + 50);
+        ctx.lineTo(x + 110, y + 95);
+        ctx.stroke();
+
+        // Tile bevel seam
+        ctx.strokeStyle = 'rgba(203, 213, 225, 0.85)';
+        ctx.strokeRect(x + 0.5, y + 0.5, tileSize - 1, tileSize - 1);
+      }
+    }
+
+    // High-visibility yellow safety boundary stripes
+    ctx.strokeStyle = '#facc15';
+    ctx.lineWidth = 22;
+    ctx.strokeRect(11, 11, 1002, 1002);
+
+    // Hazard hash lines on border
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 8;
+    for (let i = 0; i < 1024; i += 32) {
+      ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + 16, 22); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(i, 1002); ctx.lineTo(i + 16, 1024); ctx.stroke();
+    }
+
+    // Cleanroom ESD stencil
+    ctx.save();
+    ctx.fillStyle = '#0284c7';
+    ctx.font = '900 24px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('ESD CLEANROOM AREA · ISO 105 TEXTILE LAB', 512, 60);
+    ctx.fillText('PHÒNG LAB SOI MÀU D65 & XƯỞNG CẮT RẬP', 512, 975);
+    ctx.restore();
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(w / 8, h / 8);
+    tex.anisotropy = 8;
+
+    const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.25, metalness: 0.05 });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.set(cx, 0.012, cz);
+    mesh.receiveShadow = true;
+    this.scene.add(mesh);
+  }
+
+  private createEpoxyWarehouseFloor(cx: number, cz: number, w: number, h: number): void {
+    const geo = new THREE.PlaneGeometry(w, h);
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 1024;
+    const ctx = canvas.getContext('2d')!;
+
+    // Industrial gloss emerald epoxy base
+    const grad = ctx.createLinearGradient(0, 0, 1024, 1024);
+    grad.addColorStop(0, '#064e3b');
+    grad.addColorStop(0.5, '#047857');
+    grad.addColorStop(1, '#065f46');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 1024, 1024);
+
+    // Subtle expansion joints
+    ctx.strokeStyle = 'rgba(2, 44, 34, 0.6)';
+    ctx.lineWidth = 3;
+    for (let x = 0; x <= 1024; x += 256) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 1024); ctx.stroke();
+    }
+    for (let y = 0; y <= 1024; y += 256) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1024, y); ctx.stroke();
+    }
+
+    // Yellow safety perimeter
+    ctx.strokeStyle = '#facc15';
+    ctx.lineWidth = 18;
+    ctx.strokeRect(10, 10, 1004, 1004);
+
+    // Forklift central lane (yellow dashed lines)
+    ctx.strokeStyle = '#facc15';
+    ctx.lineWidth = 10;
+    ctx.setLineDash([36, 24]);
+    ctx.beginPath();
+    ctx.moveTo(340, 40); ctx.lineTo(340, 984);
+    ctx.moveTo(684, 40); ctx.lineTo(684, 984);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Stenciled traffic text
+    ctx.save();
+    ctx.fillStyle = '#facc15';
+    ctx.font = '900 36px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🚜 FORKLIFT ONLY · XE NÂNG ƯU TIÊN', 512, 180);
+    ctx.fillText('⚡ LỐI VẬN CHUYỂN VẢI CUỘN', 512, 850);
+
+    // Pallet staging bay markings
+    ctx.font = '700 24px monospace';
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(60, 240, 220, 260);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('BAY 01 · COTTON', 170, 380);
+
+    ctx.strokeRect(60, 540, 220, 260);
+    ctx.fillText('BAY 02 · SPANDEX', 170, 680);
+
+    ctx.strokeRect(740, 240, 220, 260);
+    ctx.fillText('BAY 03 · POLY', 850, 380);
+
+    ctx.strokeRect(740, 540, 220, 260);
+    ctx.fillText('BAY 04 · XUẤT XƯỞNG', 850, 680);
+    ctx.restore();
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.anisotropy = 8;
+
+    const mat = new THREE.MeshStandardMaterial({
+      map: tex,
+      roughness: 0.28,
+      metalness: 0.1
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.set(cx, 0.013, cz);
+    mesh.receiveShadow = true;
+    this.scene.add(mesh);
+  }
+
+  private createPortDockFloor(cx: number, cz: number, w: number, h: number): void {
+    const geo = new THREE.PlaneGeometry(w, h);
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 1024;
+    const ctx = canvas.getContext('2d')!;
+
+    // Heavy reinforced concrete slabs (quayside paving)
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(0, 0, 1024, 1024);
+
+    // Concrete slab grid with mastic expansion seams
+    const slab = 256;
+    for (let y = 0; y < 1024; y += slab) {
+      for (let x = 0; x < 1024; x += slab) {
+        const noise = (Math.sin(x * 0.1) + Math.cos(y * 0.1)) * 12;
+        const c = Math.round(58 + noise);
+        ctx.fillStyle = `rgb(${c}, ${c + 4}, ${c + 10})`;
+        ctx.fillRect(x + 2, y + 2, slab - 4, slab - 4);
+
+        // Dark bitumen expansion joint
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(x, y, slab, slab);
+      }
+    }
+
+    // Heavy crane rail steel tracks running vertically
+    for (const rx of [200, 824]) {
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(rx - 24, 0, 48, 1024);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(rx - 8, 0, 16, 1024);
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(rx - 2, 0, 4, 1024);
+    }
+
+    // Yellow hazard perimeter stripes
+    ctx.strokeStyle = '#eab308';
+    ctx.lineWidth = 20;
+    ctx.strokeRect(10, 10, 1004, 1004);
+
+    // Hazard chevrons on border
+    ctx.fillStyle = '#0f172a';
+    for (let i = 0; i < 1024; i += 40) {
+      ctx.beginPath();
+      ctx.moveTo(i, 0); ctx.lineTo(i + 20, 20); ctx.lineTo(i + 10, 20); ctx.lineTo(i - 10, 0);
+      ctx.fill();
+    }
+
+    // Container locating corner marks
+    ctx.strokeStyle = '#facc15';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(260, 160, 500, 300);
+    ctx.strokeRect(260, 560, 500, 300);
+
+    ctx.save();
+    ctx.fillStyle = '#facc15';
+    ctx.font = '900 28px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('🚢 BÃI TẬP KẾT CONT 40HQ · CẢNG CÁT LÁI', 512, 110);
+    ctx.fillText('[ KHU VỰC HẢI QUAN KIỂM HÓA ]', 512, 510);
+    ctx.fillText('CRANE TRACK · KHÔNG ĐỨNG DƯỚI TẦM CẨU', 512, 920);
+    ctx.restore();
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.anisotropy = 8;
+
+    const mat = new THREE.MeshStandardMaterial({
+      map: tex,
+      roughness: 0.65,
+      metalness: 0.15
+    });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.rotation.x = -Math.PI / 2;
     mesh.position.set(cx, 0.012, cz);
@@ -1437,66 +1688,571 @@ export class OfficeStage {
     const g = new THREE.Group();
     g.position.set(x, 0, z);
 
-    const table = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.15, 1.8), new THREE.MeshStandardMaterial({ color: 0x10b981 }));
-    table.position.y = 0.85;
-    table.castShadow = true;
-    g.add(table);
+    const tableW = 4.4;
+    const tableH = 0.86;
+    const tableD = 2.0;
 
-    const cloth = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.08, 1.4), new THREE.MeshStandardMaterial({ color: 0xf43f5e }));
-    cloth.position.set(0, 0.96, 0);
-    g.add(cloth);
+    // 1. Industrial Steel Legs (6 sturdy legs with leveling feet)
+    const legMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.6, roughness: 0.4 });
+    const footMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8 });
+    const legGeo = new THREE.BoxGeometry(0.08, tableH - 0.08, 0.08);
 
-    this.scene.add(g);
-  }
+    const legXs = [-tableW / 2 + 0.15, 0, tableW / 2 - 0.15];
+    const legZs = [-tableD / 2 + 0.15, tableD / 2 - 0.15];
 
-  private createWarehouseRack(x: number, z: number): void {
-    const g = new THREE.Group();
-    g.position.set(x, 0, z);
+    for (const lx of legXs) {
+      for (const lz of legZs) {
+        const leg = new THREE.Mesh(legGeo, legMat);
+        leg.position.set(lx, (tableH - 0.08) / 2, lz);
+        leg.castShadow = true;
+        g.add(leg);
 
-    const frameMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.3 });
-    const rack = new THREE.Mesh(new THREE.BoxGeometry(2.0, 3.2, 1.2), frameMat);
-    rack.position.y = 1.6;
-    rack.castShadow = true;
-    g.add(rack);
-
-    const colors = [0x3b82f6, 0xef4444, 0xf59e0b, 0x10b981, 0x8b5cf6, 0xec4899];
-    for (let level = 0; level < 3; level++) {
-      for (let i = 0; i < 3; i++) {
-        const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.9, 12), new THREE.MeshStandardMaterial({ color: colors[(level * 3 + i) % colors.length] }));
-        roll.rotation.z = Math.PI / 2;
-        roll.position.set(-0.6 + i * 0.6, 0.7 + level * 0.95, 0);
-        g.add(roll);
+        const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.04, 10), footMat);
+        foot.position.set(lx, 0.02, lz);
+        g.add(foot);
       }
     }
 
+    // Horizontal Steel Perimeter Stretchers
+    const stretcherX = new THREE.Mesh(new THREE.BoxGeometry(tableW - 0.3, 0.06, 0.04), legMat);
+    stretcherX.position.set(0, 0.25, -tableD / 2 + 0.15);
+    g.add(stretcherX);
+    const stretcherX2 = stretcherX.clone();
+    stretcherX2.position.z = tableD / 2 - 0.15;
+    g.add(stretcherX2);
+
+    // 2. Lower Storage Shelf holding paper rolls
+    const shelf = new THREE.Mesh(
+      new THREE.BoxGeometry(tableW - 0.35, 0.03, tableD - 0.35),
+      new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.7 })
+    );
+    shelf.position.set(0, 0.25, 0);
+    g.add(shelf);
+
+    // Kraft paper rolls on bottom shelf
+    const paperRollMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.9 });
+    for (let i = 0; i < 2; i++) {
+      const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 3.2, 12), paperRollMat);
+      roll.rotateZ(Math.PI / 2);
+      roll.position.set(0, 0.38, -0.4 + i * 0.8);
+      g.add(roll);
+    }
+
+    // 3. Thick Laminated Melamine Tabletop
+    const top = new THREE.Mesh(
+      new THREE.BoxGeometry(tableW, 0.08, tableD),
+      new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 })
+    );
+    top.position.y = tableH;
+    top.castShadow = true;
+    top.receiveShadow = true;
+    g.add(top);
+
+    // 4. Large Self-Healing Metric Cutting Mat (Green #059669 with printed grid)
+    const matCanvas = document.createElement('canvas');
+    matCanvas.width = 512; matCanvas.height = 256;
+    const mctx = matCanvas.getContext('2d')!;
+    mctx.fillStyle = '#059669';
+    mctx.fillRect(0, 0, 512, 256);
+    // CM Grid
+    mctx.strokeStyle = '#34d399';
+    mctx.lineWidth = 1.5;
+    for (let x = 0; x <= 512; x += 32) {
+      mctx.beginPath(); mctx.moveTo(x, 0); mctx.lineTo(x, 256); mctx.stroke();
+    }
+    for (let y = 0; y <= 256; y += 32) {
+      mctx.beginPath(); mctx.moveTo(0, y); mctx.lineTo(512, y); mctx.stroke();
+    }
+    // 45 degree angle bias lines
+    mctx.strokeStyle = '#a7f3d0';
+    mctx.lineWidth = 2;
+    mctx.beginPath();
+    mctx.moveTo(0, 0); mctx.lineTo(256, 256);
+    mctx.moveTo(256, 0); mctx.lineTo(512, 256);
+    mctx.stroke();
+
+    const matTex = new THREE.CanvasTexture(matCanvas);
+    const cutMat = new THREE.Mesh(
+      new THREE.PlaneGeometry(3.8, 1.6),
+      new THREE.MeshStandardMaterial({ map: matTex, roughness: 0.4 })
+    );
+    cutMat.rotation.x = -Math.PI / 2;
+    cutMat.position.set(0, tableH + 0.042, 0);
+    g.add(cutMat);
+
+    // 5. Multi-ply Knitted Fabric Lay (Navy Blue Plies)
+    const fabricLay = new THREE.Mesh(
+      new THREE.BoxGeometry(3.2, 0.09, 1.3),
+      new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.7 })
+    );
+    fabricLay.position.set(-0.15, tableH + 0.088, 0);
+    fabricLay.castShadow = true;
+    g.add(fabricLay);
+
+    // 6. CAD Marker Plotter Paper on top of fabric with printed garment patterns
+    const cadCanvas = document.createElement('canvas');
+    cadCanvas.width = 512; cadCanvas.height = 256;
+    const cctx = cadCanvas.getContext('2d')!;
+    cctx.fillStyle = '#ffffff';
+    cctx.fillRect(0, 0, 512, 256);
+    cctx.strokeStyle = '#0284c7';
+    cctx.lineWidth = 3;
+    cctx.strokeRect(20, 20, 110, 45);
+    cctx.strokeRect(150, 20, 110, 45);
+    cctx.beginPath();
+    cctx.arc(80, 160, 55, 0, Math.PI, true);
+    cctx.closePath();
+    cctx.stroke();
+    cctx.strokeRect(300, 30, 180, 200);
+    cctx.fillStyle = '#0284c7';
+    cctx.font = '700 14px monospace';
+    cctx.fillText('POLO SHIRT 2026 · SIZE L', 315, 60);
+    cctx.fillText('MARKER: 500 PCS USA', 315, 85);
+
+    const cadTex = new THREE.CanvasTexture(cadCanvas);
+    const markerPaper = new THREE.Mesh(
+      new THREE.PlaneGeometry(3.18, 1.28),
+      new THREE.MeshStandardMaterial({ map: cadTex, roughness: 0.6 })
+    );
+    markerPaper.rotation.x = -Math.PI / 2;
+    markerPaper.position.set(-0.15, tableH + 0.135, 0);
+    g.add(markerPaper);
+
+    // 7. Eastman Straight-Knife Cloth Cutting Machine
+    const cutterG = new THREE.Group();
+    cutterG.position.set(0.9, tableH + 0.09, 0.2);
+
+    const footplate = new THREE.Mesh(
+      new THREE.BoxGeometry(0.24, 0.015, 0.15),
+      new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.1 })
+    );
+    footplate.position.y = 0.01;
+    cutterG.add(footplate);
+
+    const knife = new THREE.Mesh(
+      new THREE.BoxGeometry(0.02, 0.45, 0.03),
+      new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.95, roughness: 0.1 })
+    );
+    knife.position.set(0, 0.24, 0);
+    cutterG.add(knife);
+
+    const motor = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.08, 0.08, 0.25, 14),
+      new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.5, roughness: 0.3 })
+    );
+    motor.position.set(0, 0.52, 0);
+    cutterG.add(motor);
+
+    const handle = new THREE.Mesh(
+      new THREE.BoxGeometry(0.04, 0.14, 0.04),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.8 })
+    );
+    handle.position.set(-0.08, 0.52, 0);
+    cutterG.add(handle);
+
+    g.add(cutterG);
+
+    // 8. Tailor Shears (Golden Brass)
+    const shearMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9, roughness: 0.2 });
+    const shearBlade = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.02, 0.04), shearMat);
+    shearBlade.position.set(-1.6, tableH + 0.05, -0.6);
+    shearBlade.rotation.y = 0.4;
+    g.add(shearBlade);
+
     this.scene.add(g);
   }
 
-  private createShippingContainer(x: number, z: number, color: string, label: string): void {
+  private createWarehouseRack(x: number, z: number, rackIdx: number = 0): void {
     const g = new THREE.Group();
     g.position.set(x, 0, z);
 
-    const contGeo = new THREE.BoxGeometry(5.2, 2.6, 2.4);
-    const contMat = new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.2 });
-    const cont = new THREE.Mesh(contGeo, contMat);
-    cont.position.y = 1.3;
-    cont.castShadow = true;
-    g.add(cont);
+    const W = 2.4;
+    const H = 3.4;
+    const D = 1.2;
 
+    // 1. Upright Steel Posts (4 slotted columns in Safety Blue #0284c7)
+    const uprightMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.6, roughness: 0.35 });
+    const postGeo = new THREE.BoxGeometry(0.09, H, 0.09);
+    for (const px of [-W / 2 + 0.05, W / 2 - 0.05]) {
+      for (const pz of [-D / 2 + 0.05, D / 2 - 0.05]) {
+        const post = new THREE.Mesh(postGeo, uprightMat);
+        post.position.set(px, H / 2, pz);
+        post.castShadow = true;
+        g.add(post);
+
+        const foot = new THREE.Mesh(
+          new THREE.BoxGeometry(0.18, 0.03, 0.18),
+          new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.8 })
+        );
+        foot.position.set(px, 0.015, pz);
+        g.add(foot);
+      }
+    }
+
+    // 2. Zigzag Steel Diagonal Cross-Trusses (connecting front & back uprights)
+    const trussMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.7, roughness: 0.4 });
+    const strutGeo = new THREE.CylinderGeometry(0.02, 0.02, 1.35, 8);
+    strutGeo.rotateZ(Math.PI / 4);
+
+    for (const px of [-W / 2 + 0.05, W / 2 - 0.05]) {
+      for (let level = 0; level < 3; level++) {
+        const strut = new THREE.Mesh(strutGeo, trussMat);
+        strut.position.set(px, 0.6 + level * 1.1, 0);
+        strut.rotation.y = (level % 2 === 0 ? 1 : -1) * 0.2;
+        g.add(strut);
+      }
+    }
+
+    // 3. Three Tiers of Heavy Safety Orange Box Beams (#ea580c)
+    const beamMat = new THREE.MeshStandardMaterial({ color: 0xea580c, metalness: 0.4, roughness: 0.3 });
+    const levels = [0.2, 1.35, 2.45];
+    const beamXGeo = new THREE.BoxGeometry(W, 0.11, 0.07);
+    const beamZGeo = new THREE.BoxGeometry(0.07, 0.11, D);
+    const wireMat = new THREE.MeshStandardMaterial({ color: 0x64748b, wireframe: true });
+
+    for (const y of levels) {
+      for (const bz of [-D / 2 + 0.04, D / 2 - 0.04]) {
+        const b = new THREE.Mesh(beamXGeo, beamMat);
+        b.position.set(0, y, bz);
+        b.castShadow = true;
+        g.add(b);
+      }
+      for (const bx of [-W / 2 + 0.04, W / 2 - 0.04]) {
+        const b = new THREE.Mesh(beamZGeo, beamMat);
+        b.position.set(bx, y, 0);
+        g.add(b);
+      }
+
+      const deck = new THREE.Mesh(new THREE.BoxGeometry(W - 0.1, 0.02, D - 0.1), wireMat);
+      deck.position.set(0, y + 0.05, 0);
+      g.add(deck);
+    }
+
+    // 4. Stored Goods & Realistic Wrapped Fabric Rolls
+    const fabricColors = [0x1e3a8a, 0x991b1b, 0x15803d, 0x374151, 0xd97706, 0x7c3aed, 0x0284c7, 0xbe123c];
+    const rollGeo = new THREE.CylinderGeometry(0.18, 0.18, 1.02, 16);
+    rollGeo.rotateX(Math.PI / 2);
+    const coreMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.9 });
+    const tagMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+    // Level 1: Pallets with heavy rolls
+    const palMat = new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.8 });
+    for (const palX of [-0.55, 0.55]) {
+      const pal = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.12, 1.05), palMat);
+      pal.position.set(palX, 0.28, 0);
+      pal.castShadow = true;
+      g.add(pal);
+
+      const c = fabricColors[(rackIdx * 2 + (palX > 0 ? 1 : 0)) % fabricColors.length];
+      const rollMat = new THREE.MeshStandardMaterial({ color: c, roughness: 0.35, metalness: 0.1 });
+      const roll = new THREE.Mesh(rollGeo, rollMat);
+      roll.position.set(palX, 0.52, 0);
+      roll.castShadow = true;
+      g.add(roll);
+
+      const core = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.04, 12), coreMat);
+      core.rotateX(Math.PI / 2);
+      core.position.set(palX, 0.52, 0);
+      g.add(core);
+
+      const tag = new THREE.Mesh(new THREE.PlaneGeometry(0.08, 0.12), tagMat);
+      tag.position.set(palX, 0.52, 0.53);
+      g.add(tag);
+    }
+
+    // Level 2: 5 stacked fabric rolls
+    const rollOffsets = [-0.8, -0.4, 0.0, 0.4, 0.8];
+    for (let i = 0; i < rollOffsets.length; i++) {
+      const rx = rollOffsets[i];
+      const c = fabricColors[(rackIdx * 3 + i + 2) % fabricColors.length];
+      const rollMat = new THREE.MeshStandardMaterial({
+        color: c,
+        roughness: 0.25,
+        metalness: 0.15,
+        transparent: true,
+        opacity: 0.95
+      });
+      const roll = new THREE.Mesh(rollGeo, rollMat);
+      roll.position.set(rx, 1.58, 0);
+      roll.castShadow = true;
+      g.add(roll);
+
+      const core = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.04, 12), coreMat);
+      core.rotateX(Math.PI / 2);
+      core.position.set(rx, 1.58, 0);
+      g.add(core);
+
+      const tag = new THREE.Mesh(new THREE.PlaneGeometry(0.08, 0.12), tagMat);
+      tag.position.set(rx, 1.58, 0.53);
+      g.add(tag);
+    }
+
+    // Level 3 (Top tier): 4 cardboard cartons of yarn cones
+    const boxMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.7 });
+    for (let i = 0; i < 4; i++) {
+      const bx = -0.75 + i * 0.5;
+      const box = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.45, 0.8), boxMat);
+      box.position.set(bx, 2.75, 0);
+      box.castShadow = true;
+      g.add(box);
+
+      const tape = new THREE.Mesh(
+        new THREE.BoxGeometry(0.442, 0.06, 0.802),
+        new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.4 })
+      );
+      tape.position.set(bx, 2.75, 0);
+      g.add(tape);
+    }
+
+    // Aisle Rack Stencil Label
     const canvas = document.createElement('canvas');
-    canvas.width = 300;
-    canvas.height = 70;
+    canvas.width = 256; canvas.height = 80;
     const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, 256, 80);
+    ctx.strokeStyle = '#facc15'; ctx.lineWidth = 4;
+    ctx.strokeRect(2, 2, 252, 76);
+    ctx.fillStyle = '#facc15'; ctx.font = '900 32px monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(`KỆ VẢI K${rackIdx + 1}`, 128, 40);
+
+    const signTex = new THREE.CanvasTexture(canvas);
+    const signSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: signTex }));
+    signSprite.scale.set(1.4, 0.45, 1);
+    signSprite.position.set(0, H + 0.35, 0);
+    g.add(signSprite);
+
+    this.scene.add(g);
+  }
+
+  private createCorrugatedContainerTexture(baseColor: string, label: string, code: string): THREE.CanvasTexture {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d')!;
+
+    // Base coat
+    ctx.fillStyle = baseColor;
+    ctx.fillRect(0, 0, 1024, 512);
+
+    // Corrugation ribs (vertical groove rhythm)
+    const ribStep = 32;
+    for (let x = 0; x < 1024; x += ribStep) {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
+      ctx.fillRect(x, 0, ribStep * 0.45, 512);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
+      ctx.fillRect(x + ribStep * 0.45, 0, ribStep * 0.55, 512);
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x, 0); ctx.lineTo(x, 512);
+      ctx.stroke();
+    }
+
+    // Weathered bottom grime
+    const grime = ctx.createLinearGradient(0, 420, 0, 512);
+    grime.addColorStop(0, 'rgba(30, 20, 10, 0)');
+    grime.addColorStop(1, 'rgba(30, 20, 10, 0.55)');
+    ctx.fillStyle = grime;
+    ctx.fillRect(0, 420, 1024, 92);
+
+    // Steel perimeter border
+    ctx.lineWidth = 14;
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.strokeRect(7, 7, 1010, 498);
+
+    // Bold Shipping Line Livery Decal
+    ctx.save();
     ctx.fillStyle = '#ffffff';
-    ctx.font = '900 24px sans-serif';
+    ctx.font = '900 62px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(label, 150, 45);
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+    ctx.shadowBlur = 8;
+    ctx.fillText(label, 512, 220);
+
+    // Serial & ISO Type code
+    ctx.font = '900 32px monospace';
+    ctx.fillStyle = '#facc15';
+    ctx.fillText(code, 512, 290);
+
+    // Technical specifications plate in lower right corner
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.fillRect(680, 360, 310, 125);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(680, 360, 310, 125);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 16px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('MAX GROSS: 32,500 KG', 695, 388);
+    ctx.fillText('TARE WT:    3,840 KG', 695, 414);
+    ctx.fillText('PAYLOAD:   28,660 KG', 695, 440);
+    ctx.fillText('CUBE:        76.4 CBM', 695, 466);
+    ctx.restore();
 
     const tex = new THREE.CanvasTexture(canvas);
-    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex }));
-    sprite.scale.set(3.2, 0.8, 1);
-    sprite.position.set(0, 1.5, 1.25);
-    g.add(sprite);
+    tex.anisotropy = 8;
+    return tex;
+  }
+
+  private createShippingContainer(
+    x: number,
+    z: number,
+    color: string,
+    label: string,
+    code: string = 'VN-40HQ',
+    stackLevel: number = 0,
+    rotY: number = 0
+  ): void {
+    const g = new THREE.Group();
+    const yBase = stackLevel * 2.62;
+    g.position.set(x, yBase, z);
+    if (rotY !== 0) g.rotation.y = rotY;
+
+    const L = 5.4;
+    const H = 2.6;
+    const W = 2.4;
+
+    const texSide = this.createCorrugatedContainerTexture(color, label, code);
+
+    const bodyMatSide = new THREE.MeshStandardMaterial({
+      map: texSide,
+      roughness: 0.5,
+      metalness: 0.25
+    });
+    const darkMetalMat = new THREE.MeshStandardMaterial({
+      color: 0x1e293b,
+      roughness: 0.7,
+      metalness: 0.5
+    });
+    const baseColorMat = new THREE.MeshStandardMaterial({
+      color,
+      roughness: 0.5,
+      metalness: 0.2
+    });
+
+    const materials = [
+      baseColorMat,  // +X (Door face)
+      baseColorMat,  // -X
+      darkMetalMat,  // +Y (Roof)
+      darkMetalMat,  // -Y (Bottom)
+      bodyMatSide,   // +Z (Front side)
+      bodyMatSide    // -Z (Back side)
+    ];
+
+    const body = new THREE.Mesh(new THREE.BoxGeometry(L, H, W), materials);
+    body.position.y = H / 2;
+    body.castShadow = true;
+    body.receiveShadow = true;
+    g.add(body);
+
+    // Corner Steel Posts
+    const postMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.6, metalness: 0.5 });
+    const postGeo = new THREE.BoxGeometry(0.18, H + 0.04, 0.18);
+    for (const px of [-L / 2 + 0.09, L / 2 - 0.09]) {
+      for (const pz of [-W / 2 + 0.09, W / 2 - 0.09]) {
+        const post = new THREE.Mesh(postGeo, postMat);
+        post.position.set(px, H / 2, pz);
+        post.castShadow = true;
+        g.add(post);
+      }
+    }
+
+    // Top and Bottom Longitudinal Rails
+    const topRailGeo = new THREE.BoxGeometry(L, 0.12, 0.12);
+    for (const rz of [-W / 2 + 0.06, W / 2 - 0.06]) {
+      const topR = new THREE.Mesh(topRailGeo, postMat);
+      topR.position.set(0, H - 0.06, rz);
+      g.add(topR);
+
+      const botR = new THREE.Mesh(topRailGeo, postMat);
+      botR.position.set(0, 0.06, rz);
+      g.add(botR);
+    }
+
+    // ISO Corner Castings (8 heavy corner blocks with oval lock holes)
+    const cornerMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.7, roughness: 0.3 });
+    const cornerHoleMat = new THREE.MeshBasicMaterial({ color: 0x020617 });
+    const cBoxGeo = new THREE.BoxGeometry(0.22, 0.22, 0.22);
+    const cHoleGeo = new THREE.CylinderGeometry(0.045, 0.045, 0.23, 12);
+    cHoleGeo.rotateX(Math.PI / 2);
+
+    for (const cx of [-L / 2 + 0.1, L / 2 - 0.1]) {
+      for (const cy of [0.11, H - 0.11]) {
+        for (const cz of [-W / 2 + 0.1, W / 2 - 0.1]) {
+          const cornerBox = new THREE.Mesh(cBoxGeo, cornerMat);
+          cornerBox.position.set(cx, cy, cz);
+          g.add(cornerBox);
+
+          const hole = new THREE.Mesh(cHoleGeo, cornerHoleMat);
+          hole.position.set(cx, cy, cz);
+          g.add(hole);
+        }
+      }
+    }
+
+    // Realistic End Double Doors on (+X) end
+    const doorX = L / 2 + 0.02;
+    const doorFrame = new THREE.Mesh(
+      new THREE.BoxGeometry(0.04, H - 0.2, W - 0.2),
+      new THREE.MeshStandardMaterial({ color, roughness: 0.4 })
+    );
+    doorFrame.position.set(doorX, H / 2, 0);
+    g.add(doorFrame);
+
+    // Door Center Gasket Seam
+    const gasket = new THREE.Mesh(
+      new THREE.BoxGeometry(0.06, H - 0.2, 0.05),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.9 })
+    );
+    gasket.position.set(doorX + 0.01, H / 2, 0);
+    g.add(gasket);
+
+    // 4 Vertical Stainless Steel Locking Rods
+    const rodMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.85, roughness: 0.2 });
+    const rodGeo = new THREE.CylinderGeometry(0.028, 0.028, H - 0.3, 12);
+    const handleMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.5 });
+    const rodZPositions = [-0.75, -0.28, 0.28, 0.75];
+
+    for (const rz of rodZPositions) {
+      const rod = new THREE.Mesh(rodGeo, rodMat);
+      rod.position.set(doorX + 0.035, H / 2, rz);
+      rod.castShadow = true;
+      g.add(rod);
+
+      const topKeeper = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.1, 0.08), postMat);
+      topKeeper.position.set(doorX + 0.035, H - 0.22, rz);
+      g.add(topKeeper);
+
+      const botKeeper = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.1, 0.08), postMat);
+      botKeeper.position.set(doorX + 0.035, 0.22, rz);
+      g.add(botKeeper);
+
+      const handle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.18, 0.04), handleMat);
+      handle.position.set(doorX + 0.05, H * 0.45, rz);
+      g.add(handle);
+    }
+
+    // Red Customs Bolt Seal
+    const seal = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.03, 0.03, 0.14, 8),
+      new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.3 })
+    );
+    seal.position.set(doorX + 0.06, H * 0.45, 0.28);
+    g.add(seal);
+
+    // Twistlocks if this container is stacked
+    if (stackLevel > 0) {
+      const twistMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.8 });
+      for (const tx of [-L / 2 + 0.1, L / 2 - 0.1]) {
+        for (const tz of [-W / 2 + 0.1, W / 2 - 0.1]) {
+          const twistlock = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.12, 8), twistMat);
+          twistlock.position.set(tx, -0.06, tz);
+          g.add(twistlock);
+        }
+      }
+    }
 
     this.scene.add(g);
   }
@@ -1505,13 +2261,247 @@ export class OfficeStage {
     const g = new THREE.Group();
     g.position.set(x, 0, z);
 
-    const body = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.0, 1.1), new THREE.MeshStandardMaterial({ color: 0xf59e0b }));
-    body.position.y = 0.6;
+    // 1. Industrial Yellow / Orange Counterbalanced Chassis
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.35, metalness: 0.25 });
+    const darkMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.7, metalness: 0.4 });
+
+    const body = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.65, 1.2), bodyMat);
+    body.position.set(-0.1, 0.45, 0);
+    body.castShadow = true;
     g.add(body);
 
-    const forks = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.4, 0.9), new THREE.MeshStandardMaterial({ color: 0x1f2937 }));
-    forks.position.set(1.0, 0.8, 0);
-    g.add(forks);
+    const counterweight = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.6, 0.65, 16, 1, false, 0, Math.PI), bodyMat);
+    counterweight.position.set(-1.0, 0.45, 0);
+    counterweight.rotation.y = Math.PI / 2;
+    g.add(counterweight);
+
+    const grill = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.35, 0.7), darkMat);
+    grill.position.set(-1.02, 0.45, 0);
+    g.add(grill);
+
+    // 2. Heavy Black Rubber Industrial Wheels
+    const tireMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.85 });
+    const rimMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.8, roughness: 0.3 });
+    const tireGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.22, 16);
+    tireGeo.rotateX(Math.PI / 2);
+    const rimGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.23, 12);
+    rimGeo.rotateX(Math.PI / 2);
+
+    const wheelPos = [
+      [-0.7, 0.32, -0.62],
+      [-0.7, 0.32, 0.62],
+      [0.6, 0.32, -0.62],
+      [0.6, 0.32, 0.62]
+    ];
+    for (const [wx, wy, wz] of wheelPos) {
+      const tire = new THREE.Mesh(tireGeo, tireMat);
+      tire.position.set(wx, wy, wz);
+      tire.castShadow = true;
+      g.add(tire);
+
+      const rim = new THREE.Mesh(rimGeo, rimMat);
+      rim.position.set(wx, wy, wz);
+      g.add(rim);
+    }
+
+    // 3. Overhead Driver Protection Roll Cage
+    const cageMat = new THREE.MeshStandardMaterial({ color: 0x111827, metalness: 0.6, roughness: 0.35 });
+    const postGeo = new THREE.BoxGeometry(0.06, 1.4, 0.06);
+    for (const px of [-0.6, 0.3]) {
+      for (const pz of [-0.48, 0.48]) {
+        const post = new THREE.Mesh(postGeo, cageMat);
+        post.position.set(px, 1.45, pz);
+        g.add(post);
+      }
+    }
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.05, 1.08), cageMat);
+    roof.position.set(-0.15, 2.15, 0);
+    g.add(roof);
+
+    const beacon = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.08, 0.08, 0.14, 10),
+      new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xd97706, emissiveIntensity: 0.8 })
+    );
+    beacon.position.set(-0.15, 2.25, 0);
+    g.add(beacon);
+
+    // 4. Cockpit: Seat & Steering Wheel
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.45, 0.45), darkMat);
+    seat.position.set(-0.35, 0.95, 0);
+    g.add(seat);
+
+    const steerCol = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.5, 8), darkMat);
+    steerCol.position.set(0.12, 1.0, 0);
+    steerCol.rotation.z = -Math.PI / 6;
+    g.add(steerCol);
+
+    const steerWheel = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.02, 8, 16), darkMat);
+    steerWheel.position.set(0.22, 1.22, 0);
+    steerWheel.rotation.y = Math.PI / 2;
+    steerWheel.rotation.x = Math.PI / 6;
+    g.add(steerWheel);
+
+    // 5. Dual-Stage Lift Mast
+    const mastMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7, roughness: 0.3 });
+    const mastIBeam = new THREE.BoxGeometry(0.08, 2.4, 0.1);
+    for (const mz of [-0.38, 0.38]) {
+      const mast = new THREE.Mesh(mastIBeam, mastMat);
+      mast.position.set(0.85, 1.25, mz);
+      mast.castShadow = true;
+      g.add(mast);
+    }
+    const hydroRam = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.045, 0.045, 2.0, 12),
+      new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.15 })
+    );
+    hydroRam.position.set(0.85, 1.1, 0);
+    g.add(hydroRam);
+
+    // 6. Fork Carriage & Forged Steel Lifting Forks
+    const carriage = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.35, 0.85), darkMat);
+    carriage.position.set(0.92, 0.6, 0);
+    g.add(carriage);
+
+    const forkMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.8, roughness: 0.3 });
+    for (const fz of [-0.26, 0.26]) {
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.04, 0.1), forkMat);
+      blade.position.set(1.42, 0.45, fz);
+      blade.castShadow = true;
+      g.add(blade);
+      const heel = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.3, 0.1), forkMat);
+      heel.position.set(0.96, 0.58, fz);
+      g.add(heel);
+    }
+
+    // 7. Hoisted Pallet on Forks
+    const pallet = new THREE.Mesh(
+      new THREE.BoxGeometry(0.9, 0.1, 0.9),
+      new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.8 })
+    );
+    pallet.position.set(1.42, 0.52, 0);
+    g.add(pallet);
+
+    const hoistedRoll = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.16, 0.16, 0.85, 16),
+      new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.35 })
+    );
+    hoistedRoll.rotateX(Math.PI / 2);
+    hoistedRoll.position.set(1.42, 0.72, 0);
+    g.add(hoistedRoll);
+
+    this.scene.add(g);
+  }
+
+  private createPortFloodlightTower(x: number, z: number): void {
+    const g = new THREE.Group();
+    g.position.set(x, 0, z);
+
+    const mastMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.7, roughness: 0.3 });
+    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.24, 6.8, 8), mastMat);
+    mast.position.y = 3.4;
+    mast.castShadow = true;
+    g.add(mast);
+
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.1, 0.15), mastMat);
+    bar.position.y = 6.8;
+    g.add(bar);
+
+    const lampMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
+    const bulbMat = new THREE.MeshBasicMaterial({ color: 0xe0f2fe });
+
+    for (let i = 0; i < 4; i++) {
+      const lx = -0.6 + i * 0.4;
+      const fixture = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.2, 0.25), lampMat);
+      fixture.position.set(lx, 6.85, 0.1);
+      fixture.rotation.x = Math.PI / 6;
+      g.add(fixture);
+
+      const bulb = new THREE.Mesh(new THREE.PlaneGeometry(0.18, 0.16), bulbMat);
+      bulb.position.set(lx, 6.8, 0.23);
+      bulb.rotation.x = Math.PI / 6;
+      g.add(bulb);
+    }
+
+    const light = new THREE.PointLight(0x93c5fd, 1.8, 22);
+    light.position.set(0, 6.5, 1.0);
+    g.add(light);
+
+    this.scene.add(g);
+  }
+
+  private createPalletWithCartons(x: number, z: number): void {
+    const g = new THREE.Group();
+    g.position.set(x, 0, z);
+
+    const palMat = new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.8 });
+    const pallet = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.14, 1.0), palMat);
+    pallet.position.y = 0.07;
+    pallet.castShadow = true;
+    g.add(pallet);
+
+    const boxMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.65 });
+    const boxGeo = new THREE.BoxGeometry(0.55, 0.48, 0.45);
+
+    for (let row = 0; row < 2; row++) {
+      for (let col = 0; col < 2; col++) {
+        for (let tier = 0; tier < 2; tier++) {
+          const bx = -0.28 + col * 0.56;
+          const bz = -0.22 + row * 0.46;
+          const by = 0.14 + tier * 0.48 + 0.24;
+
+          const box = new THREE.Mesh(boxGeo, boxMat);
+          box.position.set(bx, by, bz);
+          box.castShadow = true;
+          g.add(box);
+        }
+      }
+    }
+
+    const wrap = new THREE.Mesh(
+      new THREE.BoxGeometry(1.15, 1.0, 0.95),
+      new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.25,
+        roughness: 0.1,
+        metalness: 0.1
+      })
+    );
+    wrap.position.set(0, 0.65, 0);
+    g.add(wrap);
+
+    this.scene.add(g);
+  }
+
+  private createPalletJack(x: number, z: number): void {
+    const g = new THREE.Group();
+    g.position.set(x, 0, z);
+
+    const jackMat = new THREE.MeshStandardMaterial({ color: 0xeab308, roughness: 0.4, metalness: 0.3 });
+    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
+
+    const forkL = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.06, 0.14), jackMat);
+    forkL.position.set(0.5, 0.1, -0.18);
+    g.add(forkL);
+    const forkR = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.06, 0.14), jackMat);
+    forkR.position.set(0.5, 0.1, 0.18);
+    g.add(forkR);
+
+    const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.45, 10), jackMat);
+    tower.position.set(-0.1, 0.32, 0);
+    g.add(tower);
+
+    const tiller = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.85, 8), jackMat);
+    tiller.position.set(-0.35, 0.65, 0);
+    tiller.rotation.z = Math.PI / 4;
+    g.add(tiller);
+
+    for (const wz of [-0.14, 0.14]) {
+      const w = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.06, 12), wheelMat);
+      w.rotateX(Math.PI / 2);
+      w.position.set(-0.1, 0.1, wz);
+      g.add(w);
+    }
 
     this.scene.add(g);
   }
@@ -1599,25 +2589,436 @@ export class OfficeStage {
     this.scene.add(g);
   }
 
+  private createMerchandiserStation(g: THREE.Group): void {
+    const deskMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.3, metalness: 0.05 });
+    const legMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7, roughness: 0.3 });
+
+    // Main desk surface
+    const top = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.08, 1.1), deskMat);
+    top.position.set(0, 0.74, 0);
+    top.castShadow = true;
+    g.add(top);
+
+    // L-return side table
+    const sideReturn = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.08, 1.2), deskMat);
+    sideReturn.position.set(-1.1, 0.74, -0.6);
+    g.add(sideReturn);
+
+    // Matte black steel trestle legs
+    for (const lx of [-1.05, 1.05]) {
+      for (const lz of [-0.45, 0.45]) {
+        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.7, 0.06), legMat);
+        leg.position.set(lx, 0.35, lz);
+        g.add(leg);
+      }
+    }
+
+    // Dual 27" monitors on curved monitor stand
+    const monMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.4, metalness: 0.7 });
+    for (const [mx, rotY, isCAD] of [[-0.45, 0.12, false], [0.45, -0.12, true]] as [number, number, boolean][]) {
+      const mon = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.42, 0.04), monMat);
+      mon.position.set(mx, 1.14, -0.3);
+      mon.rotation.y = rotY;
+      g.add(mon);
+
+      const screenCanvas = document.createElement('canvas');
+      screenCanvas.width = 256; screenCanvas.height = 144;
+      const sctx = screenCanvas.getContext('2d')!;
+      if (isCAD) {
+        sctx.fillStyle = '#0f172a'; sctx.fillRect(0, 0, 256, 144);
+        sctx.strokeStyle = '#38bdf8'; sctx.lineWidth = 3;
+        sctx.strokeRect(40, 20, 176, 100);
+        sctx.fillStyle = '#38bdf8'; sctx.font = '700 14px monospace';
+        sctx.fillText('CLO 3D: POLO SHIRT', 50, 45);
+        sctx.fillText('COLOR: NAVY 19-4010', 50, 70);
+      } else {
+        sctx.fillStyle = '#1e1b4b'; sctx.fillRect(0, 0, 256, 144);
+        sctx.fillStyle = '#4ade80'; sctx.font = '700 13px monospace';
+        sctx.fillText('ERP MERCHANDISING SYSTEM', 20, 30);
+        sctx.fillText('PO #PO-98214 · US BUYER', 20, 55);
+        sctx.fillText('QTY: 500 PCS · STATUS: IN PROD', 20, 80);
+      }
+      const sTex = new THREE.CanvasTexture(screenCanvas);
+      const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.68, 0.38), new THREE.MeshBasicMaterial({ map: sTex }));
+      screen.position.set(mx, 1.14, -0.278);
+      screen.rotation.y = rotY;
+      g.add(screen);
+    }
+
+    // Keyboard & Mouse
+    const kb = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.015, 0.15), monMat);
+    kb.position.set(0, 0.79, 0.12);
+    g.add(kb);
+
+    // Pantone Cotton Passport Swatch Fan Book
+    const pantoneG = new THREE.Group();
+    pantoneG.position.set(-0.85, 0.79, 0.15);
+    const swColors = [0xef4444, 0xf97316, 0xfacc15, 0x22c55e, 0x06b6d4, 0x3b82f6, 0x8b5cf6, 0xec4899];
+    for (let i = 0; i < swColors.length; i++) {
+      const sw = new THREE.Mesh(
+        new THREE.BoxGeometry(0.18, 0.008, 0.05),
+        new THREE.MeshStandardMaterial({ color: swColors[i], roughness: 0.4 })
+      );
+      sw.rotation.y = (i - 4) * 0.15;
+      sw.position.set(0, i * 0.003, 0);
+      pantoneG.add(sw);
+    }
+    g.add(pantoneG);
+
+    // Techpack Binder
+    const tpBinder = new THREE.Mesh(
+      new THREE.BoxGeometry(0.32, 0.04, 0.24),
+      new THREE.MeshStandardMaterial({ color: 0x1d4ed8, roughness: 0.5 })
+    );
+    tpBinder.position.set(0.85, 0.8, 0.1);
+    g.add(tpBinder);
+
+    // Brass engraved Merchandiser Nameplate
+    const np = new THREE.Mesh(
+      new THREE.BoxGeometry(0.22, 0.03, 0.05),
+      new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9, roughness: 0.2 })
+    );
+    np.position.set(0.6, 0.79, 0.35);
+    g.add(np);
+
+    // Ergonomic Mesh Swivel Chair
+    const chairMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.7 });
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.08, 0.48), chairMat);
+    seat.position.set(0, 0.48, 0.7);
+    g.add(seat);
+    const back = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.55, 0.06), chairMat);
+    back.position.set(0, 0.82, 0.92);
+    g.add(back);
+  }
+
+  private createCentralPrinter(g: THREE.Group): void {
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.35 });
+    const darkMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6, metalness: 0.4 });
+
+    const body = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.15, 0.85), bodyMat);
+    body.position.set(0, 0.575, 0);
+    body.castShadow = true;
+    g.add(body);
+
+    for (let i = 0; i < 4; i++) {
+      const drawer = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.16, 0.04), darkMat);
+      drawer.position.set(0, 0.18 + i * 0.2, 0.43);
+      g.add(drawer);
+      const h = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.03, 0.03), bodyMat);
+      h.position.set(0, 0.18 + i * 0.2, 0.45);
+      g.add(h);
+    }
+
+    const adf = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.18, 0.78), bodyMat);
+    adf.position.set(0, 1.24, 0);
+    g.add(adf);
+
+    const screenG = new THREE.Group();
+    screenG.position.set(0.42, 1.25, 0.42);
+    screenG.rotation.x = -Math.PI / 6;
+    const panel = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.18, 0.03), darkMat);
+    screenG.add(panel);
+    const scr = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.22, 0.14),
+      new THREE.MeshBasicMaterial({ color: 0x22c55e })
+    );
+    scr.position.z = 0.016;
+    screenG.add(scr);
+    g.add(screenG);
+
+    const paperCatch = new THREE.Mesh(
+      new THREE.BoxGeometry(0.45, 0.04, 0.35),
+      new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 })
+    );
+    paperCatch.position.set(-0.35, 1.0, 0);
+    paperCatch.rotation.z = -0.1;
+    g.add(paperCatch);
+
+    const boxMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.6 });
+    for (let i = 0; i < 2; i++) {
+      const box = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.26, 0.48), boxMat);
+      box.position.set(0.72, 0.13 + i * 0.26, 0);
+      box.castShadow = true;
+      g.add(box);
+    }
+  }
+
+  private createLabStation(g: THREE.Group): void {
+    const boothMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.6 });
+    const innerMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.9 });
+
+    const cabinet = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.1, 0.8), boothMat);
+    cabinet.position.set(0, 1.45, 0);
+    cabinet.castShadow = true;
+    g.add(cabinet);
+
+    const cavity = new THREE.Mesh(new THREE.BoxGeometry(1.24, 0.85, 0.7), innerMat);
+    cavity.position.set(0, 1.4, 0.08);
+    g.add(cavity);
+
+    const lamp = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.03, 0.03, 1.0, 10),
+      new THREE.MeshBasicMaterial({ color: 0xf0fdf4 })
+    );
+    lamp.rotateZ(Math.PI / 2);
+    lamp.position.set(0, 1.78, 0.1);
+    g.add(lamp);
+
+    const boothLight = new THREE.PointLight(0xf0fdf4, 1.8, 3.5);
+    boothLight.position.set(0, 1.7, 0.15);
+    g.add(boothLight);
+
+    const easel = new THREE.Mesh(
+      new THREE.BoxGeometry(0.8, 0.03, 0.45),
+      new THREE.MeshStandardMaterial({ color: 0x334155 })
+    );
+    easel.position.set(0, 1.15, 0.1);
+    easel.rotation.x = Math.PI / 4;
+    g.add(easel);
+
+    const dipColors = [0x1e3a8a, 0x1e40af, 0x172554];
+    for (let i = 0; i < 3; i++) {
+      const sw = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.16, 0.18),
+        new THREE.MeshStandardMaterial({ color: dipColors[i], roughness: 0.4 })
+      );
+      sw.position.set(-0.24 + i * 0.24, 1.18, 0.08);
+      sw.rotation.x = -Math.PI / 4;
+      g.add(sw);
+    }
+
+    const bench = new THREE.Mesh(
+      new THREE.BoxGeometry(2.6, 0.88, 1.1),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.35 })
+    );
+    bench.position.set(0, 0.44, 0);
+    bench.castShadow = true;
+    g.add(bench);
+
+    const spec = new THREE.Mesh(
+      new THREE.BoxGeometry(0.48, 0.32, 0.38),
+      new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.25 })
+    );
+    spec.position.set(0.95, 0.98, 0);
+    g.add(spec);
+
+    const specScr = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.22, 0.12),
+      new THREE.MeshBasicMaterial({ color: 0x22c55e })
+    );
+    specScr.position.set(0.95, 1.05, 0.192);
+    g.add(specScr);
+
+    const glassMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.6, roughness: 0.1 });
+    for (let i = 0; i < 2; i++) {
+      const beaker = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.14, 10), glassMat);
+      beaker.position.set(-0.95 + i * 0.18, 0.95, 0.2);
+      g.add(beaker);
+    }
+  }
+
+  private createFabricWarehouseStation(g: THREE.Group): void {
+    const frameMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.6, roughness: 0.35 });
+    const steelMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.2 });
+
+    const stand = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.8, 1.1), frameMat);
+    stand.position.set(0, 0.4, 0);
+    stand.castShadow = true;
+    g.add(stand);
+
+    const bed = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.08, 0.8), frameMat);
+    bed.position.set(0, 1.1, 0.1);
+    bed.rotation.x = Math.PI / 4;
+    g.add(bed);
+
+    const glassPanel = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.8, 0.65),
+      new THREE.MeshBasicMaterial({ color: 0xffffff })
+    );
+    glassPanel.position.set(0, 1.15, 0.08);
+    glassPanel.rotation.x = -Math.PI / 4;
+    g.add(glassPanel);
+
+    const spindle = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.1, 12), steelMat);
+    spindle.rotateZ(Math.PI / 2);
+    spindle.position.set(0, 0.55, 0.45);
+    g.add(spindle);
+
+    const fabricRoll = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.24, 0.24, 1.9, 16),
+      new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.5 })
+    );
+    fabricRoll.rotateZ(Math.PI / 2);
+    fabricRoll.position.set(0, 0.55, 0.45);
+    g.add(fabricRoll);
+
+    const topRoller = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.0, 12), steelMat);
+    topRoller.rotateZ(Math.PI / 2);
+    topRoller.position.set(0, 1.45, -0.2);
+    g.add(topRoller);
+
+    const cart = new THREE.Mesh(
+      new THREE.BoxGeometry(0.65, 0.75, 0.55),
+      new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.7 })
+    );
+    cart.position.set(1.4, 0.38, 0);
+    g.add(cart);
+
+    const scanner = new THREE.Mesh(
+      new THREE.BoxGeometry(0.08, 0.16, 0.12),
+      new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.4 })
+    );
+    scanner.position.set(1.4, 0.84, 0);
+    g.add(scanner);
+
+    const clip = new THREE.Mesh(
+      new THREE.BoxGeometry(0.22, 0.02, 0.3),
+      new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.7 })
+    );
+    clip.position.set(1.4, 0.8, -0.15);
+    g.add(clip);
+  }
+
+  private createShippingPortStation(g: THREE.Group): void {
+    const bridgeMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8, roughness: 0.35 });
+    const curbMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.5 });
+
+    const platform = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.12, 2.2), bridgeMat);
+    platform.position.set(0, 0.06, 0);
+    platform.receiveShadow = true;
+    g.add(platform);
+
+    for (const cz of [-1.12, 1.12]) {
+      const curb = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.18, 0.08), curbMat);
+      curb.position.set(0, 0.09, cz);
+      g.add(curb);
+    }
+
+    const boothG = new THREE.Group();
+    boothG.position.set(-1.4, 0, 1.6);
+
+    const boothBody = new THREE.Mesh(
+      new THREE.BoxGeometry(1.2, 2.2, 1.1),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.4 })
+    );
+    boothBody.position.y = 1.1;
+    boothBody.castShadow = true;
+    boothG.add(boothBody);
+
+    const win = new THREE.Mesh(
+      new THREE.BoxGeometry(0.85, 0.65, 0.05),
+      new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.6, roughness: 0.1 })
+    );
+    win.position.set(0, 1.4, -0.56);
+    boothG.add(win);
+
+    const ac = new THREE.Mesh(
+      new THREE.BoxGeometry(0.45, 0.25, 0.35),
+      new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.5 })
+    );
+    ac.position.set(0, 2.32, 0);
+    boothG.add(ac);
+    g.add(boothG);
+
+    const pedestal = new THREE.Mesh(
+      new THREE.BoxGeometry(0.32, 0.95, 0.32),
+      new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.3 })
+    );
+    pedestal.position.set(0, 0.48, 1.1);
+    g.add(pedestal);
+
+    const armCanvas = document.createElement('canvas');
+    armCanvas.width = 256; armCanvas.height = 32;
+    const actx = armCanvas.getContext('2d')!;
+    for (let x = 0; x < 256; x += 32) {
+      actx.fillStyle = (x / 32) % 2 === 0 ? '#dc2626' : '#ffffff';
+      actx.fillRect(x, 0, 32, 32);
+    }
+    const armTex = new THREE.CanvasTexture(armCanvas);
+    const arm = new THREE.Mesh(
+      new THREE.BoxGeometry(0.08, 0.08, 2.4),
+      new THREE.MeshStandardMaterial({ map: armTex, roughness: 0.3 })
+    );
+    arm.position.set(0, 0.85, -0.1);
+    g.add(arm);
+
+    const signalLight = new THREE.Mesh(
+      new THREE.SphereGeometry(0.07, 10, 10),
+      new THREE.MeshBasicMaterial({ color: 0x22c55e })
+    );
+    signalLight.position.set(0, 1.05, 1.1);
+    g.add(signalLight);
+
+    const scorePost = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.06, 0.06, 2.6, 10),
+      new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.8 })
+    );
+    scorePost.position.set(1.5, 1.3, 1.1);
+    g.add(scorePost);
+
+    const boardCanvas = document.createElement('canvas');
+    boardCanvas.width = 512; boardCanvas.height = 200;
+    const bctx = boardCanvas.getContext('2d')!;
+    bctx.fillStyle = '#020617';
+    bctx.fillRect(0, 0, 512, 200);
+    bctx.strokeStyle = '#38bdf8';
+    bctx.lineWidth = 6;
+    bctx.strokeRect(4, 4, 504, 192);
+
+    bctx.fillStyle = '#38bdf8';
+    bctx.font = '900 24px monospace';
+    bctx.textAlign = 'center';
+    bctx.fillText('CẢNG CÁT LÁI · CỔNG 02', 256, 45);
+
+    bctx.fillStyle = '#facc15';
+    bctx.font = '900 48px monospace';
+    bctx.fillText('32,480 KG', 256, 110);
+
+    bctx.fillStyle = '#4ade80';
+    bctx.font = '700 22px monospace';
+    bctx.fillText('THÔNG QUAN ĐẠT CHUẨN [PASS]', 256, 165);
+
+    const boardTex = new THREE.CanvasTexture(boardCanvas);
+    const scoreboard = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.6, 0.65),
+      new THREE.MeshBasicMaterial({ map: boardTex })
+    );
+    scoreboard.position.set(1.5, 2.6, 1.1);
+    scoreboard.rotation.y = Math.PI;
+    g.add(scoreboard);
+  }
+
   private setupDepartmentWorkstations(): void {
     // 1. My Desk (Văn phòng)
     const deskG = new THREE.Group();
     deskG.position.set(-10.5, 0, -13.0);
+    this.createMerchandiserStation(deskG);
+    this.scene.add(deskG);
+    this.addObstacle('station_desk', -10.5, -13.3, 2.4, 1.0);
     this.addStation('desk', 'Bàn Làm Việc Merchandiser', 'Văn Phòng Điều Hành', '💻', deskG.position, 2.5, deskG);
 
     // 2. Central Printer (Văn phòng)
     const printerG = new THREE.Group();
     printerG.position.set(-4, 0, -12);
+    this.createCentralPrinter(printerG);
+    this.scene.add(printerG);
+    this.addObstacle('station_printer', -4, -12, 1.2, 1.0);
     this.addStation('printer', 'Máy In Techpack & Hợp Đồng', 'Văn Phòng Điều Hành', '🖨️', printerG.position, 2.3, printerG);
 
     // 3. Cutting & Lab Station (Xưởng cắt & Lab)
     const labG = new THREE.Group();
     labG.position.set(12, 0, -9.5);
+    this.createLabStation(labG);
+    this.scene.add(labG);
+    this.addObstacle('station_lab', 12, -9.5, 2.6, 1.2);
     this.addStation('lab', 'Phòng Lab Soi Màu D65', 'Xưởng Cắt & Lab', '🔬', labG.position, 2.5, labG);
 
     // 4. Warehouse Fabric Racks (Kho vải)
     const fabricG = new THREE.Group();
     fabricG.position.set(-14, 0, 12);
+    this.createFabricWarehouseStation(fabricG);
+    this.scene.add(fabricG);
+    this.addObstacle('station_fabric', -14, 12, 2.4, 1.2);
     this.addStation('fabric', 'Kệ Vải Thun & Phụ Liệu Spandex', 'Kho Vải Đại Ngàn', '🧵', fabricG.position, 2.6, fabricG);
 
     // 5. Canteen Espresso Coffee Machine (Quầy Pantry)
@@ -1628,6 +3029,9 @@ export class OfficeStage {
     // 6. Logistics Shipping Port (Cảng Cont Cát Lái)
     const shipG = new THREE.Group();
     shipG.position.set(13, 0, 15);
+    this.createShippingPortStation(shipG);
+    this.scene.add(shipG);
+    this.addObstacle('station_shipping_booth', 11.6, 16.6, 1.4, 1.3);
     this.addStation('shipping', 'Cổng Xuất Cont Cát Lái', 'Cảng Biển & Xuất Khẩu', '🚢', shipG.position, 2.8, shipG);
 
     // 7. Bàn Thờ Thần Tài & Thổ Địa (Altar of Fortune)
