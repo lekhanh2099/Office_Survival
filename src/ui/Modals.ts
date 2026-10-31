@@ -13,6 +13,14 @@ import { ALL_ROLES } from '../data/roles';
 import { ALL_TRAITS } from '../data/traits';
 import { StationDilemma } from '../data/officeDilemmas';
 import { COLLEAGUES_DATA } from '../data/colleagues';
+import {
+  PlayerCustomProfile,
+  PLAYER_PERSONALITIES,
+  SHIRT_COLOR_PALETTE,
+  HAIR_COLOR_PALETTE,
+  ACCESSORY_OPTIONS
+} from '../data/playerProfile';
+import { OFFICE_APPLIANCES } from '../data/officeAppliances';
 
 function esc(t?: string | number | null): string {
   return String(t ?? '').replace(/[&<>"']/g, x => ({
@@ -880,4 +888,295 @@ export function openColleagueModal(
     });
   });
 }
+
+export function openPlayerProfileModal(
+  host: HTMLElement,
+  currentProfile: PlayerCustomProfile,
+  onSave: (newProfile: PlayerCustomProfile) => void
+): void {
+  sounds.click();
+
+  let selectedPersonality = currentProfile.personality || 'caffeine_addict';
+  let selectedShirt = currentProfile.shirtColor || '#4f46e5';
+  let selectedHair = currentProfile.hairColor || '#1e1b4b';
+  let selectedAcc = currentProfile.accessory || 'headphone';
+
+  host.innerHTML = `
+    <div class="dialogShade" role="presentation">
+      <section class="dialog playerProfileDialog" role="dialog" aria-modal="true" style="max-width:520px;max-height:92vh;overflow-y:auto;border-radius:18px;border:2.5px solid #818cf8;box-shadow:0 18px 50px rgba(0,0,0,0.7);background:#0f172a;color:#ffffff;padding:0">
+        <!-- Header (Sticky) -->
+        <div style="position:sticky;top:0;z-index:10;background:linear-gradient(135deg, #312e81, #4f46e5);padding:14px 16px;border-bottom:2px solid #818cf8;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:28px">👤</span>
+            <div>
+              <h2 style="font-size:16px;font-weight:900;color:#ffffff;margin:0 0 2px">HỒ SƠ NHÂN VIÊN & TÍNH CÁCH 3D</h2>
+              <div style="font-size:11px;color:#c7d2fe;font-weight:700">Tùy biến tên, danh xưng, buff tính cách và phụ kiện Chibi</div>
+            </div>
+          </div>
+          <button id="btnCloseProfile" type="button" style="background:rgba(255,255,255,0.18);border:1.5px solid rgba(255,255,255,0.35);color:#ffffff;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:900;cursor:pointer;white-space:nowrap">✕ ĐÓNG</button>
+        </div>
+
+        <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+          <!-- Name & Title Inputs -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label style="display:block;font-size:11px;font-weight:800;color:#94a3b8;margin-bottom:4px">🏷️ HỌ & TÊN NHÂN VIÊN:</label>
+              <input id="profNameInput" type="text" value="${esc(currentProfile.name || 'Bạn')}" maxlength="24" style="width:100%;box-sizing:border-box;background:#1e293b;border:1.5px solid #475569;border-radius:8px;padding:8px 10px;color:#ffffff;font-weight:900;font-size:13px;outline:none" />
+            </div>
+            <div>
+              <label style="display:block;font-size:11px;font-weight:800;color:#94a3b8;margin-bottom:4px">🎖️ DANH XƯNG CÔNG SỞ:</label>
+              <input id="profTitleInput" type="text" value="${esc(currentProfile.title || 'Chiến Thần Merchandiser')}" maxlength="30" style="width:100%;box-sizing:border-box;background:#1e293b;border:1.5px solid #475569;border-radius:8px;padding:8px 10px;color:#fde047;font-weight:800;font-size:12.5px;outline:none" />
+            </div>
+          </div>
+
+          <!-- Personality Selector (6 Archetypes with Gameplay Buffs) -->
+          <div>
+            <div style="font-size:12px;font-weight:900;color:#fde047;margin-bottom:6px">
+              🎭 TÍNH CÁCH ĐẶC TRƯNG (CHỌN 1 ĐỂ KÍCH HOẠT BUFF):
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="personalityGrid">
+              ${PLAYER_PERSONALITIES.map(p => {
+                const isActive = p.id === selectedPersonality;
+                return `
+                  <div class="persCard" data-pers="${p.id}" style="background:${isActive ? '#312e81' : 'rgba(255,255,255,0.05)'};border:2px solid ${isActive ? '#facc15' : 'rgba(255,255,255,0.15)'};border-radius:10px;padding:8px 10px;cursor:pointer;transition:all 0.15s ease;${isActive ? 'box-shadow:0 0 10px rgba(250,204,21,0.4)' : ''}">
+                    <div style="display:flex;align-items:center;gap:6px">
+                      <span style="font-size:18px">${p.emoji}</span>
+                      <strong style="font-size:11.5px;color:${isActive ? '#fde047' : '#ffffff'}">${esc(p.name)}</strong>
+                    </div>
+                    <div style="font-size:10px;color:#cbd5e1;margin-top:3px;line-height:1.3">${esc(p.desc)}</div>
+                    <div style="font-size:9.5px;font-weight:800;color:#4ade80;margin-top:4px;border-top:1px solid rgba(255,255,255,0.1);padding-top:3px">
+                      ✨ Buff: ${esc(p.buffText)}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+          <!-- Appearance: Shirt & Hair Colors -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;background:rgba(255,255,255,0.03);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.1)">
+            <!-- Shirt Color -->
+            <div>
+              <div style="font-size:11px;font-weight:800;color:#94a3b8;margin-bottom:6px">👕 MÀU ÁO SƠ MI / POLO:</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap" id="shirtColorGrid">
+                ${SHIRT_COLOR_PALETTE.map(c => `
+                  <button class="colorPickBtn shirtBtn" data-color="${c.hex}" type="button" title="${c.label}" style="width:26px;height:26px;border-radius:50%;background:${c.hex};border:2.5px solid ${c.hex === selectedShirt ? '#facc15' : '#ffffff'};cursor:pointer;transition:transform 0.1s;${c.hex === selectedShirt ? 'transform:scale(1.2);box-shadow:0 0 8px #facc15' : ''}"></button>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Hair Color -->
+            <div>
+              <div style="font-size:11px;font-weight:800;color:#94a3b8;margin-bottom:6px">💇 MÀU TÓC ANIME:</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap" id="hairColorGrid">
+                ${HAIR_COLOR_PALETTE.map(h => `
+                  <button class="colorPickBtn hairBtn" data-color="${h.hex}" type="button" title="${h.label}" style="width:26px;height:26px;border-radius:50%;background:${h.hex};border:2.5px solid ${h.hex === selectedHair ? '#facc15' : '#ffffff'};cursor:pointer;transition:transform 0.1s;${h.hex === selectedHair ? 'transform:scale(1.2);box-shadow:0 0 8px #facc15' : ''}"></button>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+
+          <!-- Accessory Selector -->
+          <div>
+            <div style="font-size:11px;font-weight:800;color:#94a3b8;margin-bottom:6px">👓 PHỤ KIỆN ĐEO TRÊN NGƯỜI:</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap" id="accGrid">
+              ${ACCESSORY_OPTIONS.map(a => {
+                const isSelected = a.id === selectedAcc;
+                return `
+                  <button class="accBtn" data-acc="${a.id}" type="button" style="background:${isSelected ? '#4f46e5' : 'rgba(255,255,255,0.07)'};border:1.5px solid ${isSelected ? '#facc15' : 'rgba(255,255,255,0.18)'};border-radius:8px;padding:5px 9px;color:#ffffff;font-size:11px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:4px">
+                    <span>${a.emoji}</span>
+                    <span>${a.label}</span>
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        </div>
+
+        <!-- Sticky Footer Save -->
+        <div style="position:sticky;bottom:0;z-index:10;background:#0f172a;padding:12px 16px;border-top:1.5px solid rgba(255,255,255,0.12);box-shadow:0 -4px 14px rgba(0,0,0,0.4)">
+          <button class="primary" id="btnSaveProfile" type="button" style="width:100%;padding:12px;font-size:13.5px;font-weight:900;border-radius:10px;background:linear-gradient(135deg, #4f46e5, #7c3aed);border:2px solid #facc15;color:#ffffff;box-shadow:0 4px 12px rgba(79,70,229,0.5);cursor:pointer">
+            💾 LƯU HỒ SƠ & ÁP DỤNG LÊN CHIBI 3D →
+          </button>
+        </div>
+      </section>
+    </div>
+  `;
+
+  document.getElementById('btnCloseProfile')?.addEventListener('click', () => {
+    sounds.click();
+    host.innerHTML = '';
+  });
+
+  const shade = host.querySelector('.dialogShade');
+  shade?.addEventListener('click', (e) => {
+    if (e.target === shade) {
+      sounds.click();
+      host.innerHTML = '';
+    }
+  });
+
+  // Personality Card Selection
+  const persCards = host.querySelectorAll('.persCard');
+  persCards.forEach(c => {
+    c.addEventListener('click', () => {
+      sounds.click();
+      selectedPersonality = (c as HTMLElement).dataset.pers as any;
+      persCards.forEach(card => {
+        const isThis = (card as HTMLElement).dataset.pers === selectedPersonality;
+        (card as HTMLElement).style.background = isThis ? '#312e81' : 'rgba(255,255,255,0.05)';
+        (card as HTMLElement).style.borderColor = isThis ? '#facc15' : 'rgba(255,255,255,0.15)';
+        (card as HTMLElement).style.boxShadow = isThis ? '0 0 10px rgba(250,204,21,0.4)' : 'none';
+      });
+    });
+  });
+
+  // Shirt Color Selection
+  const shirtBtns = host.querySelectorAll('.shirtBtn');
+  shirtBtns.forEach(b => {
+    b.addEventListener('click', () => {
+      sounds.click();
+      selectedShirt = (b as HTMLElement).dataset.color || '#4f46e5';
+      shirtBtns.forEach(btn => {
+        const isThis = (btn as HTMLElement).dataset.color === selectedShirt;
+        (btn as HTMLElement).style.borderColor = isThis ? '#facc15' : '#ffffff';
+        (btn as HTMLElement).style.transform = isThis ? 'scale(1.2)' : 'scale(1)';
+        (btn as HTMLElement).style.boxShadow = isThis ? '0 0 8px #facc15' : 'none';
+      });
+    });
+  });
+
+  // Hair Color Selection
+  const hairBtns = host.querySelectorAll('.hairBtn');
+  hairBtns.forEach(b => {
+    b.addEventListener('click', () => {
+      sounds.click();
+      selectedHair = (b as HTMLElement).dataset.color || '#1e1b4b';
+      hairBtns.forEach(btn => {
+        const isThis = (btn as HTMLElement).dataset.color === selectedHair;
+        (btn as HTMLElement).style.borderColor = isThis ? '#facc15' : '#ffffff';
+        (btn as HTMLElement).style.transform = isThis ? 'scale(1.2)' : 'scale(1)';
+        (btn as HTMLElement).style.boxShadow = isThis ? '0 0 8px #facc15' : 'none';
+      });
+    });
+  });
+
+  // Accessory Selection
+  const accBtns = host.querySelectorAll('.accBtn');
+  accBtns.forEach(b => {
+    b.addEventListener('click', () => {
+      sounds.click();
+      selectedAcc = (b as HTMLElement).dataset.acc as any || 'none';
+      accBtns.forEach(btn => {
+        const isThis = (btn as HTMLElement).dataset.acc === selectedAcc;
+        (btn as HTMLElement).style.background = isThis ? '#4f46e5' : 'rgba(255,255,255,0.07)';
+        (btn as HTMLElement).style.borderColor = isThis ? '#facc15' : 'rgba(255,255,255,0.18)';
+      });
+    });
+  });
+
+  // Save Event
+  document.getElementById('btnSaveProfile')?.addEventListener('click', () => {
+    sounds.perk();
+    const nameInput = document.getElementById('profNameInput') as HTMLInputElement | null;
+    const titleInput = document.getElementById('profTitleInput') as HTMLInputElement | null;
+
+    const newProfile: PlayerCustomProfile = {
+      name: nameInput?.value?.trim() || 'Bạn',
+      title: titleInput?.value?.trim() || 'Chiến Thần Merchandiser',
+      personality: selectedPersonality,
+      shirtColor: selectedShirt,
+      hairColor: selectedHair,
+      accessory: selectedAcc
+    };
+
+    onSave(newProfile);
+    host.innerHTML = '';
+  });
+}
+
+export function openApplianceModal(
+  host: HTMLElement,
+  stationType: string,
+  onActionSelect: (actionId: string) => void
+): void {
+  sounds.click();
+  const appliance = OFFICE_APPLIANCES[stationType];
+  if (!appliance) return;
+
+  host.innerHTML = `
+    <div class="dialogShade" role="presentation">
+      <section class="dialog applianceDialog" role="dialog" aria-modal="true" style="max-width:460px;max-height:90vh;overflow-y:auto;border-radius:18px;border:2.5px solid #38bdf8;box-shadow:0 16px 48px rgba(0,0,0,0.65);background:#0f172a;color:#ffffff;padding:0">
+        <!-- Header (Sticky) -->
+        <div style="position:sticky;top:0;z-index:10;background:linear-gradient(135deg, #0369a1, #0284c7);padding:14px 16px;border-bottom:2px solid #38bdf8;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:30px">${appliance.emoji}</span>
+            <div>
+              <h2 style="font-size:16px;font-weight:900;color:#ffffff;margin:0 0 2px">${esc(appliance.name)}</h2>
+              <div style="font-size:11px;color:#bae6fd;font-weight:700">📍 ${esc(appliance.zone)}</div>
+            </div>
+          </div>
+          <button id="btnCloseAppliance" type="button" style="background:rgba(255,255,255,0.18);border:1.5px solid rgba(255,255,255,0.35);color:#ffffff;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:900;cursor:pointer;white-space:nowrap">✕ ĐÓNG</button>
+        </div>
+
+        <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+          <!-- Description -->
+          <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:10px 12px;font-size:11.5px;color:#e2e8f0;line-height:1.4">
+            ${esc(appliance.description)}
+          </div>
+
+          <div style="font-size:12px;font-weight:900;color:#fde047;margin-top:2px">
+            ⚡ CHỌN THAO TÁC SỬ DỤNG ĐỒ DÙNG:
+          </div>
+
+          <!-- Actions Grid -->
+          <div style="display:flex;flex-direction:column;gap:8px">
+            ${appliance.actions.map(act => `
+              <button class="applianceActionBtn" data-act-id="${act.id}" type="button" style="text-align:left;background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.18);border-radius:10px;padding:10px 12px;cursor:pointer;transition:all 0.15s ease">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <div style="font-weight:900;font-size:12.5px;color:#ffffff;display:flex;align-items:center;gap:6px">
+                    <span>${act.emoji}</span>
+                    <span>${esc(act.name)}</span>
+                  </div>
+                  <span style="background:rgba(56,189,248,0.2);color:#7dd3fc;font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;white-space:nowrap">
+                    ${esc(act.costDesc)}
+                  </span>
+                </div>
+                <div style="font-size:10.5px;color:#cbd5e1;margin-top:3px;line-height:1.35">
+                  ${esc(act.desc)}
+                </div>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      </section>
+    </div>
+  `;
+
+  document.getElementById('btnCloseAppliance')?.addEventListener('click', () => {
+    sounds.click();
+    host.innerHTML = '';
+  });
+
+  const shade = host.querySelector('.dialogShade');
+  shade?.addEventListener('click', (e) => {
+    if (e.target === shade) {
+      sounds.click();
+      host.innerHTML = '';
+    }
+  });
+
+  const actBtns = host.querySelectorAll('.applianceActionBtn');
+  actBtns.forEach(b => {
+    b.addEventListener('click', () => {
+      const actId = (b as HTMLElement).dataset.actId;
+      if (actId) {
+        sounds.click();
+        host.innerHTML = '';
+        onActionSelect(actId);
+      }
+    });
+  });
+}
+
 

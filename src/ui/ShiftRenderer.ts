@@ -1,5 +1,6 @@
 import { ShiftState } from '../3d/ShiftGameEngine';
 import { OfficeStage } from '../3d/OfficeStage';
+import { PLAYER_PERSONALITIES } from '../data/playerProfile';
 
 const stationCoords: Record<string, [number, number]> = {
   desk: [-10.5, -13.0],
@@ -148,6 +149,11 @@ export function mountShiftHUD(host: HTMLElement): void {
         <span class="orderCount" id="hudOrders">0/5</span>
       </div>
 
+      <!-- Character Profile & Traits Button -->
+      <button class="ribbonProfileBtn" id="hudProfileBtn" data-act="open_player_profile" type="button" title="👤 Tùy biến Hồ Sơ & Tính Cách 3D">
+        👤 <span id="hudRibbonPlayerName">Bạn</span>
+      </button>
+
       <!-- Daily Weather & Office Modifier Badge -->
       <div class="ribbonWeather" id="hudWeather" data-act="open_weather_info" title="Thời tiết & Biến số ca trực hôm nay">
         ☀️ Sếp Vui Tính
@@ -196,8 +202,13 @@ export function mountShiftHUD(host: HTMLElement): void {
         </div>
       </div>
 
-      <!-- Colleague Relationships Quick Bar (Interactive 5 Colleagues) -->
+      <!-- Colleague Relationships Quick Bar (Interactive 5 Colleagues + My Profile) -->
       <div class="shiftColleaguesBar" id="hudColleaguesBar">
+        <button class="colleagueChip myProfileChip" data-act="open_player_profile" type="button" title="Bấm để tùy biến Hồ Sơ & Tính Cách Nhân Viên">
+          <span class="chipEmoji" id="hudPlayerProfEmoji" style="background:linear-gradient(135deg, #4f46e5, #ec4899)">☕</span>
+          <span class="chipName" id="hudPlayerProfName">Bạn</span>
+          <span class="chipFavor" id="hudPlayerProfTrait" style="background:#f59e0b;color:#1e1b4b;font-weight:900">HỒ SƠ</span>
+        </button>
         <button class="colleagueChip" data-colleague="boss" type="button" title="Sếp Hùng (Tổng Giám Đốc) · Bấm để mở tương tác">
           <span class="chipEmoji" style="background:#334155">👔</span>
           <span class="chipName">Sếp Hùng</span>
@@ -309,6 +320,9 @@ export function mountShiftHUD(host: HTMLElement): void {
       <div class="actionCardActions">
         <button class="primary actionCardConfirmBtn" id="cardConfirmBtn" data-act="confirm_action_card" type="button">
           🚀 LÀM VIỆC NGAY
+        </button>
+        <button class="secondary actionCardApplianceBtn" id="cardApplianceBtn" data-act="open_appliance_menu" type="button" style="display:none">
+          🛠️ DÙNG ĐỒ DÙNG NÀY
         </button>
       </div>
     </div>
@@ -491,6 +505,30 @@ export function updateShiftHUD(host: HTMLElement, state: ShiftState, stage?: Off
           (el as HTMLElement).style.color = '#cbd5e1';
           (el as HTMLElement).style.fontWeight = '700';
         }
+      }
+    }
+  }
+
+  // Update Player Profile in HUD
+  if (state.playerProfile) {
+    const profName = state.playerProfile.name || 'Bạn';
+    const profNameEl = host.querySelector('#hudPlayerProfName');
+    if (profNameEl && profNameEl.textContent !== profName) {
+      profNameEl.textContent = profName;
+    }
+    const profRibbonEl = host.querySelector('#hudRibbonPlayerName');
+    if (profRibbonEl && profRibbonEl.textContent !== profName) {
+      profRibbonEl.textContent = profName;
+    }
+    const pers = PLAYER_PERSONALITIES.find(p => p.id === state.playerProfile.personality);
+    if (pers) {
+      const profTraitEl = host.querySelector('#hudPlayerProfTrait');
+      if (profTraitEl) {
+        profTraitEl.textContent = pers.name.slice(0, 10).toUpperCase();
+      }
+      const emojiEl = host.querySelector('#hudPlayerProfEmoji');
+      if (emojiEl && emojiEl.textContent !== pers.emoji) {
+        emojiEl.textContent = pers.emoji;
       }
     }
   }
@@ -687,7 +725,7 @@ export function renderShiftFinishModal(state: ShiftState): string {
 
 export function showStationActionCard(
   host: HTMLElement,
-  data: { emoji: string; title: string; subtitle: string; desc: string; buttonText: string }
+  data: { emoji: string; title: string; subtitle: string; desc: string; buttonText: string; hasApplianceActions?: boolean }
 ): void {
   const card = host.querySelector('#hudActionCard') as HTMLElement;
   if (!card) return;
@@ -706,6 +744,11 @@ export function showStationActionCard(
 
   const btnEl = card.querySelector('#cardConfirmBtn');
   if (btnEl) btnEl.textContent = data.buttonText;
+
+  const applianceBtn = card.querySelector('#cardApplianceBtn') as HTMLElement | null;
+  if (applianceBtn) {
+    applianceBtn.style.display = data.hasApplianceActions ? 'block' : 'none';
+  }
 
   card.style.display = 'block';
 }

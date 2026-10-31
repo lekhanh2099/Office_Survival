@@ -81,6 +81,7 @@ export class OfficeStage {
   public interactiveHitObjects: THREE.Mesh[] = [];
   public onStationClickCallback: ((station: Workstation, screenPos: { x: number; y: number }) => void) | null = null;
   public onColleagueClickCallback: ((colleagueId: string) => void) | null = null;
+  public onPlayerClickCallback: (() => void) | null = null;
   public onFloorTapCallback: ((pos: THREE.Vector3) => void) | null = null;
   public autoWalkTarget: { pos: THREE.Vector3; station?: Workstation | null; onReach?: () => void; stopDist?: number } | null = null;
   private autoWalkMarkerMesh!: THREE.Mesh;
@@ -2284,6 +2285,14 @@ export class OfficeStage {
 
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(mouse, this.camera);
+
+    // 0. Player Tap check (Open Profile & Customization)
+    if (this.onPlayerClickCallback && this.player?.group?.position) {
+      if (raycaster.ray.distanceToPoint(this.player.group.position) < 1.6) {
+        this.onPlayerClickCallback();
+        return;
+      }
+    }
 
     // 0. Colleague NPC Tap check (Sếp Hùng, Chị Nga, Anh Tuấn, Em Linh, Anh Hoàng)
     if (this.onColleagueClickCallback) {

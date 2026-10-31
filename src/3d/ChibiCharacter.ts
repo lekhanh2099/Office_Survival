@@ -1,25 +1,33 @@
 import * as THREE from 'three';
+import { PlayerCustomProfile, getSavedPlayerProfile } from '../data/playerProfile';
 
 export type CarriedItemType = 'none' | 'paper_stack' | 'fabric_roll' | 'coffee_cup' | 'box' | 'sample_shirt';
 
 export class ChibiCharacter {
   public group: THREE.Group;
   private headMesh!: THREE.Mesh;
+  private hairMesh!: THREE.Mesh;
+  private bang1!: THREE.Mesh;
+  private bang2!: THREE.Mesh;
   private bodyMesh!: THREE.Mesh;
+  private idCardMesh!: THREE.Mesh;
   private leftFoot!: THREE.Mesh;
   private rightFoot!: THREE.Mesh;
   private leftHand!: THREE.Mesh;
   private rightHand!: THREE.Mesh;
   private itemHolder!: THREE.Group;
+  private accessoryHolder!: THREE.Group;
   private nametagMesh!: THREE.Sprite;
+  private emoteSprite!: THREE.Sprite;
   private groundRingMesh!: THREE.Mesh;
   private leftEyeMesh!: THREE.Mesh;
   private rightEyeMesh!: THREE.Mesh;
 
-  // Animation cycle & Eye blink
+  // Animation cycle, Eye blink & Emote timer
   private walkCycle = 0;
   private idleTime = 0;
   private blinkTimer = 0;
+  private emoteTimer = 0;
   public isMoving = false;
   public moveSpeed = 5.4; // units per second
   public carriedItem: CarriedItemType = 'none';
@@ -27,17 +35,32 @@ export class ChibiCharacter {
   // Customization
   public skinColor: string;
   public shirtColor: string;
+  public hairColor: string;
   public isPlayer: boolean;
+  public currentName: string;
+  public currentTitle: string;
 
   constructor(skinColor = '#fed7aa', shirtColor = '#4f46e5', isNpc = false, name = 'BẠN (MERCHANDISER)') {
     this.skinColor = skinColor;
     this.shirtColor = shirtColor;
+    this.hairColor = isNpc ? '#475569' : '#1e1b4b';
     this.isPlayer = !isNpc;
+    this.currentName = name;
+    this.currentTitle = 'Chiến Thần Merchandiser';
     this.group = new THREE.Group();
-    this.initMeshes(isNpc, name);
+
+    if (this.isPlayer) {
+      const saved = getSavedPlayerProfile();
+      this.currentName = saved.name || name;
+      this.currentTitle = saved.title || 'Chiến Thần Merchandiser';
+      this.shirtColor = saved.shirtColor || shirtColor;
+      this.hairColor = saved.hairColor || '#1e1b4b';
+    }
+
+    this.initMeshes(isNpc);
   }
 
-  private initMeshes(isNpc: boolean, name: string): void {
+  private initMeshes(isNpc: boolean): void {
     const skinMat = new THREE.MeshStandardMaterial({
       color: new THREE.Color(this.skinColor),
       roughness: 0.35,
@@ -71,9 +94,9 @@ export class ChibiCharacter {
 
     const idCardGeo = new THREE.BoxGeometry(0.12, 0.18, 0.03);
     const idCardMat = new THREE.MeshStandardMaterial({ color: isNpc ? 0xef4444 : 0x38bdf8 });
-    const idCard = new THREE.Mesh(idCardGeo, idCardMat);
-    idCard.position.set(0, 0.46, 0.28);
-    this.group.add(idCard);
+    this.idCardMesh = new THREE.Mesh(idCardGeo, idCardMat);
+    this.idCardMesh.position.set(0, 0.46, 0.28);
+    this.group.add(this.idCardMesh);
 
     // 2. Head (Anime Chibi Proportions)
     const headGeo = new THREE.SphereGeometry(0.38, 24, 24);
@@ -87,24 +110,24 @@ export class ChibiCharacter {
     const hairGeo = new THREE.SphereGeometry(0.41, 20, 20);
     hairGeo.scale(1.02, 0.85, 1.05);
     const hairMat = new THREE.MeshStandardMaterial({
-      color: isNpc ? 0x475569 : 0x1e1b4b,
+      color: new THREE.Color(this.hairColor),
       roughness: 0.6
     });
-    const hairMesh = new THREE.Mesh(hairGeo, hairMat);
-    hairMesh.position.set(0, 0.16, -0.05);
-    this.headMesh.add(hairMesh);
+    this.hairMesh = new THREE.Mesh(hairGeo, hairMat);
+    this.hairMesh.position.set(0, 0.16, -0.05);
+    this.headMesh.add(this.hairMesh);
 
     // Front Bangs
     const bangGeo = new THREE.BoxGeometry(0.18, 0.14, 0.08);
-    const bang1 = new THREE.Mesh(bangGeo, hairMat);
-    bang1.position.set(-0.16, 0.28, 0.32);
-    bang1.rotation.z = -0.2;
-    this.headMesh.add(bang1);
+    this.bang1 = new THREE.Mesh(bangGeo, hairMat);
+    this.bang1.position.set(-0.16, 0.28, 0.32);
+    this.bang1.rotation.z = -0.2;
+    this.headMesh.add(this.bang1);
 
-    const bang2 = new THREE.Mesh(bangGeo, hairMat);
-    bang2.position.set(0.16, 0.28, 0.32);
-    bang2.rotation.z = 0.2;
-    this.headMesh.add(bang2);
+    this.bang2 = new THREE.Mesh(bangGeo, hairMat);
+    this.bang2.position.set(0.16, 0.28, 0.32);
+    this.bang2.rotation.z = 0.2;
+    this.headMesh.add(this.bang2);
 
     // Big Anime Eyes
     const eyeGeo = new THREE.SphereGeometry(0.052, 14, 14);
@@ -181,32 +204,21 @@ export class ChibiCharacter {
     rightSole.position.set(0, -0.045, 0);
     this.rightFoot.add(rightSole);
 
-    // Stylish Tech Headset Resting on Collar (Player Only)
-    if (this.isPlayer) {
-      const headsetMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.3, metalness: 0.8 });
-      const band = new THREE.Mesh(new THREE.TorusGeometry(0.31, 0.035, 8, 24, Math.PI), headsetMat);
-      band.position.set(0, 0.72, 0.02);
-      band.rotation.x = Math.PI * 0.45;
-      this.group.add(band);
-
-      const earCupMat = new THREE.MeshStandardMaterial({ color: 0x6366f1, roughness: 0.25 });
-      const earLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.06, 14), earCupMat);
-      earLeft.position.set(-0.31, 0.72, 0.07);
-      earLeft.rotation.z = Math.PI / 2;
-      this.group.add(earLeft);
-
-      const earRight = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.06, 14), earCupMat);
-      earRight.position.set(0.31, 0.72, 0.07);
-      earRight.rotation.z = Math.PI / 2;
-      this.group.add(earRight);
-    }
-
     // 5. Item Holder in front of chest
     this.itemHolder = new THREE.Group();
     this.itemHolder.position.set(0, 0.48, 0.38);
     this.group.add(this.itemHolder);
 
-    // 6. Ground Ring / Selection Indicator (Player only)
+    // 6. Accessories Holder
+    this.accessoryHolder = new THREE.Group();
+    this.group.add(this.accessoryHolder);
+
+    if (this.isPlayer) {
+      const saved = getSavedPlayerProfile();
+      this.rebuildAccessories(saved.accessory);
+    }
+
+    // 7. Ground Ring / Selection Indicator (Player only)
     if (this.isPlayer) {
       const ringCanvas = document.createElement('canvas');
       ringCanvas.width = 128;
@@ -248,32 +260,119 @@ export class ChibiCharacter {
       this.group.add(shadowMesh);
     }
 
-    // 7. Floating 3D Nametag (For NPCs)
-    if (isNpc) {
-      this.createNametag(name, isNpc);
+    // 8. Floating 3D Nametag
+    this.createNametag(this.currentName, isNpc, this.currentTitle);
+
+    // 9. Floating Emote Sprite (Initially hidden)
+    this.createEmoteSprite();
+  }
+
+  private rebuildAccessories(type: PlayerCustomProfile['accessory']): void {
+    while (this.accessoryHolder.children.length > 0) {
+      this.accessoryHolder.remove(this.accessoryHolder.children[0]);
+    }
+
+    if (type === 'glasses') {
+      const frameMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.3, metalness: 0.8 });
+      // Left rim
+      const rimGeo = new THREE.TorusGeometry(0.09, 0.014, 8, 18);
+      const rimLeft = new THREE.Mesh(rimGeo, frameMat);
+      rimLeft.position.set(-0.14, 0.98, 0.34);
+      this.accessoryHolder.add(rimLeft);
+      // Right rim
+      const rimRight = new THREE.Mesh(rimGeo, frameMat);
+      rimRight.position.set(0.14, 0.98, 0.34);
+      this.accessoryHolder.add(rimRight);
+      // Bridge
+      const bridge = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.10, 8), frameMat);
+      bridge.rotation.z = Math.PI / 2;
+      bridge.position.set(0, 0.99, 0.35);
+      this.accessoryHolder.add(bridge);
+    } else if (type === 'headphone') {
+      const headsetMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.25, metalness: 0.85 });
+      const band = new THREE.Mesh(new THREE.TorusGeometry(0.31, 0.035, 8, 24, Math.PI), headsetMat);
+      band.position.set(0, 0.72, 0.02);
+      band.rotation.x = Math.PI * 0.45;
+      this.accessoryHolder.add(band);
+
+      const earCupMat = new THREE.MeshStandardMaterial({ color: 0x6366f1, roughness: 0.2 });
+      const earLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.06, 14), earCupMat);
+      earLeft.position.set(-0.31, 0.72, 0.07);
+      earLeft.rotation.z = Math.PI / 2;
+      this.accessoryHolder.add(earLeft);
+
+      const earRight = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.06, 14), earCupMat);
+      earRight.position.set(0.31, 0.72, 0.07);
+      earRight.rotation.z = Math.PI / 2;
+      this.accessoryHolder.add(earRight);
+    } else if (type === 'gold_badge') {
+      // Golden VIP Lanyard & Badge
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.9, roughness: 0.2 });
+      const badgePlate = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.22, 0.035), goldMat);
+      badgePlate.position.set(0, 0.46, 0.30);
+      this.accessoryHolder.add(badgePlate);
+
+      // Gold Ribbon
+      const ribbonMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.5 });
+      const ribbon = new THREE.Mesh(new THREE.TorusGeometry(0.29, 0.02, 6, 20, Math.PI), ribbonMat);
+      ribbon.position.set(0, 0.68, 0.02);
+      ribbon.rotation.x = Math.PI * 0.45;
+      this.accessoryHolder.add(ribbon);
+    } else if (type === 'coffee_thermos') {
+      // Thermos Tumbler on hip belt
+      const cupMat = new THREE.MeshStandardMaterial({ color: 0x06b6d4, roughness: 0.3, metalness: 0.4 });
+      const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.28, 14), cupMat);
+      cup.position.set(0.28, 0.38, 0.12);
+      cup.rotation.z = -0.15;
+      this.accessoryHolder.add(cup);
     }
   }
 
-  private createNametag(name: string, isNpc: boolean): void {
+  private createNametag(name: string, isNpc: boolean, title?: string): void {
+    if (this.nametagMesh) {
+      this.group.remove(this.nametagMesh);
+    }
+
     const canvas = document.createElement('canvas');
-    canvas.width = 720;
-    canvas.height = 180;
+    canvas.width = 800;
+    canvas.height = 220;
     const ctx = canvas.getContext('2d')!;
 
-    ctx.fillStyle = isNpc ? '#dc2626' : '#4f46e5';
+    // Rounded Box background
+    if (isNpc) {
+      ctx.fillStyle = '#b91c1c';
+      ctx.strokeStyle = '#fca5a5';
+    } else {
+      const grad = ctx.createLinearGradient(0, 0, 800, 220);
+      grad.addColorStop(0, '#312e81');
+      grad.addColorStop(0.5, '#4f46e5');
+      grad.addColorStop(1, '#6366f1');
+      ctx.fillStyle = grad;
+      ctx.strokeStyle = '#facc15';
+    }
+
     ctx.beginPath();
-    ctx.roundRect(14, 14, 692, 152, 44);
+    ctx.roundRect(16, 16, 768, 188, 48);
     ctx.fill();
 
-    ctx.lineWidth = 8;
-    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = isNpc ? 8 : 10;
     ctx.stroke();
 
+    // Name Text
     ctx.fillStyle = '#ffffff';
-    ctx.font = '900 50px Nunito, -apple-system, sans-serif';
+    ctx.font = '900 52px Nunito, -apple-system, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`${isNpc ? '🚨' : '🟢'} ${name}`, 360, 92);
+
+    if (isNpc) {
+      ctx.fillText(`🚨 ${name.toUpperCase()}`, 400, 110);
+    } else {
+      ctx.fillText(`✨ ${name.toUpperCase()}`, 400, 82);
+      // Title Subtitle
+      ctx.fillStyle = '#fde047';
+      ctx.font = '800 36px Nunito, -apple-system, sans-serif';
+      ctx.fillText(`★ ${title || 'Chiến Thần Merchandiser'} ★`, 400, 148);
+    }
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.generateMipmaps = true;
@@ -281,9 +380,94 @@ export class ChibiCharacter {
     texture.magFilter = THREE.LinearFilter;
     const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false });
     this.nametagMesh = new THREE.Sprite(spriteMat);
-    this.nametagMesh.scale.set(1.5, 0.38, 1);
-    this.nametagMesh.position.set(0, 1.7, 0);
+    this.nametagMesh.scale.set(1.65, 0.45, 1);
+    this.nametagMesh.position.set(0, 1.78, 0);
     this.group.add(this.nametagMesh);
+  }
+
+  private createEmoteSprite(): void {
+    const canvas = document.createElement('canvas');
+    canvas.width = 160;
+    canvas.height = 160;
+    const ctx = canvas.getContext('2d')!;
+
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+    ctx.beginPath();
+    ctx.arc(80, 80, 72, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = '#facc15';
+    ctx.stroke();
+
+    ctx.font = '80px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('✨', 80, 85);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0, depthTest: false });
+    this.emoteSprite = new THREE.Sprite(spriteMat);
+    this.emoteSprite.scale.set(0.65, 0.65, 1);
+    this.emoteSprite.position.set(0, 2.3, 0);
+    this.group.add(this.emoteSprite);
+  }
+
+  public showEmote(emoji: string, duration = 2.4): void {
+    if (!this.emoteSprite) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 160;
+    canvas.height = 160;
+    const ctx = canvas.getContext('2d')!;
+
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+    ctx.beginPath();
+    ctx.arc(80, 80, 72, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = '#facc15';
+    ctx.stroke();
+
+    ctx.font = '80px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(emoji, 80, 85);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    this.emoteSprite.material.map = texture;
+    this.emoteSprite.material.opacity = 1.0;
+    this.emoteSprite.position.set(0, 2.3, 0);
+    this.emoteTimer = duration;
+  }
+
+  public updateProfile(profile: PlayerCustomProfile): void {
+    this.currentName = profile.name || 'Bạn';
+    this.currentTitle = profile.title || 'Chiến Thần Merchandiser';
+    this.shirtColor = profile.shirtColor || '#4f46e5';
+    this.hairColor = profile.hairColor || '#1e1b4b';
+
+    // Update body shirt color
+    if (this.bodyMesh) {
+      (this.bodyMesh.material as THREE.MeshStandardMaterial).color.set(this.shirtColor);
+    }
+
+    // Update hair color
+    if (this.hairMesh) {
+      (this.hairMesh.material as THREE.MeshStandardMaterial).color.set(this.hairColor);
+      (this.bang1.material as THREE.MeshStandardMaterial).color.set(this.hairColor);
+      (this.bang2.material as THREE.MeshStandardMaterial).color.set(this.hairColor);
+    }
+
+    // Rebuild accessories
+    this.rebuildAccessories(profile.accessory);
+
+    // Re-create nametag
+    this.createNametag(this.currentName, !this.isPlayer, this.currentTitle);
+
+    // Celebrate with star emote
+    this.showEmote('✨', 2.8);
   }
 
   setCarriedItem(type: CarriedItemType): void {
@@ -359,6 +543,15 @@ export class ChibiCharacter {
     } else {
       this.leftEyeMesh.scale.y = 1.25;
       this.rightEyeMesh.scale.y = 1.25;
+    }
+
+    // Emote float and fade
+    if (this.emoteTimer > 0) {
+      this.emoteTimer -= delta;
+      this.emoteSprite.position.y += delta * 0.12;
+      this.emoteSprite.material.opacity = Math.max(0, Math.min(1, this.emoteTimer));
+    } else if (this.emoteSprite && this.emoteSprite.material.opacity > 0) {
+      this.emoteSprite.material.opacity = 0;
     }
 
     if (isMoving) {

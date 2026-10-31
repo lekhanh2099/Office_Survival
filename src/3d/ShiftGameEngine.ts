@@ -18,6 +18,14 @@ import {
   SHIFT_ENDINGS,
   ShiftEnding
 } from '../data/shiftEndings';
+import {
+  PlayerCustomProfile,
+  getSavedPlayerProfile,
+  savePlayerProfile
+} from '../data/playerProfile';
+import {
+  OFFICE_APPLIANCES
+} from '../data/officeAppliances';
 
 export interface ShiftTask {
   id: string;
@@ -53,6 +61,7 @@ export interface ShiftState {
   weather: OfficeWeather;
   dilemmasResolved: number;
   choicesLog: string[];
+  playerProfile: PlayerCustomProfile;
 }
 
 export class ShiftGameEngine {
@@ -76,6 +85,7 @@ export class ShiftGameEngine {
     const weather = OFFICE_WEATHERS[Math.floor(Math.random() * OFFICE_WEATHERS.length)];
     const initialArchetype = ORDER_ARCHETYPES[0];
     const initialTask = this.createTaskFromArchetype(initialArchetype, 0);
+    const playerProfile = getSavedPlayerProfile();
 
     this.state = {
       day,
@@ -103,8 +113,13 @@ export class ShiftGameEngine {
       currentZone: stage.currentZoneName,
       weather,
       dilemmasResolved: 0,
-      choicesLog: []
+      choicesLog: [],
+      playerProfile
     };
+
+    if (playerProfile.personality === 'speed_demon') {
+      this.stage.player.moveSpeed = 5.25;
+    }
 
     // Point directional guide arrow to first station
     const initialStation = this.stage.stations.find(s => s.type === initialTask.targetStation);
@@ -182,11 +197,12 @@ export class ShiftGameEngine {
     }
 
     // 2. Speed Boost Countdown
+    const isSpeedDemon = this.state.playerProfile?.personality === 'speed_demon';
     if (this.speedBoostTimer > 0) {
       this.speedBoostTimer -= delta;
-      this.stage.player.moveSpeed = 6.2;
+      this.stage.player.moveSpeed = isSpeedDemon ? 7.4 : 6.2;
     } else {
-      this.stage.player.moveSpeed = 4.2;
+      this.stage.player.moveSpeed = isSpeedDemon ? 5.25 : 4.2;
     }
 
     // 3. Boss Patrol Proximity & Collision
@@ -205,11 +221,19 @@ export class ShiftGameEngine {
             showToast('👔 Sếp Hùng gật đầu hài lòng: "Phong độ tốt lắm em, tiếp tục phát huy nhé!" (+30 KPI)');
           } else {
             sounds.damage();
-            const stressD = Math.round(18 * this.state.weather.stressDrainMultiplier);
-            const scoreD = 60;
+            let stressD = Math.round(18 * this.state.weather.stressDrainMultiplier);
+            let scoreD = 60;
+            if (this.state.playerProfile?.personality === 'social_butterfly') {
+              stressD = Math.round(stressD * 0.5);
+              scoreD = Math.round(scoreD * 0.5);
+            }
+            if (this.state.playerProfile?.personality === 'zen_master') {
+              stressD = Math.round(stressD * 0.65);
+            }
             this.state.stress = Math.min(100, this.state.stress + stressD);
             this.state.score = Math.max(0, this.state.score - scoreD);
-            showToast(`👔 Sếp Hùng bắt gặp bạn đi chậm: Bị phê bình! (+${stressD}% Stress, -${scoreD} đ KPI)`);
+            const hint = this.state.playerProfile?.personality === 'social_butterfly' ? ' (Ngoại giao khéo léo giảm 50% phạt)' : '';
+            showToast(`👔 Sếp Hùng bắt gặp bạn đi chậm: Bị phê bình! (+${stressD}% Stress, -${scoreD} đ KPI)${hint}`);
           }
           this.bossCooldown = 6.0;
           this.sync();
@@ -225,11 +249,15 @@ export class ShiftGameEngine {
         this.state.stress = Math.max(0, this.state.stress - 15);
         showToast('🧋 Nhặt được Ly Trà Sữa Phúc Long: Hồi phục +25% Năng Lượng, giảm 15% Stress!');
       } else if (type === 'coffee') {
-        this.state.energy = Math.min(100, this.state.energy + 20);
-        this.speedBoostTimer = 7.0;
-        showToast('☕ Nhặt được Lon Cà Phê Đá: Tăng tốc chạy thần tốc 7s!');
+        const boostSec = this.state.playerProfile?.personality === 'caffeine_addict' ? 12.0 : 7.0;
+        this.state.energy = Math.min(100, this.state.energy + (this.state.playerProfile?.personality === 'caffeine_addict' ? 30 : 20));
+        this.speedBoostTimer = boostSec;
+        showToast(`☕ Nhặt được Lon Cà Phê Đá: Tăng tốc chạy thần tốc ${Math.round(boostSec)}s!`);
       } else if (type === 'bonus_cash') {
-        const bonus = Math.round(100 * this.state.weather.kpiMultiplier);
+        let bonus = Math.round(100 * this.state.weather.kpiMultiplier);
+        if (this.state.playerProfile?.personality === 'fortune_blessed') {
+          bonus = Math.round(bonus * 1.5);
+        }
         this.state.score += bonus;
         showToast(`💵 Nhặt được Tiền Thưởng Nóng: +${bonus} điểm KPI!`);
       }
@@ -298,7 +326,7 @@ export class ShiftGameEngine {
     }
   }
 
-  getStationActionDetails(st: Workstation): { emoji: string; title: string; subtitle: string; desc: string; buttonText: string; isTarget: boolean } {
+  getStationActionDetails(st: Workstation): { emoji: string; title: string; subtitle: string; desc: string; buttonText: string; isTarget: boolean; hasApplianceActions: boolean } {
     const isTarget = st.type === this.state.currentTask.targetStation;
     const title = `${st.emoji} ${st.name}`;
     const subtitle = `📍 ${st.zone}`;
@@ -349,7 +377,7 @@ export class ShiftGameEngine {
       buttonText = '👀 KIỂM TRA TRẠM';
     }
 
-    return { emoji: st.emoji, title, subtitle, desc, buttonText, isTarget };
+    return { emoji: st.emoji, title, subtitle, desc, buttonText, isTarget, hasApplianceActions: !!OFFICE_APPLIANCES[st.type] };
   }
 
   doAction(stationOverride?: Workstation): void {
@@ -388,7 +416,8 @@ export class ShiftGameEngine {
       this.state.score += 100;
 
       // Lucky jackpot easter egg trigger: Prayed 3+ times
-      if (this.state.altarPrayCount >= 3 && Math.random() < 0.3) {
+      const jackpotProb = this.state.playerProfile?.personality === 'fortune_blessed' ? 0.65 : 0.3;
+      if (this.state.altarPrayCount >= 3 && Math.random() < jackpotProb) {
         showToast('🧧 THẦN TÀI MỈM CƯỜI! Bạn vừa trúng số độc đắc 2 tỷ đồng! 🎉');
         this.finishShift('lotto_luck');
         return;
@@ -558,10 +587,18 @@ export class ShiftGameEngine {
     if (!currentStep) return;
 
     // Apply step delta stats
-    const kpiGain = Math.round(currentStep.kpiReward * this.state.weather.kpiMultiplier);
+    let kpiGain = Math.round(currentStep.kpiReward * this.state.weather.kpiMultiplier);
+    if (this.state.playerProfile?.personality === 'perfectionist') {
+      kpiGain = Math.round(kpiGain * 1.25);
+    }
+    let sDelta = currentStep.stressDelta;
+    if (this.state.playerProfile?.personality === 'zen_master' && sDelta > 0) {
+      sDelta = Math.round(sDelta * 0.65);
+    }
+
     this.state.score += kpiGain;
     this.state.energy = Math.max(0, Math.min(100, this.state.energy - currentStep.energyCost * this.state.weather.energyDrainMultiplier));
-    this.state.stress = Math.max(0, Math.min(100, this.state.stress + currentStep.stressDelta * this.state.weather.stressDrainMultiplier));
+    this.state.stress = Math.max(0, Math.min(100, this.state.stress + sDelta * this.state.weather.stressDrainMultiplier));
 
     // Update carried item on player
     this.stage.player.setCarriedItem(currentStep.carriedItem);
@@ -685,8 +722,13 @@ export class ShiftGameEngine {
     }
 
     // Apply favor & stat deltas
+    let favorDelta = opt.favorDelta;
+    if (this.state.playerProfile?.personality === 'social_butterfly') {
+      favorDelta = Math.round(favorDelta * 1.4);
+    }
+
     const currentFavor = this.state.colleagueFavors[colleagueId] || 20;
-    const newFavor = Math.max(0, Math.min(100, currentFavor + opt.favorDelta));
+    const newFavor = Math.max(0, Math.min(100, currentFavor + favorDelta));
     this.state.colleagueFavors[colleagueId] = newFavor;
 
     this.state.energy = Math.max(0, Math.min(100, this.state.energy + opt.energyDelta));
@@ -695,15 +737,84 @@ export class ShiftGameEngine {
 
     const perkUnlocked = currentFavor < 50 && newFavor >= 50;
 
+    // Show heart emote on Chibi
+    this.stage.player.showEmote('💖', 2.2);
+
     sounds.perk();
     this.sync();
 
     return {
       reply: opt.reply,
-      favorDelta: opt.favorDelta,
+      favorDelta,
       newFavor,
       perkUnlocked
     };
+  }
+
+  public executeApplianceAction(stationType: string, actionId: string): string {
+    const appliance = OFFICE_APPLIANCES[stationType];
+    if (!appliance) return 'Không thể tương tác với đồ dùng này.';
+
+    const action = appliance.actions.find(a => a.id === actionId);
+    if (!action) return 'Hành động không khả dụng.';
+
+    const personality = this.state.playerProfile?.personality;
+    let energyDelta = action.energyDelta;
+    let stressDelta = action.stressDelta;
+    let kpiDelta = action.kpiDelta;
+    let boostSec = action.speedBoostSeconds || 0;
+
+    if (personality === 'caffeine_addict' && (stationType === 'coffee' || action.id.includes('boba') || action.id.includes('tea') || action.id.includes('bac_xiu'))) {
+      energyDelta = Math.round(energyDelta * 1.35);
+      boostSec = Math.max(boostSec, 14.0);
+    }
+    if (personality === 'zen_master') {
+      if (stressDelta > 0) stressDelta = Math.round(stressDelta * 0.65);
+      if (stressDelta < 0) stressDelta = Math.round(stressDelta * 1.25);
+    }
+    if (personality === 'perfectionist') {
+      kpiDelta = Math.round(kpiDelta * 1.25);
+    }
+
+    this.state.energy = Math.max(0, Math.min(100, this.state.energy + energyDelta));
+    this.state.stress = Math.max(0, Math.min(100, this.state.stress + stressDelta));
+    this.state.score += Math.round(kpiDelta * this.state.weather.kpiMultiplier);
+
+    if (boostSec > 0) {
+      this.speedBoostTimer = boostSec;
+    }
+
+    if (action.carriedItem) {
+      this.stage.player.setCarriedItem(action.carriedItem);
+      if (action.carriedItem === 'coffee_cup') {
+        setTimeout(() => {
+          if (this.stage.player.carriedItem === 'coffee_cup') {
+            this.stage.player.setCarriedItem('none');
+          }
+        }, 4000);
+      }
+    }
+
+    // Trigger emote on Chibi character
+    this.stage.player.showEmote(action.emoji, 2.5);
+
+    sounds.success();
+    this.sync();
+    return action.resultToast;
+  }
+
+  public updatePlayerProfile(newProfile: PlayerCustomProfile): void {
+    this.state.playerProfile = newProfile;
+    savePlayerProfile(newProfile);
+    this.stage.player.updateProfile(newProfile);
+    if (newProfile.personality === 'speed_demon') {
+      this.stage.player.moveSpeed = 5.25;
+    } else {
+      this.stage.player.moveSpeed = 4.2;
+    }
+    sounds.perk();
+    showToast(`✨ Đã lưu hồ sơ nhân viên: ${newProfile.name} · ${newProfile.title}!`);
+    this.sync();
   }
 
   public finishShift(forcedEndingId?: ShiftEnding['id']): void {

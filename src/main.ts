@@ -35,7 +35,9 @@ import {
   openDilemmaModal,
   openHistoryModal,
   openRankingsModal,
-  openRoleSelectionModal
+  openRoleSelectionModal,
+  openPlayerProfileModal,
+  openApplianceModal
 } from './ui/Modals';
 import { sounds } from './audio/SoundManager';
 import { showToast } from './ui/Toast';
@@ -99,6 +101,9 @@ function renderShiftMode(): void {
     }
   });
 
+  (window as any).__shiftEngine = shiftEngine;
+  (window as any).__shiftStage = shiftStage;
+
   // Dynamic Situational Dilemmas Modal Trigger
   shiftEngine.onTriggerDilemma = (dilemma, onResolve) => {
     openDilemmaModal(HOST, dilemma, (choice) => {
@@ -122,6 +127,16 @@ function renderShiftMode(): void {
     });
   };
 
+  // Direct 3D Player Tap / Click Handling -> Open Profile Customization
+  shiftStage.onPlayerClickCallback = () => {
+    sounds.click();
+    if (shiftEngine) {
+      openPlayerProfileModal(HOST, shiftEngine.getState().playerProfile, (newProfile) => {
+        shiftEngine!.updatePlayerProfile(newProfile);
+      });
+    }
+  };
+
   // Direct 3D Click / Tap Raycaster Handling (Both Auto-Work and Card confirmation modes!)
   shiftStage.onStationClickCallback = (st) => {
     sounds.click();
@@ -134,7 +149,8 @@ function renderShiftMode(): void {
         title: st.name,
         subtitle: `📍 ${st.zone}`,
         desc: details.desc,
-        buttonText: details.buttonText
+        buttonText: details.buttonText,
+        hasApplianceActions: details.hasApplianceActions
       });
     } else {
       selectedStationForCard = null;
@@ -655,6 +671,28 @@ document.addEventListener('click', (ev) => {
             }
           });
         }
+      }
+      break;
+    }
+    case 'open_player_profile': {
+      if (shiftEngine) {
+        sounds.click();
+        openPlayerProfileModal(HOST, shiftEngine.getState().playerProfile, (newProfile) => {
+          shiftEngine!.updatePlayerProfile(newProfile);
+        });
+      }
+      break;
+    }
+    case 'open_appliance_menu': {
+      if (selectedStationForCard && shiftEngine) {
+        sounds.click();
+        const stationType = selectedStationForCard.type;
+        const uiHostEl = document.getElementById('shiftUIHost');
+        if (uiHostEl) hideStationActionCard(uiHostEl);
+        openApplianceModal(HOST, stationType, (actId) => {
+          const toast = shiftEngine!.executeApplianceAction(stationType, actId);
+          showToast(toast);
+        });
       }
       break;
     }
