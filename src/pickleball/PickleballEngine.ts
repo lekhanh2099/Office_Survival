@@ -616,9 +616,9 @@ export class PickleballEngine {
       const targetVariationX = (Math.random() - 0.5) * 0.8;
       const targetX = Math.max(-2.5, Math.min(2.5, baseTargetX + targetVariationX));
       const targetZ = 4.6 + Math.random() * 0.7;
-      const flightTime = (0.74 / (this.opponent.power * this.settings.ballSpeedFactor));
+      const flightTime = (1.08 / (this.opponent.power * this.settings.ballSpeedFactor));
 
-      const traj = this.calculateTrajectory(this.ball.x, this.ball.y, this.ball.z, targetX, targetZ, flightTime, 0.34);
+      const traj = this.calculateTrajectory(this.ball.x, this.ball.y, this.ball.z, targetX, targetZ, flightTime, 0.38);
       this.ball.vx = traj.vx;
       this.ball.vy = traj.vy;
       this.ball.vz = traj.vz;
@@ -688,11 +688,16 @@ export class PickleballEngine {
     const dz = this.ball.z - (this.playerPos.z - 0.45);
     const dist = Math.hypot(dx, dz);
 
-    if (dist <= 2.6 && this.ball.z >= 1.8 && this.ball.vz > 0) {
+    if (dist <= 5.2 && this.ball.z >= 0.8 && this.ball.vz > 0) {
+      // Step/lunge towards the ball for clean, responsive paddle contact
+      this.playerPos.x += (this.ball.x - this.playerPos.x) * 0.78;
+      this.playerPos.z = Math.max(2.2, Math.min(5.8, this.playerPos.z + (this.ball.z + 0.45 - this.playerPos.z) * 0.78));
+      this.targetPlayerPos.x = this.playerPos.x;
+      this.targetPlayerPos.z = this.playerPos.z;
       this.bufferedShot = null;
       return this.playerHitBall(shotType, aimOffset);
-    } else if (this.ball.vz > 0 && this.ball.z < 6.2) {
-      // Buffer the shot for 650ms so it fires automatically the moment the ball arrives!
+    } else if (this.ball.vz > 0 && this.ball.z < 7.2) {
+      // Buffer the shot for 1200ms so it fires automatically the moment the ball arrives!
       this.bufferedShot = { shotType, timestamp: performance.now(), aimOffset };
       return { success: true, buffered: true };
     }
@@ -709,20 +714,14 @@ export class PickleballEngine {
     const dz = this.ball.z - (this.playerPos.z - 0.45);
     const dist = Math.hypot(dx, dz);
 
-    if (dist > 2.8 || this.ball.z < 1.2) {
+    if (dist > 5.5 || this.ball.z < 0.5) {
       return { success: false, quality: 'early' };
     }
 
     // Non-Volley Zone (The Kitchen) rule check:
-    // If player is inside Kitchen (z <= 2.1) and ball hasn't bounced on player side yet -> FAULT!
-    if (this.playerPos.z <= this.kitchenSize + 0.1 && this.ball.bouncesSinceHit === 0) {
+    // Only strictly fault if player smashed aggressively right inside Kitchen before bounce
+    if (this.playerPos.z <= 1.8 && this.ball.bouncesSinceHit === 0 && shotType === 'smash') {
       this.awardPoint('ai', 'kitchen_violation', '⚠️ Bạn phạm luật Kitchen (Đập bóng sống trong vùng cấm)!');
-      return { success: false, quality: 'late' };
-    }
-
-    // Two-bounce rule on serve reception check
-    if (this.rallyCount === 0 && this.ball.bouncesSinceHit === 0) {
-      this.awardPoint('ai', 'kitchen_violation', '⚠️ Phạm luật 2 nảy (Bóng giao phải nảy 1 lần trước khi đỡ)!');
       return { success: false, quality: 'late' };
     }
 
@@ -948,33 +947,33 @@ export class PickleballEngine {
     if (isPlayerDeep && rand < this.opponent.dinkTendency) {
       chosenShot = 'dink';
       targetX = openCornerX * 0.7;
-      targetZ = 1.35 + Math.random() * 0.45; // drops just over net inside Kitchen
-      flightTime = 0.80;
-      desiredClearance = 0.36;
+      targetZ = 1.85 + Math.random() * 0.45; // reachable Kitchen drop shot
+      flightTime = 1.15;
+      desiredClearance = 0.40;
       this.ball.spinZ = -2.8; // Backspin float
       this.ball.spinX = 0;
-      this.aiStamina = Math.min(100, this.aiStamina + 10); // Dinking recovers stamina!
+      this.aiStamina = Math.min(100, this.aiStamina + 10);
       this.tacticalHint = `🏓 ${this.opponent.name} BỎ NHỎ Kitchen! Chạy lên cứu bóng!`;
     }
     // 2. TACTIC: Smash Attack
     else if ((this.ball.y > 0.90 || isPlayerNearKitchen || this.rallyCount >= 3) && rand < this.opponent.smashTendency) {
       chosenShot = 'smash';
       targetX = openCornerX;
-      targetZ = 5.3 + Math.random() * 0.3;
-      flightTime = 0.50 / (this.opponent.power * this.settings.ballSpeedFactor);
-      desiredClearance = 0.26;
-      this.ball.spinZ = 3.8; // Heavy topspin missile
+      targetZ = 5.2 + Math.random() * 0.3;
+      flightTime = 0.82 / (this.opponent.power * this.settings.ballSpeedFactor);
+      desiredClearance = 0.28;
+      this.ball.spinZ = 3.8;
       this.ball.spinX = (Math.random() - 0.5) * 1.0;
-      this.tacticalHint = `🚀 ${this.opponent.name} ĐẬP SMASH cực mạnh! Chuẩn bị đón đỡ!`;
+      this.tacticalHint = `🚀 ${this.opponent.name} ĐẬP SMASH! Chuẩn bị đón đỡ!`;
     }
     // 3. TACTIC: Curve Sidespin
     else if (rand < this.opponent.spinTendency) {
       chosenShot = 'curve';
       targetX = openCornerX;
-      targetZ = 4.7;
-      flightTime = 0.68 / (this.opponent.power * this.settings.ballSpeedFactor);
-      desiredClearance = 0.32;
-      this.ball.spinX = targetX > 0 ? 5.2 : -5.2; // Aggressive spin kick
+      targetZ = 4.8;
+      flightTime = 1.05 / (this.opponent.power * this.settings.ballSpeedFactor);
+      desiredClearance = 0.34;
+      this.ball.spinX = targetX > 0 ? 4.5 : -4.5;
       this.ball.spinZ = 1.2;
       this.tacticalHint = `🌀 ${this.opponent.name} xoáy bóng cong về mép sân!`;
     }
@@ -983,8 +982,8 @@ export class PickleballEngine {
       chosenShot = 'drive';
       targetX = openCornerX;
       targetZ = 4.9;
-      flightTime = 0.64 / (this.opponent.power * this.settings.ballSpeedFactor);
-      desiredClearance = 0.30;
+      flightTime = 0.98 / (this.opponent.power * this.settings.ballSpeedFactor);
+      desiredClearance = 0.32;
       this.ball.spinZ = 1.4;
       this.ball.spinX = 0;
       this.tacticalHint = `🎾 ${this.opponent.name} ép góc hiểm! Di chuyển đón bóng!`;
@@ -1030,11 +1029,17 @@ export class PickleballEngine {
 
     // Check buffered shot execution
     if (this.bufferedShot && this.ball.inPlay && this.ball.lastHitter !== 'player' && this.ball.vz > 0) {
-      if (performance.now() - this.bufferedShot.timestamp < 650) {
+      if (performance.now() - this.bufferedShot.timestamp < 1200) {
         const dx = this.ball.x - this.playerPos.x;
         const dz = this.ball.z - (this.playerPos.z - 0.45);
         const dist = Math.hypot(dx, dz);
-        if (dist <= 2.8 && this.ball.z >= 1.6) {
+        if (dist <= 5.2 && this.ball.z >= 0.8) {
+          // Athletic step to ball
+          this.playerPos.x += (this.ball.x - this.playerPos.x) * 0.78;
+          this.playerPos.z = Math.max(2.2, Math.min(5.8, this.playerPos.z + (this.ball.z + 0.45 - this.playerPos.z) * 0.78));
+          this.targetPlayerPos.x = this.playerPos.x;
+          this.targetPlayerPos.z = this.playerPos.z;
+
           const shot = this.bufferedShot.shotType;
           const aim = this.bufferedShot.aimOffset || 0;
           this.bufferedShot = null;
@@ -1243,10 +1248,10 @@ export class PickleballEngine {
           this.onBallBounce?.(this.ball.x, this.ball.z, false);
           this.targetLanding = null;
 
-          // Rebound velocity with authentic wiffle ball elasticity
-          this.ball.vy = Math.max(3.2, -this.ball.vy * 0.76);
-          this.ball.vx *= 0.78;
-          this.ball.vz *= 0.78;
+          // Rebound velocity with authentic wiffle ball elasticity & generous hang-time
+          this.ball.vy = Math.max(5.2, Math.min(6.8, -this.ball.vy * 0.82));
+          this.ball.vx *= 0.72;
+          this.ball.vz *= 0.72;
         } else {
           // SECOND OR SUBSEQUENT BOUNCE:
           // The ball already bounced legally once! The receiver failed to return it before the 2nd bounce!
@@ -1264,10 +1269,10 @@ export class PickleballEngine {
 
       // Ball flying past baseline after bounce #1 without touching ground again
       if (this.ball.bouncesSinceHit >= 1) {
-        if (this.ball.z > 7.0) {
+        if (this.ball.z > 7.6) {
           this.awardPoint('ai', 'winner', `⚡ Cú đánh hiểm hóc của ${this.opponent.name}!`);
           return;
-        } else if (this.ball.z < -7.0) {
+        } else if (this.ball.z < -7.6) {
           this.awardPoint('player', 'winner', '⚡ Bạn tung cú đánh cắm sâu ghi điểm!');
           return;
         }
