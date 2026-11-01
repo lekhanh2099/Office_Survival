@@ -25,6 +25,34 @@ export interface ColleagueProfile {
   praises: string[];
 }
 
+export interface WorldSnapshot {
+  type: 'TICK';
+  ball: {
+    x: number;
+    y: number;
+    z: number;
+    vx: number;
+    vy: number;
+    vz: number;
+    inPlay: boolean;
+    lastHitter: 'host' | 'guest' | null;
+    bounces: number;
+  };
+  hostPos: { x: number; z: number };
+  guestPos: { x: number; z: number };
+  hostScore: number;
+  guestScore: number;
+  hostStamina: number;
+  guestStamina: number;
+  rally: number;
+  server: 'host' | 'guest';
+  isServing: boolean;
+  targetLanding?: { x: number; z: number; hitter: 'player' | 'ai'; type: ShotType } | null;
+  tacticalHint?: string;
+  isMatchOver?: boolean;
+  matchWinner?: 'host' | 'guest';
+}
+
 export const PICKLEBALL_COLLEAGUES: Record<ColleagueId, ColleagueProfile> = {
   linh: {
     id: 'linh',
@@ -169,7 +197,7 @@ export const PICKLEBALL_PADDLES: PaddleGear[] = [
 
 export interface PickleballSettings {
   opponentId: ColleagueId;
-  targetScore: 5 | 7 | 11;
+  targetScore: 3 | 5 | 7 | 11;
   ballSpeedFactor: number; // 1.0 (standard) or 1.25 (fast)
   autoPositionAssist: boolean;
   selectedPaddleId: string;
@@ -289,6 +317,19 @@ export class PickleballEngine {
   public manualInputTimer = 0; // seconds remaining where manual input overrides auto-assist
   public isDiving = false;
   public diveTimer = 0;
+
+  // PvP Multiplayer State
+  public isPvP = false;
+  public pvpRole: 'host' | 'guest' | 'none' = 'none';
+  public guestTargetPos = { x: -1.2, z: -5.8 };
+  public pvpOpponent = {
+    name: 'Đối thủ',
+    role: 'Đồng Nghiệp',
+    emoji: '🧑‍💻',
+    avatarBg: '#059669',
+    paddleId: 'carbon'
+  };
+  public onPvPSnapshotReady?: (snapshot: WorldSnapshot) => void;
 
   // Ball 3D Physical State
   public ball = {
@@ -528,7 +569,7 @@ export class PickleballEngine {
   public setupServe(server: 'player' | 'ai'): void {
     this.currentServer = server;
     this.isServing = true;
-    this.serveTimer = server === 'player' ? 999999 : 1.4; // AI serves after 1.4s, player waits indefinitely!
+    this.serveTimer = (server === 'player' || this.isPvP) ? 999999 : 1.4; // In PvP, both human players wait for user action!
     this.rallyCount = 0;
     this.bufferedShot = null;
 
@@ -1163,8 +1204,14 @@ export class PickleballEngine {
     this.playerPos.x = Math.max(-2.7, Math.min(2.7, this.playerPos.x));
     this.playerPos.z = Math.max(2.2, Math.min(5.8, this.playerPos.z));
 
-    // 3. AI Movement (Predictive & Adaptive with Athletic Speed)
-    if (this.ball.inPlay) {
+    // 3. AI / Remote Guest Movement
+    if (this.isPvP) {
+      if (this.pvpRole === 'host') {
+        // Smoothly interpolate AI avatar towards remote guest's reported coordinates
+        this.aiPos.x += (this.guestTargetPos.x - this.aiPos.x) * Math.min(1, 18 * delta);
+        this.aiPos.z += (this.guestTargetPos.z - this.aiPos.z) * Math.min(1, 18 * delta);
+      }
+    } else if (this.ball.inPlay) {
       const staminaFactor = 0.70 + (this.aiStamina / 100) * 0.30;
       if (this.ball.vz < 0) {
         // Ball flying towards AI: calculate arrival intercept
@@ -1350,9 +1397,14 @@ export class PickleballEngine {
       }
 
       // Check AI hit opportunity
-      if (this.ball.vz < 0 && this.ball.z < -2.0) {
+      if (!this.isPvP && this.ball.vz < 0 && this.ball.z < -2.0) {
         this.aiDecideShot();
       }
+    }
+
+    // Host emits real-time world snapshot to connected guest
+    if (this.isPvP && this.pvpRole === 'host') {
+      this.onPvPSnapshotReady?.(this.getWorldSnapshot());
     }
   }
 
@@ -1402,6 +1454,243 @@ export class PickleballEngine {
           this.setupServe(winner);
         }
       }, 1400);
+    }
+  }
+
+  // ==========================================================================
+  // PVP MULTIPLAYER METHODS (Online 1v1 Realtime Synchronization)
+  // ==========================================================================
+
+  public setPvPMode(
+    role: 'host' | 'guest' | 'none',
+    opponentInfo?: { name: string; paddleId: string; emoji: string },
+    targetScore: 3 | 5 | 7 | 11 = 5
+  ): void {
+    this.isPvP = role !== 'none';
+    this.pvpRole = role;
+    this.settings.targetScore = targetScore;
+
+    if (opponentInfo) {
+      this.pvpOpponent = {
+        name: opponentInfo.name,
+        role: 'Đối thủ Solo',
+        emoji: opponentInfo.emoji || '🧑‍💻',
+        avatarBg: '#059669',
+        paddleId: opponentInfo.paddleId || 'carbon'
+      };
+      // Override opponent profile for HUD
+      this.opponent = {
+        ...this.opponent,
+        name: opponentInfo.name,
+        role: 'Solo 1v1',
+        emoji: opponentInfo.emoji || '🧑‍💻',
+        avatarBg: '#059669'
+      };
+    }
+
+    this.playerScore = 0;
+    this.aiScore = 0;
+    this.isMatchOver = false;
+    this.matchWinner = null;
+    this.setupServe('player');
+  }
+
+  public applyGuestInput(pos: { x: number; z: number }): void {
+    // Guest position is in guest's local space (near court: z in [2.2, 5.8]).
+    // On Host, Guest is at far court (z < 0), so invert by 180°:
+    this.guestTargetPos.x = -Math.max(-2.7, Math.min(2.7, pos.x));
+    this.guestTargetPos.z = -Math.max(2.2, Math.min(5.8, pos.z));
+  }
+
+  public guestHitBall(
+    shotType: ShotType,
+    explicitAimX?: number,
+    explicitAimZ?: number
+  ): { success: boolean; quality: ShotQuality } {
+    if (!this.ball.inPlay || this.ball.lastHitter === 'ai' || this.isMatchOver) {
+      return { success: false, quality: 'late' };
+    }
+
+    // Guest is striking from aiPos (z < 0) towards Host's court (z > 0)
+    let targetX = explicitAimX !== undefined ? Math.max(-2.55, Math.min(2.55, explicitAimX)) : 0;
+    let targetZ = explicitAimZ !== undefined ? Math.max(1.5, Math.min(5.8, explicitAimZ)) : 4.8;
+    let flightTime = 0.78;
+    let desiredClearance = 0.34;
+    let quality: ShotQuality = 'good';
+
+    this.aiPaddleAnim = 0.28;
+    this.ball.lastHitter = 'ai';
+    this.ball.bouncesSinceHit = 0;
+    this.ball.hasClearedNet = false;
+    this.rallyCount++;
+    this.stats.longestRally = Math.max(this.stats.longestRally, this.rallyCount);
+
+    if (shotType === 'smash') {
+      this.aiStamina = Math.max(0, this.aiStamina - 25);
+      flightTime = 0.54 / this.settings.ballSpeedFactor;
+      desiredClearance = 0.28;
+      this.ball.spinZ = -3.6;
+      this.ball.spinX = (targetX - this.ball.x) * 0.35;
+      this.tacticalHint = `🚀 Đối thủ ĐẬP SMASH cực mạnh!`;
+    } else if (shotType === 'dink' || shotType === 'drop') {
+      this.aiStamina = Math.min(100, this.aiStamina + 20);
+      flightTime = 1.05;
+      desiredClearance = 0.42;
+      this.ball.spinZ = 2.6;
+      this.ball.spinX = 0;
+      targetZ = explicitAimZ !== undefined ? explicitAimZ : 1.85;
+      this.tacticalHint = `🏓 Đối thủ BỎ NHỎ Kitchen! Chạy lên cứu bóng!`;
+    } else if (shotType === 'curve') {
+      this.aiStamina = Math.max(0, this.aiStamina - 15);
+      flightTime = 0.80 / this.settings.ballSpeedFactor;
+      desiredClearance = 0.34;
+      this.ball.spinX = targetX > 0 ? -5.2 : 5.2;
+      this.ball.spinZ = -1.0;
+      this.tacticalHint = `🌀 Đối thủ XOÁY GÓC hiểm!`;
+    } else if (shotType === 'volley') {
+      this.aiStamina = Math.max(0, this.aiStamina - 12);
+      flightTime = 0.66 / this.settings.ballSpeedFactor;
+      desiredClearance = 0.28;
+      this.ball.spinZ = -1.8;
+      this.ball.spinX = (targetX - this.ball.x) * 0.3;
+      this.tacticalHint = `⚡ Đối thủ bắt VOLLEY bóng sống!`;
+    } else {
+      this.aiStamina = Math.max(0, this.aiStamina - 10);
+      flightTime = 0.80 / this.settings.ballSpeedFactor;
+      desiredClearance = 0.34;
+      this.ball.spinZ = -1.2;
+      this.ball.spinX = (targetX - this.ball.x) * 0.2;
+      this.tacticalHint = `🎾 Đối thủ đẩy bóng cắm sân!`;
+    }
+
+    this.targetLanding = { x: targetX, z: targetZ, hitter: 'ai', type: shotType };
+
+    const traj = this.calculateTrajectory(
+      this.ball.x,
+      this.ball.y,
+      this.ball.z,
+      targetX,
+      targetZ,
+      flightTime,
+      desiredClearance
+    );
+
+    this.ball.vx = traj.vx;
+    this.ball.vy = traj.vy;
+    this.ball.vz = traj.vz;
+
+    this.onBallHit?.('ai', shotType, quality);
+    return { success: true, quality };
+  }
+
+  public guestExecuteServe(aimX?: number): boolean {
+    if (!this.isServing || this.isMatchOver || this.currentServer !== 'ai') return false;
+
+    this.isServing = false;
+    this.ball.inPlay = true;
+    this.ball.lastHitter = 'ai';
+    this.ball.serveTargetSide = 'player';
+    this.aiStamina = Math.max(0, this.aiStamina - 8);
+
+    let targetX: number;
+    if (aimX !== undefined) {
+      targetX = Math.max(-2.4, Math.min(2.4, aimX));
+    } else {
+      targetX = this.serverQuadrant === 'right' ? -1.5 : 1.5;
+    }
+    const targetZ = 4.6;
+    const flightTime = 0.96 / this.settings.ballSpeedFactor;
+
+    const traj = this.calculateTrajectory(this.ball.x, this.ball.y, this.ball.z, targetX, targetZ, flightTime, 0.40);
+    this.ball.vx = traj.vx;
+    this.ball.vy = traj.vy;
+    this.ball.vz = traj.vz;
+    this.ball.spinX = 0;
+    this.ball.spinZ = -1.2;
+    this.ball.bouncesSinceHit = 0;
+    this.ball.hasClearedNet = false;
+    this.aiPaddleAnim = 0.25;
+    this.targetLanding = { x: targetX, z: targetZ, hitter: 'ai', type: 'drive' };
+
+    this.onBallHit?.('ai', 'drive', 'good');
+    return true;
+  }
+
+  public getWorldSnapshot(): WorldSnapshot {
+    return {
+      type: 'TICK',
+      ball: {
+        x: this.ball.x,
+        y: this.ball.y,
+        z: this.ball.z,
+        vx: this.ball.vx,
+        vy: this.ball.vy,
+        vz: this.ball.vz,
+        inPlay: this.ball.inPlay,
+        lastHitter: this.ball.lastHitter === 'player' ? 'host' : (this.ball.lastHitter === 'ai' ? 'guest' : null),
+        bounces: this.ball.bouncesSinceHit
+      },
+      hostPos: { x: this.playerPos.x, z: this.playerPos.z },
+      guestPos: { x: this.aiPos.x, z: this.aiPos.z },
+      hostScore: this.playerScore,
+      guestScore: this.aiScore,
+      hostStamina: this.playerStamina,
+      guestStamina: this.aiStamina,
+      rally: this.rallyCount,
+      server: this.currentServer === 'player' ? 'host' : 'guest',
+      isServing: this.isServing,
+      targetLanding: this.targetLanding,
+      tacticalHint: this.tacticalHint,
+      isMatchOver: this.isMatchOver,
+      matchWinner: this.matchWinner === 'player' ? 'host' : (this.matchWinner === 'ai' ? 'guest' : undefined)
+    };
+  }
+
+  public applyWorldSnapshot(snap: WorldSnapshot): void {
+    if (this.pvpRole !== 'guest') return;
+
+    // Symmetrical 180° Inversion:
+    // Guest sees their own court at z in [2.2, 5.8] and opponent (host) at z in [-5.8, -2.2]
+    this.ball.x = -snap.ball.x;
+    this.ball.y = snap.ball.y;
+    this.ball.z = -snap.ball.z;
+    this.ball.vx = -snap.ball.vx;
+    this.ball.vy = snap.ball.vy;
+    this.ball.vz = -snap.ball.vz;
+    this.ball.inPlay = snap.ball.inPlay;
+    this.ball.bouncesSinceHit = snap.ball.bounces;
+    this.ball.lastHitter = snap.ball.lastHitter === 'guest' ? 'player' : (snap.ball.lastHitter === 'host' ? 'ai' : 'none');
+
+    // Host position mapped to Guest's opponent (aiPos)
+    this.aiPos.x = -snap.hostPos.x;
+    this.aiPos.z = -snap.hostPos.z;
+
+    this.playerScore = snap.guestScore;
+    this.aiScore = snap.hostScore;
+    this.playerStamina = snap.guestStamina;
+    this.aiStamina = snap.hostStamina;
+    this.rallyCount = snap.rally;
+    this.isServing = snap.isServing;
+    this.currentServer = snap.server === 'guest' ? 'player' : 'ai';
+
+    if (snap.targetLanding) {
+      this.targetLanding = {
+        x: -snap.targetLanding.x,
+        z: -snap.targetLanding.z,
+        hitter: snap.targetLanding.hitter === 'ai' ? 'player' : 'ai',
+        type: snap.targetLanding.type
+      };
+    } else {
+      this.targetLanding = null;
+    }
+
+    if (snap.tacticalHint) {
+      this.tacticalHint = snap.tacticalHint;
+    }
+
+    if (snap.isMatchOver) {
+      this.isMatchOver = true;
+      this.matchWinner = snap.matchWinner === 'guest' ? 'player' : 'ai';
     }
   }
 }

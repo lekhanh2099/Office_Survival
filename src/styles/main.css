@@ -3414,6 +3414,29 @@ body.isPickleballMode #root {
   transform: translateY(-1px);
 }
 
+.pbHeadBtn.btnPvP {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  border: 1.5px solid #a7f3d0;
+  font-weight: 900;
+  font-size: 11px;
+  width: auto !important;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+.pbHeadBtn.btnPvP:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
 @keyframes serveCueBob {
   0%, 100% { transform: translate(-50%, 0); }
   50% { transform: translate(-50%, -6px); }
@@ -3461,7 +3484,8 @@ body.isPickleballMode #root {
     background: rgba(15, 23, 42, 0.75);
     backdrop-filter: blur(8px);
   }
-  .pbHeadBtn.btnTourney {
+  .pbHeadBtn.btnTourney,
+  .pbHeadBtn.btnPvP {
     font-size: 9.5px;
     padding: 0 6px;
     height: 28px;

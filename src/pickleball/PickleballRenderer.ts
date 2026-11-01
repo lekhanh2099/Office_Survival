@@ -35,10 +35,11 @@ export function mountPickleballHUD(host: HTMLElement, engine: PickleballEngine):
     <!-- Top Utility Bar: Tournament Stage Pill + Quick Actions -->
     <div class="pbTopUtilityBar">
       <div class="pbMatchModeBadge" id="pbMatchModeBadge">
-        ${engine.tournament.active ? `🏆 ${engine.tournament.rounds[engine.tournament.currentRound].stageName} · ĐẤU ${engine.settings.targetScore} ĐIỂM` : `🎯 ĐẤU ${engine.settings.targetScore} ĐIỂM`}
+        ${engine.isPvP ? `👥 SOLO 1V1 · ĐẤU ${engine.settings.targetScore} ĐIỂM` : (engine.tournament.active ? `🏆 ${engine.tournament.rounds[engine.tournament.currentRound].stageName} · ĐẤU ${engine.settings.targetScore} ĐIỂM` : `🎯 ĐẤU ${engine.settings.targetScore} ĐIỂM`)}
       </div>
       <div class="pbHeadActions">
         <button class="pbHeadBtn btnTourney" data-act="open_pb_tournament" type="button" title="Giải Đấu Cúp Doanh Nghiệp">🏆 Giải Đấu</button>
+        <button class="pbHeadBtn btnPvP" data-act="open_pb_pvp" type="button" title="Solo 1v1 Đối Kháng 2 Người">👥 Solo 1v1</button>
         <button class="pbHeadBtn" data-act="open_pb_settings" type="button" title="Cài đặt trận đấu">⚙️</button>
         <button class="pbHeadBtn" data-act="exit_pb" type="button" title="Rời sân về ca trực">🚪</button>
       </div>

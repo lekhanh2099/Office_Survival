@@ -304,3 +304,187 @@ export function renderPickleballMatchOverModal(
     </div>
   `;
 }
+
+export type PvPModalView = 'menu' | 'host_waiting' | 'guest_joining' | 'connected' | 'error';
+
+export interface PvPModalProps {
+  view: PvPModalView;
+  roomCode?: string;
+  shareUrl?: string;
+  playerName?: string;
+  targetScore?: 3 | 5 | 11;
+  guestName?: string;
+  guestEmoji?: string;
+  hostName?: string;
+  hostEmoji?: string;
+  pingMs?: number;
+  errorMessage?: string;
+}
+
+export function renderPickleballPvPModal(props: PvPModalProps): string {
+  const targetScore = props.targetScore || 5;
+  const name = props.playerName || 'Bạn';
+
+  return `
+    <div class="dialogShade" role="presentation">
+      <section class="dialog pbPvPModal" role="dialog" aria-modal="true" style="max-width:480px;max-height:92vh;overflow-y:auto">
+        <div class="dialogHeader" style="background:linear-gradient(135deg, #059669, #047857);color:#ffffff;padding:16px;border-bottom:2px solid var(--ink);text-align:center;position:relative">
+          <button data-act="close_dialog" type="button" style="position:absolute;top:12px;right:12px;background:#ffffff;color:#0f172a;border:2px solid var(--ink);border-radius:8px;width:32px;height:32px;font-size:16px;font-weight:900;cursor:pointer;display:grid;place-items:center;line-height:1">✕</button>
+          <div style="font-size:36px;margin-bottom:4px">👥🏓</div>
+          <h2 style="font-size:18px;font-weight:900;margin:0 0 4px">SOLO 1V1 — ĐỐI ĐẦU 2 NGƯỜI THẬT</h2>
+          <p class="note" style="margin:0;font-size:12px;color:#a7f3d0;font-weight:700">
+            Đấu đối kháng trực tiếp 2 máy qua WebRTC P2P không độ trễ!
+          </p>
+        </div>
+
+        <div class="dialogBody" style="padding:16px;display:flex;flex-direction:column;gap:14px">
+          ${props.errorMessage ? `
+            <div style="background:#fef2f2;border:2px solid #ef4444;border-radius:10px;padding:10px 12px;color:#b91c1c;font-size:12px;font-weight:800;display:flex;align-items:center;gap:8px">
+              <span>⚠️</span>
+              <div>${esc(props.errorMessage)}</div>
+            </div>
+          ` : ''}
+
+          ${props.view === 'menu' ? `
+            <!-- SECTION 1: CREATE ROOM (HOST) -->
+            <div style="background:#f0fdf4;border:2px solid #10b981;border-radius:12px;padding:14px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                <span style="font-size:20px">✨</span>
+                <span style="font-size:14px;font-weight:900;color:#065f46">TẠO PHÒNG MỚI (LÀM CHỦ PHÒNG)</span>
+              </div>
+
+              <div style="margin-bottom:10px">
+                <label style="display:block;font-size:11px;font-weight:800;color:#334155;margin-bottom:4px">Tên hiển thị của bạn:</label>
+                <input id="pvpHostNameInput" type="text" value="${esc(name)}" maxlength="16" style="width:100%;box-sizing:border-box;padding:8px 10px;font-size:13px;font-weight:800;border:2px solid var(--ink);border-radius:8px" />
+              </div>
+
+              <div style="margin-bottom:12px">
+                <label style="display:block;font-size:11px;font-weight:800;color:#334155;margin-bottom:4px">Thể thức điểm trận đấu:</label>
+                <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:6px">
+                  <button type="button" class="pbPvpScoreBtn ${targetScore === 3 ? 'active' : ''}" data-pvp-target="3" style="padding:6px;font-size:11px;font-weight:900;border-radius:8px;border:2px solid var(--ink);background:${targetScore === 3 ? '#10b981' : '#ffffff'};color:${targetScore === 3 ? '#ffffff' : '#000'};cursor:pointer">
+                    ⚡ 3 Điểm<br><span style="font-size:9px;font-weight:600">Đánh nhanh</span>
+                  </button>
+                  <button type="button" class="pbPvpScoreBtn ${targetScore === 5 ? 'active' : ''}" data-pvp-target="5" style="padding:6px;font-size:11px;font-weight:900;border-radius:8px;border:2px solid var(--ink);background:${targetScore === 5 ? '#10b981' : '#ffffff'};color:${targetScore === 5 ? '#ffffff' : '#000'};cursor:pointer">
+                    ⭐ 5 Điểm<br><span style="font-size:9px;font-weight:600">Chuẩn cúp</span>
+                  </button>
+                  <button type="button" class="pbPvpScoreBtn ${targetScore === 11 ? 'active' : ''}" data-pvp-target="11" style="padding:6px;font-size:11px;font-weight:900;border-radius:8px;border:2px solid var(--ink);background:${targetScore === 11 ? '#10b981' : '#ffffff'};color:${targetScore === 11 ? '#ffffff' : '#000'};cursor:pointer">
+                    🏆 11 Điểm<br><span style="font-size:9px;font-weight:600">Quốc tế</span>
+                  </button>
+                </div>
+              </div>
+
+              <button class="primary" data-act="pvp_create_room" type="button" style="width:100%;padding:11px;font-size:13px;font-weight:900;background:linear-gradient(135deg, #10b981, #059669);color:#ffffff;border:2px solid var(--ink);border-radius:10px;cursor:pointer;box-shadow:2px 2px 0 var(--ink)">
+                🚀 TẠO PHÒNG &amp; LẤY MÃ
+              </button>
+            </div>
+
+            <!-- SECTION 2: JOIN ROOM (GUEST) -->
+            <div style="background:#eff6ff;border:2px solid #3b82f6;border-radius:12px;padding:14px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                <span style="font-size:20px">🔑</span>
+                <span style="font-size:14px;font-weight:900;color:#1e40af">VÀO PHÒNG BẠN BÈ (NHẬP MÃ)</span>
+              </div>
+
+              <div style="margin-bottom:10px">
+                <label style="display:block;font-size:11px;font-weight:800;color:#334155;margin-bottom:4px">Tên hiển thị của bạn:</label>
+                <input id="pvpGuestNameInput" type="text" value="${esc(name)}" maxlength="16" style="width:100%;box-sizing:border-box;padding:8px 10px;font-size:13px;font-weight:800;border:2px solid var(--ink);border-radius:8px" />
+              </div>
+
+              <div style="margin-bottom:12px">
+                <label style="display:block;font-size:11px;font-weight:800;color:#334155;margin-bottom:4px">Mã phòng 4 chữ số:</label>
+                <input id="pvpJoinCodeInput" type="text" inputmode="numeric" placeholder="VD: 7821" maxlength="6" style="width:100%;box-sizing:border-box;padding:10px;font-size:20px;font-weight:900;text-align:center;letter-spacing:6px;border:2px solid var(--ink);border-radius:8px;background:#ffffff" />
+              </div>
+
+              <button class="primary" data-act="pvp_join_room" type="button" style="width:100%;padding:11px;font-size:13px;font-weight:900;background:linear-gradient(135deg, #3b82f6, #1d4ed8);color:#ffffff;border:2px solid var(--ink);border-radius:10px;cursor:pointer;box-shadow:2px 2px 0 var(--ink)">
+                ⚡ THAM GIA TRẬN ĐẤU
+              </button>
+            </div>
+          ` : ''}
+
+          ${props.view === 'host_waiting' ? `
+            <!-- HOST WAITING ROOM -->
+            <div style="text-align:center;padding:10px 0">
+              <div style="font-size:11px;font-weight:800;color:#64748b;margin-bottom:4px">MÃ PHÒNG SOLO CỦA BẠN:</div>
+              <div id="pvpDisplayRoomCode" style="display:inline-block;background:#0f172a;color:#facc15;font-size:36px;font-weight:900;letter-spacing:8px;padding:8px 24px;border:3px solid var(--ink);border-radius:14px;box-shadow:3px 3px 0 var(--ink);margin-bottom:14px">
+                ${esc(props.roomCode)}
+              </div>
+
+              <div style="font-size:12px;font-weight:700;color:#334155;margin-bottom:12px">
+                Thể thức: <b>Đấu ${props.targetScore} điểm</b>
+              </div>
+
+              <!-- Share Buttons -->
+              <div style="display:flex;gap:8px;justify-content:center;margin-bottom:14px">
+                <button data-act="pvp_copy_link" type="button" style="flex:1;padding:10px 14px;font-size:12px;font-weight:900;background:#fef08a;border:2px solid var(--ink);border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;box-shadow:2px 2px 0 var(--ink)">
+                  📋 Sao chép Link mời
+                </button>
+              </div>
+
+              ${props.shareUrl ? `
+                <div style="margin:12px auto;width:150px;height:150px;background:#ffffff;border:2px solid var(--ink);border-radius:12px;padding:6px;box-shadow:2px 2px 0 var(--ink)">
+                  <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(props.shareUrl)}" alt="QR Code" style="width:100%;height:100%;display:block;border-radius:6px" />
+                </div>
+                <div style="font-size:10px;color:#64748b;font-weight:700">Quét mã QR trên điện thoại đối thủ để vào phòng ngay</div>
+              ` : ''}
+
+              <div style="margin-top:16px;padding:10px;background:#eff6ff;border:1.5px dashed #3b82f6;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px">
+                <span style="display:inline-block;animation:spin 1.5s infinite linear">⏳</span>
+                <span style="font-size:12px;font-weight:800;color:#1e40af">Đang chờ đồng nghiệp vào phòng...</span>
+              </div>
+
+              <div style="margin-top:14px">
+                <button data-act="pvp_cancel" type="button" style="padding:8px 16px;font-size:11px;font-weight:800;background:#f1f5f9;border:1.5px solid #94a3b8;border-radius:8px;cursor:pointer">
+                  ✕ Hủy phòng
+                </button>
+              </div>
+            </div>
+          ` : ''}
+
+          ${props.view === 'guest_joining' ? `
+            <div style="text-align:center;padding:24px 0">
+              <div style="font-size:42px;margin-bottom:10px;display:inline-block;animation:spin 2s infinite linear">🎾</div>
+              <div style="font-size:16px;font-weight:900;color:#0f172a;margin-bottom:6px">ĐANG KẾT NỐI VÀO PHÒNG ${esc(props.roomCode)}...</div>
+              <div style="font-size:12px;color:#64748b;font-weight:600">Đang thiết lập kết nối WebRTC P2P trực tiếp...</div>
+              <div style="margin-top:20px">
+                <button data-act="pvp_cancel" type="button" style="padding:8px 16px;font-size:11px;font-weight:800;background:#f1f5f9;border:1.5px solid #94a3b8;border-radius:8px;cursor:pointer">
+                  ✕ Hủy kết nối
+                </button>
+              </div>
+            </div>
+          ` : ''}
+
+          ${props.view === 'connected' ? `
+            <!-- MATCH READY PREVIEW -->
+            <div style="text-align:center;padding:10px 0">
+              <div style="font-size:14px;font-weight:900;color:#15803d;margin-bottom:12px">🎉 ĐỐI THỦ ĐÃ SẴN SÀNG!</div>
+
+              <div style="display:flex;align-items:center;justify-content:space-around;background:#f8fafc;border:2px solid var(--ink);border-radius:14px;padding:14px;margin-bottom:16px">
+                <div style="display:flex;flex-direction:column;align-items:center">
+                  <span style="font-size:32px;background:#2563eb;border-radius:50%;width:50px;height:50px;display:grid;place-items:center;color:#fff">${esc(props.hostEmoji || '🧑‍💻')}</span>
+                  <span style="font-size:12px;font-weight:900;margin-top:4px">${esc(props.hostName || 'Bạn')}</span>
+                  <span style="font-size:9px;color:#64748b;font-weight:700">Chủ phòng</span>
+                </div>
+
+                <div style="font-size:24px;font-weight:900;color:#ef4444">VS</div>
+
+                <div style="display:flex;flex-direction:column;align-items:center">
+                  <span style="font-size:32px;background:#059669;border-radius:50%;width:50px;height:50px;display:grid;place-items:center;color:#fff">${esc(props.guestEmoji || '🏓')}</span>
+                  <span style="font-size:12px;font-weight:900;margin-top:4px">${esc(props.guestName || 'Đối thủ')}</span>
+                  <span style="font-size:9px;color:#64748b;font-weight:700">Khách</span>
+                </div>
+              </div>
+
+              <div style="font-size:11px;color:#475569;font-weight:700;margin-bottom:14px">
+                Thể thức: <b>Đấu ${props.targetScore} điểm</b> · Độ trễ: <b>${props.pingMs ? `${props.pingMs}ms` : '< 30ms'}</b>
+              </div>
+
+              <button class="primary" data-act="pvp_start_match" type="button" style="width:100%;padding:13px;font-size:14px;font-weight:900;background:linear-gradient(135deg, #10b981, #047857);color:#ffffff;border:2px solid var(--ink);border-radius:12px;cursor:pointer;box-shadow:3px 3px 0 var(--ink)">
+                🔥 BẮT ĐẦU TRẬN ĐẤU NGAY!
+              </button>
+            </div>
+          ` : ''}
+        </div>
+      </section>
+    </div>
+  `;
+}

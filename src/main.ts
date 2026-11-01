@@ -54,8 +54,11 @@ import {
 import {
   renderPickleballSettingsModal,
   renderPickleballMatchOverModal,
-  renderPickleballTournamentModal
+  renderPickleballTournamentModal,
+  renderPickleballPvPModal,
+  PvPModalProps
 } from './pickleball/PickleballModals';
+import { PickleballNet } from './pickleball/PickleballNet';
 
 const ROOT = document.getElementById('root') as HTMLElement;
 const HOST = document.getElementById('dialogHost') as HTMLElement;
@@ -79,6 +82,90 @@ let pbAnimFrameId: number | null = null;
 let pbPlayerDirX = 0;
 let pbPlayerDirZ = 0;
 let pbLastFrameTime = performance.now();
+
+// PvP Multiplayer Net & Modal State
+let pbNet: PickleballNet | null = null;
+let pvpModalProps: PvPModalProps = {
+  view: 'menu',
+  playerName: 'Bạn',
+  targetScore: 5
+};
+
+function updatePvPModal(props: Partial<PvPModalProps>): void {
+  pvpModalProps = { ...pvpModalProps, ...props };
+  HOST.innerHTML = renderPickleballPvPModal(pvpModalProps);
+}
+
+function initPickleballNet(): PickleballNet {
+  if (pbNet) return pbNet;
+
+  pbNet = new PickleballNet({
+    onGuestJoined: (guest) => {
+      sounds.perk();
+      updatePvPModal({
+        view: 'connected',
+        guestName: guest.name,
+        guestEmoji: guest.emoji,
+        hostName: pbNet?.localPlayer.name || 'Bạn',
+        hostEmoji: pbNet?.localPlayer.emoji || '🧑‍💻'
+      });
+      showToast(`🎉 Đối thủ ${guest.name} đã vào phòng!`);
+    },
+    onConnectedToHost: (hostInfo) => {
+      sounds.perk();
+      updatePvPModal({
+        view: 'connected',
+        hostName: hostInfo.name,
+        hostEmoji: hostInfo.emoji,
+        guestName: pbNet?.localPlayer.name || 'Bạn',
+        guestEmoji: pbNet?.localPlayer.emoji || '🧑‍💻',
+        targetScore: hostInfo.targetScore as 3 | 5 | 11
+      });
+      showToast(`🎉 Đã kết nối với chủ phòng ${hostInfo.name}!`);
+    },
+    onGameStart: () => {
+      sounds.success();
+      HOST.innerHTML = '';
+      if (pbEngine && pbNet) {
+        pbEngine.setPvPMode('guest', pbNet.remotePlayer, pvpModalProps.targetScore || 5);
+        pbStage?.updateOpponentVisuals();
+        const uiHostEl = document.getElementById('pbUIHost');
+        if (uiHostEl) mountPickleballHUD(uiHostEl, pbEngine);
+        showToast('🔥 Trận đấu Solo 1v1 BẮT ĐẦU!');
+      }
+    },
+    onSnapshotReceived: (snapshot) => {
+      if (pbEngine && pbEngine.pvpRole === 'guest') {
+        pbEngine.applyWorldSnapshot(snapshot);
+      }
+    },
+    onGuestMove: (pos) => {
+      if (pbEngine && pbEngine.pvpRole === 'host') {
+        pbEngine.applyGuestInput(pos);
+      }
+    },
+    onGuestShot: (shot) => {
+      if (pbEngine && pbEngine.pvpRole === 'host') {
+        pbEngine.guestHitBall(shot.shotType, shot.explicitAimX, shot.explicitAimZ);
+      }
+    },
+    onGuestServe: (aimX) => {
+      if (pbEngine && pbEngine.pvpRole === 'host') {
+        pbEngine.guestExecuteServe(aimX);
+      }
+    },
+    onDisconnected: (reason) => {
+      showToast(reason || 'Đối thủ đã ngắt kết nối');
+      if (pbEngine && pbEngine.isPvP) {
+        pbEngine.setPvPMode('none');
+        const uiHostEl = document.getElementById('pbUIHost');
+        if (uiHostEl) mountPickleballHUD(uiHostEl, pbEngine);
+      }
+    }
+  });
+
+  return pbNet;
+}
 
 // 3D Shift Mode Lifecycle
 let shiftStage: OfficeStage | null = null;
@@ -407,6 +494,10 @@ function renderPickleballMode(): void {
         const targetX = (ratioX - 0.5) * 5.4;
         const targetZ = 2.2 + Math.max(0, Math.min(1, (ratioY - 0.28) / 0.58)) * 3.6;
         pbEngine.setPlayerPos(targetX, targetZ);
+
+        if (pbNet && pbNet.status === 'connected' && pbEngine.pvpRole === 'guest') {
+          pbNet.send({ type: 'MOVE', x: targetX, z: targetZ });
+        }
       }
     });
 
@@ -423,10 +514,16 @@ function renderPickleballMode(): void {
       setTimeout(clearSwipeTrail, 120);
 
       if (pbEngine) {
+        // Handle Serve (Player or Guest)
         if (pbEngine.isServing && pbEngine.currentServer === 'player') {
           const angleRatio = dx / Math.max(30, Math.abs(dy) * 0.9);
           const aimX = Math.abs(dx) > 16 ? Math.max(-2.4, Math.min(2.4, angleRatio * 2.4)) : undefined;
-          pbEngine.executeServe(aimX);
+
+          if (pbEngine.isPvP && pbEngine.pvpRole === 'guest') {
+            pbNet?.send({ type: 'SERVE', aimX: aimX !== undefined ? -aimX : undefined });
+          } else {
+            pbEngine.executeServe(aimX);
+          }
           if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
             try { navigator.vibrate(18); } catch (_) {}
           }
@@ -434,10 +531,40 @@ function renderPickleballMode(): void {
         }
 
         // SWIPE-TO-HIT GESTURE (Direct Swipe Aiming + Skill Recognition)
-        // Works on soft flick (dink/drop), hard flick (smash), side flick (curve), net-volley
         const dist = Math.hypot(dx, dy);
         const isSwipeGesture = dist >= 16 || dy < -14 || Math.abs(dx) >= 16;
         if (isSwipeGesture) {
+          if (pbEngine.isPvP && pbEngine.pvpRole === 'guest') {
+            const angleRatio = dx / Math.max(26, Math.abs(dy) * 0.85);
+            const explicitAimX = Math.max(-2.55, Math.min(2.55, angleRatio * 2.5));
+            let shotType: ShotType = 'drive';
+            let explicitAimZ = 4.8;
+
+            if (Math.abs(dx) > 38 && Math.abs(dx) > Math.abs(dy) * 0.72) {
+              shotType = 'curve';
+              explicitAimZ = 4.7;
+            } else if ((speed > 0.44 && dy < -38) || dy < -65 || (dist > 70 && speed > 0.36)) {
+              shotType = 'smash';
+              explicitAimZ = 5.35;
+            } else if (dist < 46 && speed < 0.38) {
+              shotType = 'dink';
+              explicitAimZ = 1.85;
+            } else {
+              shotType = 'drive';
+              explicitAimZ = 4.8;
+            }
+
+            // Invert coordinates for Host
+            pbNet?.send({
+              type: 'SHOT',
+              shotType,
+              explicitAimX: -explicitAimX,
+              explicitAimZ: explicitAimZ
+            });
+            sounds.pickleballPaddleHit(shotType === 'smash');
+            return;
+          }
+
           const res = pbEngine.triggerPlayerShotWithGesture(dx, dy, dt, speed);
           if (res.success) {
             if (res.shotType === 'smash') {
@@ -454,16 +581,26 @@ function renderPickleballMode(): void {
             }
           }
         } else if (dt < 220 && dist < 16) {
-          // Stationary tap: only strikes if ball is already right in front of the player's paddle!
+          // Stationary tap
           const bDx = Math.abs(pbEngine.ball.x - pbEngine.playerPos.x);
           const bDz = Math.abs(pbEngine.ball.z - (pbEngine.playerPos.z - 0.45));
           if (pbEngine.ball.inPlay && pbEngine.ball.vz > 0 && bDx <= 1.8 && bDz <= 1.8) {
             const chosen = pbEngine.ball.y > 1.05 ? 'smash' : (pbEngine.ball.y < 0.62 ? 'dink' : 'curve');
-            const res = pbEngine.triggerPlayerShot(chosen);
-            if (res.success) {
+            if (pbEngine.isPvP && pbEngine.pvpRole === 'guest') {
+              pbNet?.send({
+                type: 'SHOT',
+                shotType: chosen,
+                explicitAimX: 0,
+                explicitAimZ: chosen === 'dink' ? 1.85 : 4.8
+              });
               sounds.pickleballPaddleHit(chosen === 'smash');
-              if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-                try { navigator.vibrate(18); } catch (_) {}
+            } else {
+              const res = pbEngine.triggerPlayerShot(chosen);
+              if (res.success) {
+                sounds.pickleballPaddleHit(chosen === 'smash');
+                if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+                  try { navigator.vibrate(18); } catch (_) {}
+                }
               }
             }
           }
@@ -479,6 +616,33 @@ function renderPickleballMode(): void {
     sounds.perk();
     showPickleballPointBanner(result);
   };
+
+  pbEngine.onPvPSnapshotReady = (snapshot) => {
+    if (pbNet && pbNet.status === 'connected' && pbEngine?.pvpRole === 'host') {
+      pbNet.send(snapshot);
+    }
+  };
+
+  // Auto-join PvP room if "?mode=pickleball&join=1234" is present
+  const joinParam = urlParams.get('join');
+  if (joinParam) {
+    setTimeout(() => {
+      const net = initPickleballNet();
+      pvpModalProps = {
+        view: 'guest_joining',
+        roomCode: joinParam,
+        playerName: 'Đồng Nghiệp',
+        targetScore: 5
+      };
+      HOST.innerHTML = renderPickleballPvPModal(pvpModalProps);
+      net.joinRoom(joinParam, 'Đồng Nghiệp', pbEngine?.settings.selectedPaddleId || 'carbon', '🏓').catch(() => {
+        updatePvPModal({
+          view: 'menu',
+          errorMessage: 'Phòng không tồn tại hoặc chủ phòng đã rời!'
+        });
+      });
+    }, 400);
+  }
 
   pbEngine.onBallHit = (hitter, shot, quality) => {
     pbStage?.onHit(hitter, shot, quality);
@@ -820,7 +984,35 @@ document.addEventListener('click', (ev) => {
   const pbShotBtn = target.closest('[data-pb-shot]') as HTMLElement | null;
   if (pbShotBtn && currentMode === 'pickleball' && pbEngine) {
     const shot = pbShotBtn.dataset.pbShot as ShotType;
-    pbEngine.triggerPlayerShot(shot);
+    if (pbEngine.isPvP && pbEngine.pvpRole === 'guest') {
+      if (pbEngine.isServing && pbEngine.currentServer === 'player') {
+        pbNet?.send({ type: 'SERVE' });
+      } else {
+        pbNet?.send({
+          type: 'SHOT',
+          shotType: shot,
+          explicitAimX: (Math.random() - 0.5) * 1.5,
+          explicitAimZ: shot === 'dink' ? 1.85 : 5.0
+        });
+      }
+      sounds.pickleballPaddleHit(shot === 'smash');
+    } else {
+      pbEngine.triggerPlayerShot(shot);
+    }
+    return;
+  }
+
+  // Pickleball PvP Score Selection in Modal
+  const pvpScoreBtn = target.closest('.pbPvpScoreBtn') as HTMLElement | null;
+  if (pvpScoreBtn) {
+    sounds.click();
+    const t = Number(pvpScoreBtn.dataset.pvpTarget) as 3 | 5 | 11;
+    pvpModalProps.targetScore = t;
+    HOST.querySelectorAll('.pbPvpScoreBtn').forEach(b => {
+      const isCur = Number((b as HTMLElement).dataset.pvpTarget) === t;
+      (b as HTMLElement).style.background = isCur ? '#10b981' : '#ffffff';
+      (b as HTMLElement).style.color = isCur ? '#ffffff' : '#000';
+    });
     return;
   }
 
@@ -893,6 +1085,103 @@ document.addEventListener('click', (ev) => {
   }
 
   switch (btn.dataset.act) {
+    case 'open_pb_pvp': {
+      if (pbEngine) {
+        sounds.click();
+        const net = initPickleballNet();
+        pvpModalProps = {
+          view: 'menu',
+          playerName: net.localPlayer.name || 'Bạn',
+          targetScore: 5
+        };
+        HOST.innerHTML = renderPickleballPvPModal(pvpModalProps);
+      }
+      break;
+    }
+    case 'pvp_create_room': {
+      sounds.click();
+      const nameInput = document.getElementById('pvpHostNameInput') as HTMLInputElement | null;
+      const hostName = nameInput?.value.trim() || 'Bạn';
+      const code = PickleballNet.generateRoomCode();
+      const shareUrl = `${window.location.origin}${window.location.pathname}?mode=pickleball&join=${code}`;
+
+      updatePvPModal({
+        view: 'host_waiting',
+        roomCode: code,
+        shareUrl,
+        playerName: hostName
+      });
+
+      const net = initPickleballNet();
+      net.createRoom(code, hostName, pbEngine?.settings.selectedPaddleId || 'carbon', '🧑‍💻').catch((err) => {
+        updatePvPModal({
+          view: 'menu',
+          errorMessage: err.message
+        });
+      });
+      break;
+    }
+    case 'pvp_join_room': {
+      sounds.click();
+      const nameInput = document.getElementById('pvpGuestNameInput') as HTMLInputElement | null;
+      const codeInput = document.getElementById('pvpJoinCodeInput') as HTMLInputElement | null;
+      const guestName = nameInput?.value.trim() || 'Đồng Nghiệp';
+      const code = codeInput?.value.trim();
+
+      if (!code || code.length < 3) {
+        showToast('⚠️ Vui lòng nhập đúng mã phòng!');
+        return;
+      }
+
+      updatePvPModal({
+        view: 'guest_joining',
+        roomCode: code,
+        playerName: guestName
+      });
+
+      const net = initPickleballNet();
+      net.joinRoom(code, guestName, pbEngine?.settings.selectedPaddleId || 'carbon', '🏓').catch((err) => {
+        updatePvPModal({
+          view: 'menu',
+          errorMessage: err.message || 'Không thể kết nối tới phòng này'
+        });
+      });
+      break;
+    }
+    case 'pvp_copy_link': {
+      sounds.click();
+      if (pvpModalProps.shareUrl) {
+        try {
+          navigator.clipboard.writeText(pvpModalProps.shareUrl);
+          showToast('📋 Đã sao chép link mời vào bộ nhớ tạm!');
+        } catch (_) {
+          showToast('📋 Link: ' + pvpModalProps.shareUrl);
+        }
+      }
+      break;
+    }
+    case 'pvp_start_match': {
+      sounds.success();
+      HOST.innerHTML = '';
+      if (pbEngine && pbNet) {
+        pbNet.send({ type: 'START' });
+        pbEngine.setPvPMode('host', pbNet.remotePlayer, pvpModalProps.targetScore || 5);
+        pbStage?.updateOpponentVisuals();
+        const uiHostEl = document.getElementById('pbUIHost');
+        if (uiHostEl) mountPickleballHUD(uiHostEl, pbEngine);
+        showToast('🔥 Trận đấu Solo 1v1 BẮT ĐẦU!');
+      }
+      break;
+    }
+    case 'pvp_cancel': {
+      sounds.click();
+      pbNet?.disconnect();
+      updatePvPModal({
+        view: 'menu',
+        errorMessage: undefined
+      });
+      break;
+    }
     case 'open_pb_tournament': {
       if (pbEngine) {
         sounds.click();
