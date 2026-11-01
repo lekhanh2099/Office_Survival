@@ -2,7 +2,7 @@
 // PICKLEBALL ENGINE - Real-Time 3D Physics & Match State Machine
 // ============================================================================
 
-export type ShotType = 'drive' | 'dink' | 'smash' | 'curve';
+export type ShotType = 'drive' | 'dink' | 'smash' | 'curve' | 'volley' | 'drop';
 export type ShotQuality = 'perfect' | 'good' | 'late' | 'early';
 export type ColleagueId = 'linh' | 'hoang' | 'nga' | 'tuan' | 'boss';
 
@@ -285,7 +285,7 @@ export class PickleballEngine {
   public aiPos = { x: -1.2, z: -5.8 };
   public playerPaddleAnim = 0; // 0: idle, >0: swinging
   public aiPaddleAnim = 0;
-  public bufferedShot: { shotType: ShotType; timestamp: number; aimOffset?: number } | null = null;
+  public bufferedShot: { shotType: ShotType; timestamp: number; explicitAimX?: number; explicitAimZ?: number; aimOffset?: number } | null = null;
   public manualInputTimer = 0; // seconds remaining where manual input overrides auto-assist
   public isDiving = false;
   public diveTimer = 0;
@@ -579,7 +579,7 @@ export class PickleballEngine {
     };
   }
 
-  public executeServe(): boolean {
+  public executeServe(aimX?: number): boolean {
     if (!this.isServing || this.isMatchOver) return false;
 
     this.isServing = false;
@@ -593,10 +593,15 @@ export class PickleballEngine {
       this.ball.serveTargetSide = 'ai';
       this.playerStamina = Math.max(0, this.playerStamina - 8);
 
-      // Crosscourt serve trajectory into diagonal receiving box (past Kitchen: z < -2.1)
-      const targetX = this.serverQuadrant === 'right' ? -1.4 : 1.4;
+      // Aim targetX: if player swiped/aimed, use aimX! Else crosscourt diagonal:
+      let targetX: number;
+      if (aimX !== undefined) {
+        targetX = Math.max(-2.4, Math.min(2.4, aimX));
+      } else {
+        targetX = this.serverQuadrant === 'right' ? -1.5 : 1.5;
+      }
       const targetZ = -4.6;
-      const flightTime = 0.84 / this.settings.ballSpeedFactor;
+      const flightTime = 0.96 / this.settings.ballSpeedFactor;
 
       const traj = this.calculateTrajectory(this.ball.x, this.ball.y, this.ball.z, targetX, targetZ, flightTime, 0.40);
       this.ball.vx = traj.vx;
@@ -633,49 +638,78 @@ export class PickleballEngine {
     return true;
   }
 
-  public triggerPlayerShotWithGesture(dx: number, dy: number, _dt: number, speed: number): { success: boolean; shotType?: ShotType; quality?: ShotQuality; buffered?: boolean } {
+  public triggerPlayerShotWithGesture(
+    dx: number,
+    dy: number,
+    _dt: number,
+    speed: number
+  ): { success: boolean; shotType?: ShotType; quality?: ShotQuality; buffered?: boolean } {
     if (this.isMatchOver) return { success: false };
 
-    // If serving, immediately execute serve!
+    // Continuous directional aiming from swipe vector:
+    // Swiping left (dx < 0) -> target left side (negative X)
+    // Swiping right (dx > 0) -> target right side (positive X)
+    // Swiping forward/center -> center
+    const angleRatio = dx / Math.max(26, Math.abs(dy) * 0.85);
+    const explicitAimX = Math.max(-2.55, Math.min(2.55, angleRatio * 2.5));
+
+    // If serving, immediately execute serve with directional aim!
     if (this.isServing && this.currentServer === 'player') {
-      this.executeServe();
-      return { success: true, quality: 'good' };
+      this.executeServe(explicitAimX);
+      return { success: true, quality: 'good', shotType: 'drive' };
     }
 
     if (!this.ball.inPlay || this.ball.lastHitter === 'player') {
       return { success: false };
     }
 
+    const dist = Math.hypot(dx, dy);
     let shotType: ShotType = 'drive';
-    // Continuous directional aiming from swipe vector (-1.5 to +1.5)
-    const aimOffset = Math.max(-1.5, Math.min(1.5, dx / 35));
+    let explicitAimZ: number = -4.8;
 
-    // High velocity or long upward flick -> Smash / Power Drive
-    if (dy < -20 || speed > 0.42) {
-      shotType = 'smash';
-    } else if (Math.abs(dx) > 35 && Math.abs(dy) < 35) {
-      // Direct sideways swipe -> Curve Sidespin
+    const isNearKitchen = this.playerPos.z <= 3.6;
+    const isBallInAir = this.ball.bouncesSinceHit === 0;
+
+    // 1. Curve Sidespin: Strong horizontal swipe (|dx| > 38 and dx dominates dy)
+    if (Math.abs(dx) > 38 && Math.abs(dx) > Math.abs(dy) * 0.72) {
       shotType = 'curve';
-    } else if (dy < -8 && dy >= -25) {
-      // Gentle flick -> Drop shot Dink
+      explicitAimZ = -4.7;
+    }
+    // 2. Power Smash: Fast, long upward flick (speed > 0.44 or deep upward flick dy < -65)
+    else if ((speed > 0.44 && dy < -38) || dy < -65 || (dist > 70 && speed > 0.36)) {
+      shotType = 'smash';
+      explicitAimZ = -5.35;
+    }
+    // 3. Volley: Intercepting ball mid-air when positioned up near the Kitchen
+    else if (isNearKitchen && isBallInAir) {
+      shotType = 'volley';
+      explicitAimZ = -4.6;
+    }
+    // 4. Drop Shot / Dink: Short, gentle flick (Đánh nhẹ / vuốt ngắn)
+    else if (dist < 46 && speed < 0.38) {
       shotType = 'dink';
-    } else {
-      // Adaptive shot based on ball height
-      if (this.ball.y > 1.05) shotType = 'smash';
-      else if (this.ball.y < 0.6) shotType = 'dink';
-      else shotType = 'curve';
+      explicitAimZ = -1.8;
+    }
+    // 5. Baseline Drive: Solid medium forward drive
+    else {
+      shotType = 'drive';
+      explicitAimZ = -4.8;
     }
 
-    const res = this.triggerPlayerShot(shotType, aimOffset);
+    const res = this.triggerPlayerShot(shotType, explicitAimX, explicitAimZ);
     return { ...res, shotType };
   }
 
-  public triggerPlayerShot(shotType: ShotType, aimOffset = 0): { success: boolean; quality?: ShotQuality; buffered?: boolean } {
+  public triggerPlayerShot(
+    shotType: ShotType,
+    explicitAimX?: number,
+    explicitAimZ?: number
+  ): { success: boolean; quality?: ShotQuality; buffered?: boolean } {
     if (this.isMatchOver) return { success: false };
 
     // If serving, immediately serve!
     if (this.isServing && this.currentServer === 'player') {
-      this.executeServe();
+      this.executeServe(explicitAimX);
       return { success: true, quality: 'good' };
     }
 
@@ -695,17 +729,21 @@ export class PickleballEngine {
       this.targetPlayerPos.x = this.playerPos.x;
       this.targetPlayerPos.z = this.playerPos.z;
       this.bufferedShot = null;
-      return this.playerHitBall(shotType, aimOffset);
+      return this.playerHitBall(shotType, explicitAimX, explicitAimZ);
     } else if (this.ball.vz > 0 && this.ball.z < 7.2) {
       // Buffer the shot for 1200ms so it fires automatically the moment the ball arrives!
-      this.bufferedShot = { shotType, timestamp: performance.now(), aimOffset };
+      this.bufferedShot = { shotType, timestamp: performance.now(), explicitAimX, explicitAimZ };
       return { success: true, buffered: true };
     }
 
     return { success: false, quality: 'early' };
   }
 
-  public playerHitBall(shotType: ShotType, aimOffset = 0): { success: boolean; quality: ShotQuality } {
+  public playerHitBall(
+    shotType: ShotType,
+    explicitAimX?: number,
+    explicitAimZ?: number
+  ): { success: boolean; quality: ShotQuality } {
     if (!this.ball.inPlay || this.ball.lastHitter === 'player' || this.isMatchOver) {
       return { success: false, quality: 'late' };
     }
@@ -727,17 +765,17 @@ export class PickleballEngine {
 
     // Timing quality evaluation
     let quality: ShotQuality = 'good';
-    if (dist < 1.1 && this.ball.y > 0.35 && this.ball.y < 1.6) {
+    if (dist < 1.2 && this.ball.y > 0.35 && this.ball.y < 1.6) {
       quality = 'perfect';
       this.stats.perfectHits++;
-    } else if (dist > 2.2 || this.ball.y < 0.22) {
+    } else if (dist > 3.0 || this.ball.y < 0.22) {
       quality = 'late';
     }
 
     // TACTICAL ADAPTATION: AGGRESSIVE SHOT ON LOW BALL (Speed-up / Rolled Volley)
     // In real pickleball, hitting hard on low ball becomes a rolled topspin drive skimming the net tape.
     if (shotType === 'smash' && this.ball.y < 0.62) {
-      if (this.ball.y < 0.12 && dist > 2.2) {
+      if (this.ball.y < 0.12 && dist > 3.0) {
         // Only if ball has essentially scraped the floor does it fault into net
         this.playerStamina = Math.max(0, this.playerStamina - 20);
         this.playerPaddleAnim = 0.28;
@@ -772,65 +810,86 @@ export class PickleballEngine {
     let flightTime: number;
     let desiredClearance: number;
 
+    // 1. Calculate TARGET X: 100% PLAYER DIRECTED IF SWIPED, or smart auto-aim if button clicked
+    if (explicitAimX !== undefined) {
+      targetX = Math.max(-2.55, Math.min(2.55, explicitAimX));
+    } else {
+      const openRight = this.aiPos.x < 0;
+      if (shotType === 'smash') {
+        targetX = openRight ? (1.6 + Math.random() * 0.8) : (-1.6 - Math.random() * 0.8);
+      } else if (shotType === 'dink' || shotType === 'drop') {
+        targetX = openRight ? (1.1 + Math.random() * 0.6) : (-1.1 - Math.random() * 0.6);
+      } else if (shotType === 'curve') {
+        targetX = openRight ? (2.2 + Math.random() * 0.3) : (-2.2 - Math.random() * 0.3);
+      } else {
+        targetX = openRight ? 1.5 : -1.5;
+      }
+    }
+
+    // 2. Calculate TARGET Z:
+    if (explicitAimZ !== undefined) {
+      targetZ = explicitAimZ;
+    } else {
+      if (shotType === 'dink' || shotType === 'drop') {
+        targetZ = -1.8 - Math.random() * 0.4;
+      } else if (shotType === 'smash') {
+        targetZ = -5.35 - Math.random() * 0.3;
+      } else if (shotType === 'volley') {
+        targetZ = -4.6;
+      } else {
+        targetZ = -4.8;
+      }
+    }
+
+    // 3. Distinct Physics & Trajectory for each Skill
     if (shotType === 'smash') {
       const isHighBall = this.ball.y >= 0.85;
       this.playerStamina = Math.max(0, this.playerStamina - 25);
       this.stats.smashes++;
-      quality = isHighBall ? 'perfect' : 'good';
-      if (quality === 'perfect') this.stats.perfectHits++;
+      if (isHighBall) quality = 'perfect';
 
-      // Aim dynamically to opposite of AI position!
-      targetX = this.aiPos.x < 0 ? (1.5 + Math.random() * 0.9) : (-1.5 - Math.random() * 0.9);
-      targetZ = -5.4 - Math.random() * 0.3;
-      flightTime = (isHighBall ? 0.46 : 0.54) / powerMult;
+      flightTime = (isHighBall ? 0.50 : 0.58) / powerMult;
       desiredClearance = 0.28;
       this.ball.spinZ = 3.6; // Heavy topspin dips sharply down into backcourt
-      this.ball.spinX = (Math.random() - 0.5) * 1.0;
-      this.tacticalHint = '🚀 Cú ĐẬP SMASH sấm sét! Ép đối thủ lùi sâu!';
-    } else if (shotType === 'dink') {
-      // DINK recovers stamina!
+      this.ball.spinX = (targetX - this.ball.x) * 0.35;
+      this.tacticalHint = '🚀 Cú ĐẬP SMASH sấm sét cắm sâu cuối sân!';
+    } else if (shotType === 'dink' || shotType === 'drop') {
       this.playerStamina = Math.min(100, this.playerStamina + 20);
       this.stats.dinks++;
 
-      // Target shallow kitchen on AI side (between -1.0 and -1.8)
-      targetX = this.aiPos.x < 0 ? (0.8 + Math.random() * 0.8) : (-0.8 - Math.random() * 0.8);
-      targetZ = -1.2 - Math.random() * 0.5;
-      flightTime = 0.88;
-      desiredClearance = 0.44;
-      this.ball.spinZ = -2.4; // Backspin float: hovers softly over net, drops dead
+      flightTime = 1.05;
+      desiredClearance = 0.42;
+      this.ball.spinZ = -2.6; // Gentle backspin float
       this.ball.spinX = 0;
-
-      if (this.aiPos.z < -4.6) {
-        this.tacticalHint = `🏓 Bỏ nhỏ Kitchen hiểm! ${this.opponent.name} bị hụt trớn!`;
-      } else {
-        this.tacticalHint = '🏓 Bỏ nhỏ Kitchen ổn định nhịp thở (+20% Thể Lực)!';
-      }
+      this.tacticalHint = '🏓 Bỏ nhỏ DINK êm ái vào Kitchen! (+20% Thể Lực)';
     } else if (shotType === 'curve') {
       this.playerStamina = Math.max(0, this.playerStamina - 15);
-      // Exploit open court!
-      const openRight = this.aiPos.x < 0;
-      targetX = openRight ? (2.2 + Math.random() * 0.3) : (-2.2 - Math.random() * 0.3);
-      targetZ = -4.8 - Math.random() * 0.3;
-      flightTime = 0.68 / powerMult;
+
+      flightTime = 0.80 / powerMult;
       desiredClearance = 0.34;
-      this.ball.spinX = openRight ? 4.4 : -4.4;
+      this.ball.spinX = targetX > 0 ? 5.2 : -5.2; // Heavy curve sidespin
       this.ball.spinZ = 1.0;
-      this.tacticalHint = `🌀 Đổi góc hiểm sang ${openRight ? 'phải' : 'trái'}! Ép đối thủ di chuyển!`;
+      this.tacticalHint = `🌀 Cú XOÁY GÓC lượn hiểm sang ${targetX > 0 ? 'phải' : 'trái'}!`;
+    } else if (shotType === 'volley') {
+      this.playerStamina = Math.max(0, this.playerStamina - 12);
+
+      flightTime = 0.66 / powerMult;
+      desiredClearance = 0.28;
+      this.ball.spinZ = 1.8;
+      this.ball.spinX = (targetX - this.ball.x) * 0.3;
+      this.tacticalHint = '⚡ Cú bắt VOLLEY bóng sống chớp nhoáng trên lưới!';
     } else {
-      // Drive: standard crosscourt return
+      // Standard Drive
       this.playerStamina = Math.max(0, this.playerStamina - 10);
-      const crossRight = this.playerPos.x < -0.2;
-      const crossLeft = this.playerPos.x > 0.2;
-      targetX = crossRight ? 1.6 : (crossLeft ? -1.6 : (Math.random() - 0.5) * 1.6);
-      targetZ = -4.9;
-      flightTime = 0.74 / powerMult;
-      desiredClearance = 0.36;
-      this.ball.spinZ = 1.0;
-      this.ball.spinX = (Math.random() - 0.5) * 0.8;
-      this.tacticalHint = '🎾 Đẩy bóng an toàn, chờ thời cơ dứt điểm!';
+
+      flightTime = 0.80 / powerMult;
+      desiredClearance = 0.34;
+      this.ball.spinZ = 1.2;
+      this.ball.spinX = (targetX - this.ball.x) * 0.2;
+      this.tacticalHint = '🎾 Đẩy bóng cắm sân!';
     }
 
-    targetX = Math.max(-2.55, Math.min(2.55, targetX + aimOffset * 0.8));
+    targetX = Math.max(-2.55, Math.min(2.55, targetX));
     this.targetLanding = { x: targetX, z: targetZ, hitter: 'player', type: shotType };
 
     const traj = this.calculateTrajectory(
@@ -1041,9 +1100,10 @@ export class PickleballEngine {
           this.targetPlayerPos.z = this.playerPos.z;
 
           const shot = this.bufferedShot.shotType;
-          const aim = this.bufferedShot.aimOffset || 0;
+          const aimX = this.bufferedShot.explicitAimX;
+          const aimZ = this.bufferedShot.explicitAimZ;
           this.bufferedShot = null;
-          this.playerHitBall(shot, aim);
+          this.playerHitBall(shot, aimX, aimZ);
         }
       } else {
         this.bufferedShot = null;

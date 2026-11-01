@@ -128,9 +128,15 @@ export class PickleballStage {
       if (isSmash) {
         trailMat.color.setHex(0xf97316); // Electric flame orange!
         trailMat.opacity = 0.95;
-      } else if (shot === 'dink') {
+      } else if (shot === 'dink' || shot === 'drop') {
         trailMat.color.setHex(0x10b981); // Emerald drop!
-        trailMat.opacity = 0.75;
+        trailMat.opacity = 0.85;
+      } else if (shot === 'curve') {
+        trailMat.color.setHex(0xa855f7); // Purple curve!
+        trailMat.opacity = 0.85;
+      } else if (shot === 'volley') {
+        trailMat.color.setHex(0x06b6d4); // Cyan volley!
+        trailMat.opacity = 0.85;
       } else {
         trailMat.color.setHex(0xfef08a); // Crisp optic yellow
         trailMat.opacity = 0.65;
@@ -944,10 +950,12 @@ export class PickleballStage {
       const targetMat = this.landingTargetMesh.material as THREE.MeshBasicMaterial;
       if (this.engine.targetLanding.type === 'smash') {
         targetMat.color.setHex(0xef4444); // Red for Smash
-      } else if (this.engine.targetLanding.type === 'dink') {
-        targetMat.color.setHex(0x10b981); // Emerald green for Dink
+      } else if (this.engine.targetLanding.type === 'dink' || this.engine.targetLanding.type === 'drop') {
+        targetMat.color.setHex(0x10b981); // Emerald green for Dink / Drop
+      } else if (this.engine.targetLanding.type === 'curve') {
+        targetMat.color.setHex(0xa855f7); // Purple for Curve
       } else {
-        targetMat.color.setHex(0x38bdf8); // Cyan for Curve/Drive
+        targetMat.color.setHex(0x38bdf8); // Cyan for Curve/Drive/Volley
       }
     } else {
       this.landingTargetMesh.visible = false;

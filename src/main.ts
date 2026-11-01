@@ -308,18 +308,49 @@ function renderPickleballMode(): void {
     const drawSwipeTrail = () => {
       if (!sctx || !swipeCanvas || swipePoints.length < 2) return;
       sctx.clearRect(0, 0, swipeCanvas.width, swipeCanvas.height);
+      const start = swipePoints[0];
+      const end = swipePoints[swipePoints.length - 1];
+      const dx = end.x - start.x;
+      const dy = end.y - start.y;
+
       sctx.beginPath();
-      sctx.moveTo(swipePoints[0].x, swipePoints[0].y);
+      sctx.moveTo(start.x, start.y);
       for (let i = 1; i < swipePoints.length; i++) {
         sctx.lineTo(swipePoints[i].x, swipePoints[i].y);
       }
-      sctx.strokeStyle = 'rgba(56, 189, 248, 0.85)';
-      sctx.lineWidth = 4;
+
+      // Dynamic color & glow based on swipe gesture skill
+      let color = 'rgba(56, 189, 248, 0.9)';
+      let glow = '#0284c7';
+      if (dy < -45) {
+        color = 'rgba(249, 115, 22, 0.95)'; // Smash: Fire orange
+        glow = '#ea580c';
+      } else if (dy >= -35 && Math.hypot(dx, dy) < 60) {
+        color = 'rgba(16, 185, 129, 0.95)'; // Dink: Emerald green
+        glow = '#059669';
+      } else if (Math.abs(dx) > 35) {
+        color = 'rgba(168, 85, 247, 0.95)'; // Curve: Purple
+        glow = '#9333ea';
+      }
+
+      sctx.strokeStyle = color;
+      sctx.lineWidth = 5;
       sctx.lineCap = 'round';
       sctx.lineJoin = 'round';
-      sctx.shadowColor = '#0284c7';
-      sctx.shadowBlur = 10;
+      sctx.shadowColor = glow;
+      sctx.shadowBlur = 12;
       sctx.stroke();
+
+      // Directional arrowhead at the tip showing exact aim trajectory
+      const angle = Math.atan2(dy, dx);
+      const headLen = 12;
+      sctx.fillStyle = color;
+      sctx.beginPath();
+      sctx.moveTo(end.x, end.y);
+      sctx.lineTo(end.x - headLen * Math.cos(angle - Math.PI / 6), end.y - headLen * Math.sin(angle - Math.PI / 6));
+      sctx.lineTo(end.x - headLen * Math.cos(angle + Math.PI / 6), end.y - headLen * Math.sin(angle + Math.PI / 6));
+      sctx.closePath();
+      sctx.fill();
     };
 
     const clearSwipeTrail = () => {
@@ -393,16 +424,20 @@ function renderPickleballMode(): void {
 
       if (pbEngine) {
         if (pbEngine.isServing && pbEngine.currentServer === 'player') {
-          pbEngine.executeServe();
+          const angleRatio = dx / Math.max(30, Math.abs(dy) * 0.9);
+          const aimX = Math.abs(dx) > 16 ? Math.max(-2.4, Math.min(2.4, angleRatio * 2.4)) : undefined;
+          pbEngine.executeServe(aimX);
           if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
             try { navigator.vibrate(18); } catch (_) {}
           }
           return;
         }
 
-        // SWIPE-TO-HIT GESTURE (Tennis Clash Style: rapid directional flick)
-        const isFlick = (Math.hypot(dx, dy) > 28 && speed > 0.32) || (dy < -22 && speed > 0.28);
-        if (isFlick) {
+        // SWIPE-TO-HIT GESTURE (Direct Swipe Aiming + Skill Recognition)
+        // Works on soft flick (dink/drop), hard flick (smash), side flick (curve), net-volley
+        const dist = Math.hypot(dx, dy);
+        const isSwipeGesture = dist >= 16 || dy < -14 || Math.abs(dx) >= 16;
+        if (isSwipeGesture) {
           const res = pbEngine.triggerPlayerShotWithGesture(dx, dy, dt, speed);
           if (res.success) {
             if (res.shotType === 'smash') {
@@ -418,7 +453,7 @@ function renderPickleballMode(): void {
               }
             }
           }
-        } else if (dt < 220 && Math.hypot(dx, dy) < 18) {
+        } else if (dt < 220 && dist < 16) {
           // Stationary tap: only strikes if ball is already right in front of the player's paddle!
           const bDx = Math.abs(pbEngine.ball.x - pbEngine.playerPos.x);
           const bDz = Math.abs(pbEngine.ball.z - (pbEngine.playerPos.z - 0.45));
@@ -448,7 +483,7 @@ function renderPickleballMode(): void {
   pbEngine.onBallHit = (hitter, shot, quality) => {
     pbStage?.onHit(hitter, shot, quality);
     sounds.pickleballPaddleHit(shot === 'smash');
-    showPickleballTimingBadge(quality);
+    showPickleballTimingBadge(quality, shot);
 
     // Dynamic Juice: Screen Shake & Mobile Haptics Vibration
     if (shot === 'smash' || quality === 'perfect' || pbEngine?.isDiving) {

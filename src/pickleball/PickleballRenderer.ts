@@ -2,7 +2,7 @@
 // PICKLEBALL RENDERER - In-Match Scoreboard HUD, Shot Buttons & Mobile Controls
 // ============================================================================
 
-import { PickleballEngine, PointResult } from './PickleballEngine';
+import { PickleballEngine, PointResult, ShotType } from './PickleballEngine';
 
 interface PickleballHUDCache {
   host: HTMLElement;
@@ -110,14 +110,14 @@ export function mountPickleballHUD(host: HTMLElement, engine: PickleballEngine):
 
     <!-- Prominent Serve Cue Banner -->
     <div class="pbServeCue" id="pbServeCue" style="display:none">
-      🎾 LƯỢT BẠN GIAO BÓNG — Chạm sân hoặc bấm nút để giao!
+      🎾 LƯỢT GIAO BÓNG — Chạm sân hoặc bấm nút!
     </div>
 
     <!-- Bottom Controls Rail (Desktop & Mobile Optimized) -->
     <footer class="pbBottomControlRail">
       <!-- Mobile Swipe-to-Hit & Tap-to-Run Ergonomics Guide Pill -->
       <div class="pbSwipeGuidePill">
-        👆 <b>Chạm sân</b> để chạy · <b>Vuốt ⬆️</b>: Smash · <b>Vuốt ngắn</b>: Bỏ nhỏ · <b>Vuốt ↗️</b>: Xoáy
+        👆 <b>Chạm</b>: Di chuyển · <b>⬆</b> Smash · <b>🏓</b> Bỏ nhỏ · <b>↗</b> Xoáy góc
       </div>
 
       <!-- 3 Primary Action Shot Buttons -->
@@ -456,7 +456,7 @@ export function showPickleballDialogue(speaker: string, text: string): void {
   }, 2400);
 }
 
-export function showPickleballTimingBadge(quality: 'perfect' | 'good' | 'late' | 'early'): void {
+export function showPickleballTimingBadge(quality: 'perfect' | 'good' | 'late' | 'early', shot?: ShotType): void {
   if (!pbCache || !pbCache.timingBadgeEl) return;
 
   const el = pbCache.timingBadgeEl;
@@ -464,7 +464,7 @@ export function showPickleballTimingBadge(quality: 'perfect' | 'good' | 'late' |
   let color = '#22c55e';
 
   if (quality === 'perfect') {
-    text = '⭐ PERFECT!';
+    text = shot === 'smash' ? '🔥 POWER SMASH!' : (shot === 'dink' || shot === 'drop' ? '🎯 PERFECT DINK!' : (shot === 'curve' ? '🌀 PERFECT CURVE!' : '⭐ PERFECT!'));
     color = '#facc15';
   } else if (quality === 'late') {
     text = '💨 LATE';
@@ -472,6 +472,9 @@ export function showPickleballTimingBadge(quality: 'perfect' | 'good' | 'late' |
   } else if (quality === 'early') {
     text = '⏳ EARLY';
     color = '#38bdf8';
+  } else {
+    text = shot === 'smash' ? '🚀 SMASH' : (shot === 'dink' || shot === 'drop' ? '🏓 BỎ NHỎ' : (shot === 'curve' ? '🌀 XOÁY GÓC' : (shot === 'volley' ? '⚡ VOLLEY' : '✨ GOOD')));
+    color = '#22c55e';
   }
 
   el.textContent = text;
@@ -483,5 +486,5 @@ export function showPickleballTimingBadge(quality: 'perfect' | 'good' | 'late' |
 
   setTimeout(() => {
     el.style.display = 'none';
-  }, 600);
+  }, 750);
 }
